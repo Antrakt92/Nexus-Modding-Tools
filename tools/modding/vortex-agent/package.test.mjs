@@ -4,11 +4,15 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import crypto from 'node:crypto';
 import path from 'node:path';
+import { runtimeWorkspace } from './build.mjs';
 const ROOT = paths.build;
 const sha = async file => crypto.createHash('sha256').update(await fs.readFile(file)).digest('hex');
 test('packaged entrypoint and source/lockfile provenance match verified isolated build', async () => {
   const plugin = path.join(ROOT, 'plugin/vortex-agent');
   const provenance = JSON.parse(await fs.readFile(path.join(plugin, 'provenance.json'), 'utf8'));
+  const compileReceipt = JSON.parse(await fs.readFile(path.join(ROOT, 'adapted-compile.json'), 'utf8'));
+  assert.equal(provenance.workspaceRoot, runtimeWorkspace());
+  assert.equal(compileReceipt.inputs.workspaceRoot, provenance.workspaceRoot);
   assert.equal(await sha(path.join(plugin, 'index.js')), provenance.pluginSha256);
   assert.equal(await sha(path.join(ROOT, 'upstream/adapted-dist/index.js')), provenance.pluginSha256);
   assert.equal(await sha(path.join(ROOT, 'upstream/pnpm-lock.yaml')), provenance.lockfileSha256);

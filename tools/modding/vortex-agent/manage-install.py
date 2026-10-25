@@ -1,6 +1,5 @@
 """Bounded plugin installation and protected-file snapshots; never edit managed mods."""
 import argparse
-import csv
 import hashlib
 import json
 from pathlib import Path
@@ -28,6 +27,11 @@ SOURCE = ROOT / 'local-state/vortex-agent-build/plugin/vortex-agent'
 PLUGINS = absolute_root(os.environ.get('APPDATA', str(Path.home() / 'AppData/Roaming')), 'APPDATA') / 'Vortex/plugins'
 RECEIPTS = ROOT / 'local-state/vortex-agent-build/receipts'
 UPGRADES = ROOT / 'local-state/vortex-agent-build/upgrades'
+PROCESS_GUARD = Path(__file__).resolve().with_name('guard.cjs')
+PROCESS_SNAPSHOT_SCRIPT = """
+const names = require(process.argv[1]).processNames();
+process.stdout.write(JSON.stringify({schema: 1, complete: true, count: names.length, names}));
+"""
 
 def sha(file):
     digest = hashlib.sha256()
@@ -37,11 +41,28 @@ def sha(file):
     return digest.hexdigest()
 
 def stopped():
-    output = subprocess.check_output(['tasklist.exe', '/FO', 'CSV', '/NH'], text=True, timeout=10)
-    rows = list(csv.reader(output.splitlines(), strict=True))
-    if not rows or any(len(row) != 5 or not row[1].isdigit() for row in rows):
-        raise RuntimeError('Unverifiable Windows process list')
-    names = {row[0].lower() for row in rows}
+    # Reuse the maintained bounded .NET enumeration instead of tasklist.
+    # Always enumerate again, including immediately before the directory swap.
+    try:
+        node = shutil.which('node')
+        if not node:
+            raise RuntimeError('Unverifiable Windows process list')
+        result = subprocess.run([str(Path(node).resolve()), '-e', PROCESS_SNAPSHOT_SCRIPT, str(PROCESS_GUARD)],
+            capture_output=True, text=True, encoding='utf-8', timeout=15,
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+        if result.returncode != 0 or result.stderr.strip() or len(result.stdout) > 1024 * 1024:
+            raise RuntimeError('Unverifiable Windows process list')
+        snapshot = json.loads(result.stdout)
+        if not isinstance(snapshot, dict) or set(snapshot) != {'schema', 'complete', 'count', 'names'} \
+            or type(snapshot['schema']) is not int or snapshot['schema'] != 1 or snapshot['complete'] is not True \
+            or type(snapshot['count']) is not int or not 0 < snapshot['count'] <= 65536 \
+            or not isinstance(snapshot['names'], list) or len(snapshot['names']) != snapshot['count'] \
+            or any(not isinstance(name, str) or not 0 < len(name) <= 260
+                or re.search(r'[\\/\x00-\x1f\x7f]', name) for name in snapshot['names']):
+            raise RuntimeError('Unverifiable Windows process list')
+        names = {name.lower() for name in snapshot['names']}
+    except (OSError, subprocess.SubprocessError, UnicodeError, json.JSONDecodeError) as exc:
+        raise RuntimeError('Unverifiable Windows process list') from exc
     if names & {name.lower() for name in ['Vortex.exe', 'Cyberpunk2077.exe', 'REDprelauncher.exe', 'ACU.exe', 'SkyrimSE.exe', 'SkyrimVR.exe', 'skse64_loader.exe', 'sksevr_loader.exe', 'Fallout4.exe', 'f4se_loader.exe']}:
         raise RuntimeError('Vortex/game still running; close gracefully before installation')
 
@@ -181,9 +202,18 @@ def install_lock():
         lock.unlink()
 
 
-def install(expected_sha, from_sha=None):
+def verify_runtime_workspace(provenance):
+    runtime = absolute_root(provenance.get('workspaceRoot'), 'Package runtime workspace')
+    no_reparse(runtime)
+    if os.path.normcase(str(runtime)) != os.path.normcase(str(ROOT)):
+        raise RuntimeError('Package runtime workspace differs from active credential/receipt workspace')
+
+
+def install(expected_sha, from_sha=None, package_root=None):
     stopped()
-    provenance = package(SOURCE, expected_sha, '1.0.4')
+    source = SOURCE if package_root is None else absolute_root(package_root, 'Package root')
+    provenance = package(source, expected_sha, '1.0.4')
+    verify_runtime_workspace(provenance)
     verify_sources(provenance)
     target = PLUGINS / 'vortex-agent'
     no_reparse(PLUGINS)
@@ -209,9 +239,10 @@ def install(expected_sha, from_sha=None):
         temp_parent.mkdir(exist_ok=True)
         staged = temp_parent / ('vortex-agent-upgrade-' + run.name)
         old = temp_parent / ('vortex-agent-old-' + run.name)
-        shutil.copytree(SOURCE, staged)
+        shutil.copytree(source, staged)
         staged_provenance = package(staged, expected_sha, '1.0.4')
         stopped()
+        verify_runtime_workspace(staged_provenance)
         verify_sources(staged_provenance)
         if receipt_pins() != pins:
             raise RuntimeError('Receipt pins changed before swap')
@@ -263,19 +294,22 @@ if __name__ == '__main__':
     parser.add_argument('operation', choices=['snapshot', 'compare', 'install', 'upgrade', 'sync-provenance'])
     parser.add_argument('--expected-sha')
     parser.add_argument('--from-sha')
+    parser.add_argument('--package-root', help='Absolute verified package directory; runtime workspace must still match NEXUS_WORKSPACE')
     parser.add_argument('--game-root', action='append', help='Absolute game directory protected by snapshot; repeat for every game')
     parser.add_argument('labels', nargs='*')
     args = parser.parse_args()
+    if args.package_root and args.operation not in {'install', 'upgrade'}:
+        parser.error('--package-root is supported only for install/upgrade')
     if args.operation == 'snapshot' and len(args.labels) == 1:
         snapshot(args.labels[0], args.game_root)
     elif args.operation == 'compare' and len(args.labels) == 2:
         compare(*args.labels)
     elif args.operation == 'install' and not args.labels:
-        install(args.expected_sha)
+        install(args.expected_sha, package_root=args.package_root)
     elif args.operation == 'upgrade' and not args.labels:
         if not args.from_sha:
             parser.error('upgrade requires --from-sha')
-        install(args.expected_sha, args.from_sha)
+        install(args.expected_sha, args.from_sha, args.package_root)
     elif args.operation == 'sync-provenance' and not args.labels:
         sync_provenance(args.expected_sha)
     else:

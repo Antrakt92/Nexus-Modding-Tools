@@ -140,6 +140,21 @@ test('curated inspect reads overlap with a maximum of four and do not write', as
   assert.equal(names.length, 6);
 });
 
+test('inspection refuses missing or malformed initial context before reading inventory', async () => {
+  for (const mutate of [value => {delete value.gameId;}, value => {delete value.profileId;},
+    value => {value.gamePath = 'relative';}, value => {value.filesystemIds = {};},
+    value => {value.filesystemIds.stagingPath = 'unknown';}]) {
+    const initial = health(); mutate(initial);
+    const calls = [];
+    const result = await inspectSession({call: async name => {
+      calls.push(name); return name === 'health' ? initial : [];
+    }});
+    assert.equal(result.status, 'partial');
+    assert.deepEqual(result.errors, [{tool: 'health', code: 'INVALID_PLAN_CONTEXT'}]);
+    assert.deepEqual(calls, ['health']);
+  }
+});
+
 test('partial, capped and context-drift inspections never report all healthy', async () => {
   const failed = await inspectSession({call: async name => {if (name === 'list_downloads') throw Error('not available'); return name === 'health' ? health() : [];}});
   assert.equal(failed.status, 'partial'); assert.equal(failed.errors[0].tool, 'list_downloads'); assert.ok(failed.results.list_mods);

@@ -7,6 +7,7 @@ paths; the tooling rejects relative overrides.
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `NEXUS_WORKSPACE` | Repository root | Runtime files under `local-state` |
+| `NEXUS_RUNTIME_WORKSPACE` | Build workspace | Build-only override for the packaged adapter's credential/receipt workspace; use consistently for patch, compile and package |
 | `NEXUS_CONTEXT_ROOT` | `<workspace>/local-state/upstream-sources` | Pinned external source checkouts |
 | `NEXUS_UPLOAD_ACTION_ROOT` | `<context-root>/nexus-upload-action` | Explicit verified uploader checkout |
 | `NEXUS_STATE_DIR` | `<workspace>/local-state/nexus-publish-setup` | Persistent publication attempts, locks and receipts |
@@ -49,6 +50,13 @@ the authenticated loopback service inside the already running Vortex extension.
 Keep the bridge and installed package configured for the same runtime workspace.
 The package records its compile-time workspace; an explicit process environment
 override must be deliberate and consistent.
+
+For maintenance from a separate source checkout, leave `NEXUS_WORKSPACE` pointing
+at its isolated build tree and set `NEXUS_RUNTIME_WORKSPACE` to the existing live
+workspace before patching, compiling and packaging. This embeds the existing
+credential/receipt location without copying credentials or overwriting an older
+build tree. The installer still runs with `NEXUS_WORKSPACE` set to the live
+workspace and refuses a package whose recorded runtime workspace differs.
 
 `scripts/recovery.py configure --apply` creates a generic JSON template, not a
 universal client installer. Some clients use TOML or another schema. Review and

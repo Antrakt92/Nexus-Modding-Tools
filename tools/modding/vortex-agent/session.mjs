@@ -97,8 +97,9 @@ export async function inspectSession({call = createToolCaller(), concurrency = 4
   try {
     results.health = await call('health', {});
     insist(results.health?.protocol === PROTOCOL, 'WRONG_ADAPTER_PROTOCOL');
+    validateContext(Object.fromEntries(CONTEXT_KEYS.map(key => [key, results.health[key]])));
   } catch (error) { return {status: 'partial', snapshotAtomic: false, results, errors: [{tool: 'health', code: errorCode(error)}]}; }
-  const game = id(results.health.gameId) ? {gameId: results.health.gameId} : {};
+  const game = {gameId: results.health.gameId};
   const names = ['list_mods', 'list_downloads', 'list_dialogs', 'list_external_changes'];
   const reads = await readPool(names.map(name => async () => {
     const value = await call(name, ['list_mods', 'list_downloads'].includes(name) ? {...game, limit: 500} : {});

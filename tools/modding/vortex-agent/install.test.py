@@ -22,7 +22,8 @@ def package(directory, version, content, historical=False):
     (directory / 'LICENSE.md').write_text('Synthetic fixture license', encoding='utf-8')
     (directory / 'info.json').write_text(json.dumps({'id': 'vortex-agent', 'version': version}), encoding='utf-8')
     provenance = {'protocol': 'vortex-agent/1', 'version': version,
-        'pluginSha256': digest, 'sources': {}, 'maintainedSource': str(directory), 'installSupported': False}
+        'pluginSha256': digest, 'sources': {}, 'maintainedSource': str(directory), 'installSupported': False,
+        'workspaceRoot': str(upgrade.ROOT)}
     if not historical:
         (directory / 'THIRD-PARTY-NOTICES.md').write_text('Synthetic dependency notice', encoding='utf-8')
         provenance.update(packageSchemaVersion=2,
@@ -71,6 +72,30 @@ class UpgradeTests(unittest.TestCase):
     def test_wrong_prior_bundle_pin_refuses_upgrade(self):
         with self.assertRaisesRegex(RuntimeError, 'pin mismatch'):
             upgrade.install(self.new, '0' * 64)
+        self.assertEqual(upgrade.sha(self.plugins / 'vortex-agent/index.js'), self.old)
+
+    def test_wrong_runtime_workspace_refuses_before_swap_and_preserves_receipts(self):
+        metadata = self.source / 'provenance.json'
+        value = json.loads(metadata.read_text())
+        value['workspaceRoot'] = str(self.root / 'different-workspace')
+        metadata.write_text(json.dumps(value))
+        before = self.marker.read_bytes()
+        with self.assertRaisesRegex(RuntimeError, 'runtime workspace differs'):
+            upgrade.install(self.new, self.old)
+        self.assertEqual(upgrade.sha(self.plugins / 'vortex-agent/index.js'), self.old)
+        self.assertEqual(self.marker.read_bytes(), before)
+        self.assertFalse((self.root / 'upgrades').exists())
+
+    def test_explicit_package_root_keeps_runtime_receipts_in_original_workspace(self):
+        before = self.marker.read_bytes()
+        with patch.object(upgrade, 'SOURCE', self.root / 'absent-default-source'):
+            upgrade.install(self.new, self.old, str(self.source))
+        self.assertEqual(upgrade.sha(self.plugins / 'vortex-agent/index.js'), self.new)
+        self.assertEqual(self.marker.read_bytes(), before)
+
+    def test_relative_package_root_is_refused(self):
+        with self.assertRaisesRegex(RuntimeError, 'absolute path'):
+            upgrade.install(self.new, self.old, 'relative/package')
         self.assertEqual(upgrade.sha(self.plugins / 'vortex-agent/index.js'), self.old)
 
     def test_failed_post_swap_validation_restores_exact_old_plugin(self):
@@ -218,6 +243,76 @@ class UpgradeTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, 'source provenance'):
                 upgrade.install(self.new, self.old)
         self.assertEqual(upgrade.sha(self.plugins / 'vortex-agent/index.js'), self.old)
+
+
+class ProcessGuardTests(unittest.TestCase):
+    def result(self, names=None):
+        names = ['explorer.exe'] if names is None else names
+        return upgrade.subprocess.CompletedProcess([], 0,
+            json.dumps({'schema': 1, 'complete': True, 'count': len(names), 'names': names}), '')
+
+    def invoke(self, result):
+        with patch.object(upgrade.shutil, 'which', return_value=str(MODULE.with_name('node.exe'))), \
+            patch.object(upgrade.subprocess, 'run', return_value=result) as run:
+            upgrade.stopped()
+            return run
+
+    def test_uses_absolute_maintained_guard_in_hidden_bounded_node_process(self):
+        run = self.invoke(self.result())
+        args, kwargs = run.call_args
+        self.assertTrue(Path(args[0][0]).is_absolute())
+        self.assertEqual(args[0][-1], str(MODULE.resolve().with_name('guard.cjs')))
+        self.assertIn('.processNames()', args[0][2])
+        self.assertEqual(kwargs['timeout'], 15)
+        self.assertEqual(kwargs['creationflags'], upgrade.subprocess.CREATE_NO_WINDOW if upgrade.os.name == 'nt' else 0)
+
+    def test_all_protected_processes_are_refused_case_insensitively(self):
+        for name in ['Vortex.exe', 'Cyberpunk2077.exe', 'REDprelauncher.exe', 'ACU.exe', 'SkyrimSE.exe',
+            'SkyrimVR.exe', 'skse64_loader.exe', 'sksevr_loader.exe', 'Fallout4.exe', 'f4se_loader.exe']:
+            with self.subTest(name=name), self.assertRaisesRegex(RuntimeError, 'still running'):
+                self.invoke(self.result([name.swapcase()]))
+
+    def test_each_call_enumerates_fresh_instead_of_caching_absence(self):
+        with patch.object(upgrade.shutil, 'which', return_value=str(MODULE.with_name('node.exe'))), \
+            patch.object(upgrade.subprocess, 'run', side_effect=[self.result(), self.result(['Vortex.exe'])]) as run:
+            upgrade.stopped()
+            with self.assertRaisesRegex(RuntimeError, 'still running'):
+                upgrade.stopped()
+        self.assertEqual(run.call_count, 2)
+
+    def test_malformed_or_incomplete_snapshot_is_never_proof_of_stopped_processes(self):
+        valid = json.loads(self.result().stdout)
+        snapshots = [None, [], {}, {**valid, 'schema': True}, {**valid, 'schema': 2},
+            {**valid, 'complete': False}, {**valid, 'complete': 1}, {**valid, 'count': True},
+            {**valid, 'count': 0}, {**valid, 'count': 2}, {**valid, 'extra': True},
+            {**valid, 'names': 'explorer.exe'}, {**valid, 'names': [None]},
+            {**valid, 'names': ['']}, {**valid, 'names': ['a' * 261]},
+            {**valid, 'names': ['C:/Vortex.exe']}, {**valid, 'names': ['Vortex.exe\n']}]
+        for value in snapshots:
+            with self.subTest(snapshot=value), self.assertRaisesRegex(RuntimeError, 'Unverifiable'):
+                self.invoke(upgrade.subprocess.CompletedProcess([], 0, json.dumps(value), ''))
+        for value in ['', '{bad json', ' ' * (1024 * 1024 + 1)]:
+            with self.subTest(output_length=len(value)), self.assertRaisesRegex(RuntimeError, 'Unverifiable'):
+                self.invoke(upgrade.subprocess.CompletedProcess([], 0, value, ''))
+
+    def test_nonzero_exit_or_stderr_refuses_even_with_plausible_snapshot(self):
+        for code, stderr in [(1, ''), (0, 'warning'), (-1, 'failure')]:
+            with self.subTest(code=code, stderr=stderr), self.assertRaisesRegex(RuntimeError, 'Unverifiable'):
+                self.invoke(upgrade.subprocess.CompletedProcess([], code, self.result().stdout, stderr))
+
+    def test_missing_node_or_failed_timed_out_process_refuses(self):
+        with patch.object(upgrade.shutil, 'which', return_value=None), \
+            patch.object(upgrade.subprocess, 'run') as run:
+            with self.assertRaisesRegex(RuntimeError, 'Unverifiable'):
+                upgrade.stopped()
+            run.assert_not_called()
+        for failure in [OSError('unavailable'), upgrade.subprocess.TimeoutExpired('node', 15),
+            UnicodeDecodeError('utf-8', b'\xff', 0, 1, 'invalid')]:
+            with self.subTest(failure=type(failure).__name__), \
+                patch.object(upgrade.shutil, 'which', return_value=str(MODULE.with_name('node.exe'))), \
+                patch.object(upgrade.subprocess, 'run', side_effect=failure):
+                with self.assertRaisesRegex(RuntimeError, 'Unverifiable'):
+                    upgrade.stopped()
 
 
 if __name__ == '__main__':

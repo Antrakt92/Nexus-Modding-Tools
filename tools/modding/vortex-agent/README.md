@@ -34,8 +34,11 @@ not a guarantee against a brief window.
 `NEXUS_WORKSPACE` defaults to the repository root. Runtime build files,
 credentials and receipts live in its ignored `local-state` directory.
 `NEXUS_CONTEXT_ROOT` defaults to `<workspace>/local-state/upstream-sources`.
-Overrides must be absolute. Compiled packages retain their build workspace;
-keep the installed package and bridge environment consistent.
+Overrides must be absolute. Compiled packages retain their selected runtime
+workspace; `NEXUS_RUNTIME_WORKSPACE` selects it independently of build artifacts.
+Keep the installed package and bridge environment consistent. The installer
+accepts an explicit `--package-root` but refuses a different runtime workspace
+before replacing anything, preserving the existing credential and receipt paths.
 
 On a new Windows account, initialize the per-user bearer explicitly:
 
@@ -112,8 +115,9 @@ files. It requires an explicitly supplied support extension/hash, never launches
 a game, and checks original-file restoration and ordinary-session preservation.
 It does not prove real Nexus acquisition, ordinary-profile deployment or gameplay.
 
-The current portable candidate passed the isolated Vortex 2.9 native fixture;
-the ordinary running adapter remains a separately accepted older package.
+The portable package passed the isolated Vortex 2.9 native fixture and a later
+ordinary-session upgrade/read/no-op acceptance check. See
+[the verification record](../../../docs/AUDIT-20261025.md) for the precise scope.
 Earlier Vortex 2.7/2.8 source-target fields and the
 [accepted source snapshot](../../../recovery/accepted-adapter/README.md) are
 historical evidence, not today's installed-host version or acceptance claim.
