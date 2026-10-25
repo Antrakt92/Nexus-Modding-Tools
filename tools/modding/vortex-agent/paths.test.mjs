@@ -9,7 +9,7 @@ import { createRequire } from 'node:module';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import paths from './paths.cjs';
-import { adaptedConfig, assertCompileReceipt, verifyPinnedSnapshot, PIN } from './build.mjs';
+import { adaptedConfig, assertCompileReceipt, compileInputs, runtimeWorkspace, verifyPinnedSnapshot, PIN } from './build.mjs';
 
 const require = createRequire(import.meta.url);
 const directory = path.dirname(fileURLToPath(import.meta.url));
@@ -80,6 +80,40 @@ test('bundle packaging refuses changed source, workspace or bundle pins', () => 
   assert.throws(() => assertCompileReceipt(receipt, { ...current, workspaceRoot: absoluteFixture('other') }, 'b'.repeat(64)), /proof differs/);
   assert.throws(() => assertCompileReceipt(receipt, { ...current, inputs: {} }, 'b'.repeat(64)), /proof differs/);
   assert.throws(() => assertCompileReceipt(receipt, current, 'c'.repeat(64)), /proof differs/);
+});
+
+test('runtime workspace override separates packaged state from the artifact workspace', () => {
+  const runtime = absoluteFixture('existing-vortex-runtime');
+  assert.equal(runtimeWorkspace({}), paths.workspace);
+  assert.equal(runtimeWorkspace({ NEXUS_RUNTIME_WORKSPACE: runtime }), runtime);
+  for (const value of ['', 'relative/path', 'x\0y'])
+    assert.throws(() => runtimeWorkspace({ NEXUS_RUNTIME_WORKSPACE: value }), /NEXUS_RUNTIME_WORKSPACE_ABSOLUTE_PATH_REQUIRED/);
+  assert.equal(paths.build, path.join(paths.workspace, 'local-state/vortex-agent-build'));
+});
+
+test('compile proof binds the selected runtime and refuses an override changed after patch or compilation', async t => {
+  const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'vortex-runtime-pins-'));
+  t.after(async () => {
+    assert(path.resolve(temp).startsWith(path.resolve(os.tmpdir()) + path.sep + 'vortex-runtime-pins-'));
+    assert(!(await fs.lstat(temp)).isSymbolicLink());
+    await fs.rm(temp, { recursive: true, force: true });
+  });
+  const runtime = absoluteFixture('existing-vortex-runtime'), other = absoluteFixture('different-vortex-runtime');
+  const config = 'export default defineConfig({ entry: { index: "src/index.ts" }, outDir: "dist" });';
+  await fs.mkdir(path.join(temp, 'src'));
+  const modules = ['paths.cjs', 'guard.cjs', 'extension.cjs', 'credential.cjs', 'inspection.cjs',
+    'serialization.cjs', 'download-identity.cjs', 'receipts.cjs', 'http-ingress.cjs', 'adapted.cjs', 'vortexControl.ts'];
+  for (const name of modules) await fs.writeFile(path.join(temp, 'src', name), 'fixture input');
+  for (const name of ['package.json', 'pnpm-lock.yaml']) await fs.writeFile(path.join(temp, name), 'fixture input');
+  await fs.writeFile(path.join(temp, 'tsup.config.ts'), config);
+  await fs.writeFile(path.join(temp, 'tsup.adapted.config.ts'), adaptedConfig(config, runtime));
+  const inputs = await compileInputs(temp, runtime);
+  assert.equal(inputs.workspaceRoot, runtime);
+  const receipt = { inputs, bundleSha256: 'a'.repeat(64) };
+  await assert.rejects(compileInputs(temp, other), /configuration changed; patch again/);
+  await fs.writeFile(path.join(temp, 'tsup.adapted.config.ts'), adaptedConfig(config, other));
+  const changed = await compileInputs(temp, other);
+  assert.throws(() => assertCompileReceipt(receipt, changed, 'a'.repeat(64)), /proof differs/);
 });
 
 test('vendored restore validates original and accepted content pins before using files', async t => {

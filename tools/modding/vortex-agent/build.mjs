@@ -57,7 +57,12 @@ async function checkBuildTree(tree) {
   return { commit: PIN, sourceMethod: 'pinned local Git clone' };
 }
 
-export function adaptedConfig(config, workspace = paths.workspace) {
+export function runtimeWorkspace(env = process.env) {
+  return paths.absolute(env.NEXUS_RUNTIME_WORKSPACE === undefined ? paths.workspace
+    : env.NEXUS_RUNTIME_WORKSPACE, 'NEXUS_RUNTIME_WORKSPACE');
+}
+
+export function adaptedConfig(config, workspace = runtimeWorkspace()) {
   if (!config.includes('entry: { index: "src/index.ts" }') || !config.includes('outDir: "dist"'))
     throw Error('Unexpected upstream build config');
   const root = paths.absolute(workspace, 'NEXUS_WORKSPACE');
@@ -66,14 +71,15 @@ export function adaptedConfig(config, workspace = paths.workspace) {
       + JSON.stringify(JSON.stringify(root)) + ' },');
 }
 
-export async function compileInputs(tree) {
+export async function compileInputs(tree, workspace = runtimeWorkspace()) {
+  const runtime = paths.absolute(workspace, 'NEXUS_RUNTIME_WORKSPACE');
   const config = await fs.readFile(path.join(tree, 'tsup.config.ts'), 'utf8');
-  if (await fs.readFile(path.join(tree, 'tsup.adapted.config.ts'), 'utf8') !== adaptedConfig(config))
+  if (await fs.readFile(path.join(tree, 'tsup.adapted.config.ts'), 'utf8') !== adaptedConfig(config, runtime))
     throw Error('Workspace or generated build configuration changed; patch again');
   const inputs = {};
   for (const name of [...modules.map(n => 'src/' + n), 'src/adapted.cjs', 'tsup.adapted.config.ts',
     'tsup.config.ts', 'package.json', 'pnpm-lock.yaml', 'src/vortexControl.ts']) inputs[name] = await sha(path.join(tree, name));
-  return { workspaceRoot: paths.workspace, inputs };
+  return { workspaceRoot: runtime, inputs };
 }
 
 export function assertCompileReceipt(receipt, current, bundleSha256) {
@@ -161,7 +167,7 @@ if (argv.includes('--prepare')) {
   for (const name of modules) if (await sha(path.join(BUILD, 'upstream/src', name)) !== sources[name]) throw Error('Build copy differs: ' + name);
   await checkBuildTree(path.join(BUILD, 'upstream'));
   await fs.writeFile(path.join(plugin, 'provenance.json'), JSON.stringify({ upstream: 'https://github.com/alandtse/vortex-mcp', commit: PIN,
-    maintainedSource: source, workspaceRoot: paths.workspace, protocol: 'vortex-agent/1', version: '1.0.4', installSupported: false, receiptVersion: 2,
+    maintainedSource: source, workspaceRoot: runtimeWorkspace(), protocol: 'vortex-agent/1', version: '1.0.4', installSupported: false, receiptVersion: 2,
     packageSchemaVersion: 2,
     licenseFileSHA256: { 'LICENSE.md': await sha(path.join(plugin, 'LICENSE.md')),
       'THIRD-PARTY-NOTICES.md': await sha(path.join(plugin, 'THIRD-PARTY-NOTICES.md')) },

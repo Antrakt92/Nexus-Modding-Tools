@@ -102,6 +102,16 @@ Loading a new extension requires a deliberate Vortex restart; routine operations
 after loading it do not. A successful build does not establish native-host or
 gameplay acceptance.
 
+For an upgrade built in a separate source workspace, set
+`NEXUS_RUNTIME_WORKSPACE` to the existing runtime workspace throughout patch,
+compile and package. Keep the artifact workspace separate. When installing,
+set `NEXUS_WORKSPACE` to the existing live workspace and select the built package
+with `--package-root 'C:/SourceWorkspace/local-state/vortex-agent-build/plugin/vortex-agent'`.
+Supply both the new `--expected-sha` and existing `--from-sha` for `upgrade`.
+The installer verifies the package's runtime workspace before any swap and
+preserves receipts in the original workspace. Do not initialize new credentials
+or move uncertainty records merely to make an upgrade connect.
+
 ## 5. Prepare client settings without overwriting them
 
 ```powershell

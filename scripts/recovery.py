@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 from pathlib import Path, PurePosixPath
+import stat
 import subprocess
 import urllib.request
 
@@ -26,8 +27,12 @@ def relative(value):
 
 def no_links(path):
     for p in [path, *path.parents]:
-        if p.exists() and (p.is_symlink() or getattr(p, 'is_junction', lambda: False)()
-                           or getattr(p.lstat(), 'st_file_attributes', 0) & 0x400):
+        # exists() follows links and hides dangling reparse points.
+        try:
+            info = p.lstat()
+        except FileNotFoundError:
+            continue
+        if stat.S_ISLNK(info.st_mode) or getattr(info, 'st_file_attributes', 0) & 0x400:
             raise ValueError('Recovery through reparse paths is refused')
 
 

@@ -11,6 +11,32 @@ spec.loader.exec_module(r)
 
 
 class RecoveryTests(unittest.TestCase):
+    def make_symlink(self, link, target, directory=False):
+        try:
+            link.symlink_to(target, target_is_directory=directory)
+        except OSError as error:
+            self.skipTest('Symlink creation unavailable: ' + str(error))
+
+    def test_dangling_output_symlink_does_not_create_outside_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            outside = root / 'outside.txt'
+            link = root / 'output.txt'
+            self.make_symlink(link, outside)
+            with self.assertRaisesRegex(ValueError, 'reparse'):
+                r.write_matching(link, b'private skill content', True)
+            self.assertFalse(outside.exists())
+
+    def test_dangling_workspace_symlink_is_not_resolved_for_configuration(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            outside = root / 'outside-workspace'
+            link = root / 'workspace'
+            self.make_symlink(link, outside, directory=True)
+            with self.assertRaisesRegex(ValueError, 'reparse'):
+                r.configure(link, True)
+            self.assertFalse(outside.exists())
+
     def test_plan_creates_nothing_then_apply_is_idempotent(self):
         with tempfile.TemporaryDirectory() as tmp:
             target = Path(tmp) / 'workspace with spaces'

@@ -152,11 +152,11 @@
     },
     {
       "path": "docs/AUDIT-20261025.md",
-      "sha256_lf": "b5a48638be05244e57b90cc6f183188e7548075bcf8cece1a40db1394b816acb"
+      "sha256_lf": "f0f6d19378ad9abb38989a7fff6db4352f4ea93a41de570d626995417ffb67a2"
     },
     {
       "path": "docs/CONFIGURATION.md",
-      "sha256_lf": "e8076538c466ef36a7aa731baa4dce164eb4c0bbb20b8d4aec338f1db71deb0b"
+      "sha256_lf": "cbe5b086b14e7183fe52cbe050065e4cde3b7bb591b3c83a03d812050b1ba66e"
     },
     {
       "path": "docs/DEPENDENCY-AUDIT.md",
@@ -172,7 +172,7 @@
     },
     {
       "path": "docs/RESTORE.md",
-      "sha256_lf": "f8220f98e060c7ec99f1c8939d3e1661355ca012a54f61af1ab3426a9f71d76f"
+      "sha256_lf": "0bfb85b25ce34e7631969df70e8b5f9462a21fbc8fe65a3183176d58d2a2cefe"
     },
     {
       "path": "recovery/accepted-adapter/README.md",
@@ -236,7 +236,7 @@
     },
     {
       "path": "scripts/recovery.py",
-      "sha256_lf": "0158d6e07f2f32cb15c588171ae3117ceb3ebf10f6d7092729a494db078c5e94"
+      "sha256_lf": "69cfc08169c4311c83a6589f47df2e9f756579a242d26af84055baf2fb214402"
     },
     {
       "path": "scripts/update_manifest.py",
@@ -252,7 +252,7 @@
     },
     {
       "path": "tests/test_recovery.py",
-      "sha256_lf": "f3617b37e3b744aa2e3fd1de5bb8b0ba107221ae821f5f8c4a3d6842dd2c38aa"
+      "sha256_lf": "79a7c1c8cc11c285f0ed8f6678a64465ad716ccf0a481fc22a4526d317cd5465"
     },
     {
       "path": "tools/modding/AGENT-TOOLS.md",
@@ -368,7 +368,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/README.md",
-      "sha256_lf": "1bf1c948fb39feba3ea22fef36702c9943f450664a43d5bb7526b8935a816b9a"
+      "sha256_lf": "f7f4019231412828bc1b0e6e844e5c14e1a76ba9d8fec6b5ac46a5bcd9fcfc68"
     },
     {
       "path": "tools/modding/vortex-agent/audit-fixes.test.mjs",
@@ -380,7 +380,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/build.mjs",
-      "sha256_lf": "c19a1c953128aa3db97dfd042393fae399b135d4fbc99f4bda742bdd27d56716"
+      "sha256_lf": "9321545c268c4dabffda3e01a048a8030bb458a4b87346a661236d2bcbb98054"
     },
     {
       "path": "tools/modding/vortex-agent/credential.cjs",
@@ -408,7 +408,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/install.test.py",
-      "sha256_lf": "3bc4070b37e26911ed8c334987d86864cf881f48e49190da939f824303a5246d"
+      "sha256_lf": "c62819d1592d3a97cf4d274fd4899e2bc4e6b65de72de80cb62e39425d0b1908"
     },
     {
       "path": "tools/modding/vortex-agent/live-check.mjs",
@@ -428,7 +428,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/manage-install.py",
-      "sha256_lf": "0c1e720a3314799c848a3ea4c1cf6beb604cfa2378d7548f090b3680f0366a5a"
+      "sha256_lf": "f2b1121aa39a3e4f9c8aee26efe7353aadbfbe0f107ea662569637b0a97fd6eb"
     },
     {
       "path": "tools/modding/vortex-agent/native-conflicts.test.mjs",
@@ -452,7 +452,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/package.test.mjs",
-      "sha256_lf": "076349e873c5bc3dfc4a41fa6682e8f0d36549421fbb988c18cdedf0f4930820"
+      "sha256_lf": "9f996b3c7380945a38f76249788022717b189c29cadd80bb987e8012c31a7508"
     },
     {
       "path": "tools/modding/vortex-agent/paths.cjs",
@@ -460,7 +460,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/paths.test.mjs",
-      "sha256_lf": "0d42092789dd02482060d9daa11a7a6fde475e145839404ec6d8f4cef5415731"
+      "sha256_lf": "1faf3f62c6e44c1474ba0099f28d03222b9cc9dff84fa1a860ee0646e009a229"
     },
     {
       "path": "tools/modding/vortex-agent/process-guard.test.mjs",
@@ -492,11 +492,11 @@
     },
     {
       "path": "tools/modding/vortex-agent/session.mjs",
-      "sha256_lf": "6ffedb89561a12436ecab9228764bf20042d4255120d9ef6b825814daae88b94"
+      "sha256_lf": "be341420d6c36f1a60838232e56e0ce99bcee16d213050a3450fec9ea8284cb9"
     },
     {
       "path": "tools/modding/vortex-agent/session.test.mjs",
-      "sha256_lf": "a901e80f67d1f80cb3bf87f408c829def24fc71f13791c18eaae01f00b0c323e"
+      "sha256_lf": "4bd4a557494ef28e43a4c11c0da8ec884a5f8f062e369b41e6ec6a3afb0dafb5"
     },
     {
       "path": "tools/modding/vortex-agent/stdio.test.mjs",
