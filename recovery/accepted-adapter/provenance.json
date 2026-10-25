@@ -1,0 +1,28 @@
+{
+  "upstream": "https://github.com/alandtse/vortex-mcp",
+  "commit": "d10277b8858ad6d411765aa93131219f4a24533e",
+  "protocol": "vortex-agent/1",
+  "version": "1.0.4",
+  "installSupported": false,
+  "receiptVersion": 2,
+  "authentication": "Windows-DPAPI-CurrentUser-bearer",
+  "vortexSourceCommit": "41be6d4556568a605d6131b8c5ca90ff26dec6ac",
+  "pluginSha256": "5c390a69c47aa6afb91f8980507f9eaa97cca46383fcd5e4a5f8335f449ad485",
+  "lockfileSha256": "b755f94d86e0278345ddce2d933e17dd4cdee7b139f4d633ca48bc2ad52f06c9",
+  "upstreamControlSha256": "8dbbd475899c356c073a949b099603543ab900713310ee7018f3dc96a4e2d731",
+  "sources": {
+    "bridge.mjs": "e1cc9fe30e01882e60879e602252ea0f53d133b45a8a9b975c0bd3893a100326",
+    "build.mjs": "c3392a20e16356d433606ddbdd3d707fb54932ce698af77ea05dac20b957eed0",
+    "credential.cjs": "4d5641d030e66123c10fa6399ce67ed94c3d8c8ade92605222327205aa79c561",
+    "download-identity.cjs": "75ea877635d65241d9aeec074d7b07a60a33bc50e08e8fba844b3429cfcf2cdc",
+    "extension.cjs": "615d4abcb417515e75029af76f7a7ba4ec237515fb6bc039654d4b7fcda99bd2",
+    "guard.cjs": "45d4244ed968da1d1a92c0c568e50510ca533cee56e2a07e32faa42959a92c50",
+    "http-ingress.cjs": "876aa29d6218cf6999ebd9fdc9667caee4a6761d22b83aa66ca74f183c11ae7a",
+    "inspection.cjs": "833b9e58ab87c096489874ce8f5600cef4c5c9dbcc4db7561dc4a641cc5b3d25",
+    "manage-install.py": "82e6b10b90833f2fdb212279226f5ad1c52a7196cf6a481fa4681146a8bbd101",
+    "receipts.cjs": "3eb8083635803a0fe93902f77df020637d890b23a54053b649da9a83a229347c",
+    "serialization.cjs": "64be6018fbb6eeac6ed47b4afda0690ac75139545b36eec4be013e0d1ea71c8a"
+  },
+  "performancePatchBaseSha256": "4fc5f545cf4ef5213498907fc1be749e43d11de17d0d680b5e6569f685e99413",
+  "performancePatchScope": "Fresh process snapshot only; existing15tool surface preserved"
+}

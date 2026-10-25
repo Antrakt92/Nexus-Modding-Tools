@@ -1,0 +1,4 @@
+* text=auto eol=lf
+# Provenance pins describe original bytes, including the few CRLF metadata files.
+dependencies/vortex-mcp/** -text
+recovery/accepted-adapter/** -text whitespace=cr-at-eol

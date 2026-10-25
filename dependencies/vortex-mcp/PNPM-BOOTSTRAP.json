@@ -1,0 +1,15 @@
+{
+  "package": "pnpm",
+  "version": "9.15.0",
+  "registryMetadata": "https://registry.npmjs.org/pnpm/9.15.0",
+  "tarball": "https://registry.npmjs.org/pnpm/-/pnpm-9.15.0.tgz",
+  "integrity": "sha512-duI3l2CkMo7EQVgVvNZije5yevN3mqpMkU45RBVsQpmSGon5djge4QfUHxLPpLZmgcqccY8GaPoIMe1MbYulbA==",
+  "archiveBytes": 4314910,
+  "unpackedBytes": 17493610,
+  "fileCount": 901,
+  "license": "MIT",
+  "installedGlobally": false,
+  "installScriptsExecuted": false,
+  "buildToolOnly": true,
+  "retainedUnderIgnored": ".tooling/pnpm-9.15.0"
+}

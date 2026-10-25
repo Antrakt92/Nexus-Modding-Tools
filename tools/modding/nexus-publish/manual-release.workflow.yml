@@ -1,0 +1,92 @@
+# TEMPLATE ONLY. Copy deliberately into a future repository; never activate automatically.
+# Requires publish.py, safe-action.mjs, fetch-guard.mjs, native-transport.mjs,
+# completion-xml.py and release-assets.py in tools/modding/nexus-publish/ on the chosen ref.
+# Manifest must bind expected_user_id; only the source-verified target uploader is supported.
+# Uses a dedicated self-hosted Windows runner for a durable receipt ledger across jobs/cancellations.
+name: Manual Nexus existing-file release
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing GitHub release tag
+        required: true
+        type: string
+      archive_asset:
+        description: Exact existing ZIP asset name
+        required: true
+        type: string
+      manifest_asset:
+        description: Exact JSON publication manifest asset name
+        required: true
+        type: string
+      mode:
+        description: Dry-run by default; publish requires an explicit release order
+        type: choice
+        options: [dry-run, publish]
+        default: dry-run
+permissions:
+  contents: read
+concurrency:
+  group: nexus-manual-publication
+  cancel-in-progress: false
+jobs:
+  prepare-and-run:
+    runs-on: [self-hosted, Windows, nexus-publication]
+    environment: nexus-publication
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: Checkout exact official action (upload protocol stays upstream-owned)
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          repository: Nexus-Mods/upload-action
+          ref: 98532f7670c27cbecc78fae03fa3e278147827e2
+          path: official-nexus-upload-action
+          persist-credentials: false
+      - name: Download named existing release assets and bind absolute archive path
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          ARCHIVE_ASSET: ${{ inputs.archive_asset }}
+          MANIFEST_ASSET: ${{ inputs.manifest_asset }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          python tools/modding/nexus-publish/release-assets.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Validate / explicitly publish through guarded exact official bundle
+        id: publication
+        shell: pwsh
+        env:
+          MODE: ${{ inputs.mode }}
+          NEXUS_STATE_DIR: ${{ vars.NEXUS_STATE_DIR }}
+          NEXUS_PUBLISH_KEY: ${{ inputs.mode == 'publish' && secrets.NEXUSMODS_API_KEY || '' }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:NEXUS_STATE_DIR) -or $env:NEXUS_STATE_DIR -match '[\r\n\x00]' -or -not [System.IO.Path]::IsPathFullyQualified($env:NEXUS_STATE_DIR)) {
+            throw 'Configure vars.NEXUS_STATE_DIR as an absolute persistent Windows directory.'
+          }
+          $stateDir = [System.IO.Path]::GetFullPath($env:NEXUS_STATE_DIR)
+          foreach ($ephemeral in @($env:RUNNER_TEMP, $env:GITHUB_WORKSPACE)) {
+            $prefix = [System.IO.Path]::GetFullPath($ephemeral).TrimEnd('\', '/')
+            if ($stateDir.Equals($prefix, [StringComparison]::OrdinalIgnoreCase) -or $stateDir.StartsWith($prefix + '\', [StringComparison]::OrdinalIgnoreCase)) {
+              throw 'NEXUS_STATE_DIR must be outside RUNNER_TEMP and GITHUB_WORKSPACE.'
+            }
+          }
+          [System.IO.File]::AppendAllText($env:GITHUB_OUTPUT, "state_dir=$stateDir`n")
+          $args = @('tools/modding/nexus-publish/publish.py', "$env:RUNNER_TEMP/nexus-publish-assets/manifest.json", '--action-dir', "$env:GITHUB_WORKSPACE/official-nexus-upload-action")
+          # Stable persistent directory is essential: never use RUNNER_TEMP for the attempt ledger.
+          $args += @('--state-dir', $stateDir)
+          if ($env:MODE -eq 'publish') { $args += @('--publish', '--credential', 'github-secret') }
+          python @args
+          exit $LASTEXITCODE
+      - name: Retain only sanitized receipts (local ledger remains authoritative)
+        if: always() && steps.publication.outputs.state_dir != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: nexus-publication-receipts-${{ github.run_id }}
+          path: |
+            ${{ steps.publication.outputs.state_dir }}/receipts/*.json
+            ${{ steps.publication.outputs.state_dir }}/locks/*.json
+            ${{ steps.publication.outputs.state_dir }}/dry-runs/*.json
+          if-no-files-found: ignore

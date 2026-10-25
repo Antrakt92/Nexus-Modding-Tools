@@ -1,0 +1,249 @@
+{
+  "scope": "Historical initial import hashes before portability and dependency repairs; not a current recovery verifier. Use recovery-manifest.json for current source integrity.",
+  "files": [
+    {
+      "path": "tools/modding/vortex-agent/bridge.mjs",
+      "sha256": "e1cc9fe30e01882e60879e602252ea0f53d133b45a8a9b975c0bd3893a100326"
+    },
+    {
+      "path": "tools/modding/vortex-agent/build.mjs",
+      "sha256": "c3392a20e16356d433606ddbdd3d707fb54932ce698af77ea05dac20b957eed0"
+    },
+    {
+      "path": "tools/modding/vortex-agent/credential.cjs",
+      "sha256": "4d5641d030e66123c10fa6399ce67ed94c3d8c8ade92605222327205aa79c561"
+    },
+    {
+      "path": "tools/modding/vortex-agent/download-identity.cjs",
+      "sha256": "75ea877635d65241d9aeec074d7b07a60a33bc50e08e8fba844b3429cfcf2cdc"
+    },
+    {
+      "path": "tools/modding/vortex-agent/extension.cjs",
+      "sha256": "4451963bef09b40dc468a4086e71c1b2938c2f0cba53c667bb46c629bed8fe2c"
+    },
+    {
+      "path": "tools/modding/vortex-agent/guard.cjs",
+      "sha256": "45d4244ed968da1d1a92c0c568e50510ca533cee56e2a07e32faa42959a92c50"
+    },
+    {
+      "path": "tools/modding/vortex-agent/http-ingress.cjs",
+      "sha256": "876aa29d6218cf6999ebd9fdc9667caee4a6761d22b83aa66ca74f183c11ae7a"
+    },
+    {
+      "path": "tools/modding/vortex-agent/inspection.cjs",
+      "sha256": "d2a7eb5586332c2d46d43fef64c7115fa184d979296c0f67197ec2e0eb8bfd36"
+    },
+    {
+      "path": "tools/modding/vortex-agent/install.test.py",
+      "sha256": "895306bdf9267eca4cfa8fe1487354e0788368b4334bb695ba4bbb4436824267"
+    },
+    {
+      "path": "tools/modding/vortex-agent/live-check.mjs",
+      "sha256": "75a089a754c9743aad163f731087b11e5f63ec2ef51b893fc99b422365f1dcc8"
+    },
+    {
+      "path": "tools/modding/vortex-agent/local-import-readiness.cjs",
+      "sha256": "3452dcc7edaf593a26a2096a723e3b59d40708531272740461727be06dd8dc83"
+    },
+    {
+      "path": "tools/modding/vortex-agent/local-import-readiness.md",
+      "sha256": "4193200d56f5c3a6aa93c05174587237a725e0bd0a4e83fa9ab42cc87889cf4e"
+    },
+    {
+      "path": "tools/modding/vortex-agent/local-import-readiness.test.cjs",
+      "sha256": "449a21ba807a01b217b93915fdd4f8bf347e9fc53018c7291e0721795aef3667"
+    },
+    {
+      "path": "tools/modding/vortex-agent/LOCAL-PACKAGE-INSTALL-DESIGN.md",
+      "sha256": "4c2d55725b08104b05fee5fb62fbaa039b5b8d649c72686fff9553e00e39930e"
+    },
+    {
+      "path": "tools/modding/vortex-agent/manage-install.py",
+      "sha256": "82e6b10b90833f2fdb212279226f5ad1c52a7196cf6a481fa4681146a8bbd101"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-conflicts.test.mjs",
+      "sha256": "9c50555d82f0699ee8926f155cd28d5bf2e49efb3a6b4debbc8fa2f27512ccb6"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-fixture-close.ps1",
+      "sha256": "6f25e54aef868c64b67a3df6db1c65b24095c21bffa4292e3ba6fc93667a41e0"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-fixture-verify.mjs",
+      "sha256": "a9132561501887c5167ebaf195b8f53788cc419f9482b45e41e66c218e083ce6"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-fixture-worker.cjs",
+      "sha256": "83923c17bad527445cb5eba7f4d65ca027a595a696f5aa68decf1f93d1aee1e5"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-fixture.mjs",
+      "sha256": "86b242175dc2db164f71dda28bf38a1292d182c00a9817f70ff1d5700474bbc9"
+    },
+    {
+      "path": "tools/modding/vortex-agent/package.test.mjs",
+      "sha256": "6ad63b137d733423c1f5e6b963ee1578263ab2c973dbb5611f80669673071829"
+    },
+    {
+      "path": "tools/modding/vortex-agent/process-guard.test.mjs",
+      "sha256": "5204409a634bfdd385ec503172eb5e7cf25e55c46dbd2557cbc7d0ba8b211e8f"
+    },
+    {
+      "path": "tools/modding/vortex-agent/README.md",
+      "sha256": "2c63a586ef1a4613e8e980ebbf76caa244c8a3b96f31ed80a503c3f02595d847"
+    },
+    {
+      "path": "tools/modding/vortex-agent/receipts.cjs",
+      "sha256": "3eb8083635803a0fe93902f77df020637d890b23a54053b649da9a83a229347c"
+    },
+    {
+      "path": "tools/modding/vortex-agent/regression.test.ts",
+      "sha256": "8583338b08abe8419b4306248c51c639430c9d74a630d32aa98d805a50bb6406"
+    },
+    {
+      "path": "tools/modding/vortex-agent/rereview.test.mjs",
+      "sha256": "37a7f84df58b5a8aefe415fb15e931e2c1af034f486965721857b3a171b3f633"
+    },
+    {
+      "path": "tools/modding/vortex-agent/response-cleanup.test.mjs",
+      "sha256": "c9df2f6c03bfb934dde3d844a36e6f6dfc13ce15f479c59feb3ad3703dcf431e"
+    },
+    {
+      "path": "tools/modding/vortex-agent/review.test.mjs",
+      "sha256": "e1b264f9ead4f3c860bb149307503f050d67ac3840ee38a1b22d821b2802b8b3"
+    },
+    {
+      "path": "tools/modding/vortex-agent/serialization.cjs",
+      "sha256": "64be6018fbb6eeac6ed47b4afda0690ac75139545b36eec4be013e0d1ea71c8a"
+    },
+    {
+      "path": "tools/modding/vortex-agent/stdio.test.mjs",
+      "sha256": "7410a289ba67639beff091d60382067748cffab7e26ac408545c0fadaaaf2a41"
+    },
+    {
+      "path": "tools/modding/vortex-agent/tests.mjs",
+      "sha256": "da122f9664d742b3ea4109569775e16be2ec17a19209e2035b19afa85989f5fc"
+    },
+    {
+      "path": "tools/modding/vortex-agent/wire.test.mjs",
+      "sha256": "a3682c57b57624e2c302180c94144a14c6cd9218b15d48e6b4182df2e6c63ef5"
+    },
+    {
+      "path": "tools/modding/nexus-cli/credential_setup.py",
+      "sha256": "c30db6ea363bae5d815495c9fe4ba2fdf4f2a1851e9139605bb0d38b16550cf7"
+    },
+    {
+      "path": "tools/modding/nexus-cli/install.py",
+      "sha256": "c54563ccd07f554c19c7b02e582f7e6b969a13a07b24bda3064c9306452f2852"
+    },
+    {
+      "path": "tools/modding/nexus-cli/nexusmods.ps1",
+      "sha256": "c68bc4302a365ae902ad5abca38a4aa7cb56d10936f0f7e13acbd86b814bcf0a"
+    },
+    {
+      "path": "tools/modding/nexus-cli/README.md",
+      "sha256": "7df73821ea223da1747cfe38703bfb590bd3fb36693a1cde15f3729784d90051"
+    },
+    {
+      "path": "tools/modding/nexus-cli/test_credential_setup.py",
+      "sha256": "e8a2d6657eece85b86f9d63aeb1d167d6fa3337389f317b0295059eae4bddaa7"
+    },
+    {
+      "path": "tools/modding/nexus-publish/check-credential.py",
+      "sha256": "dffd763490ccf15c31866ece67807bf14c0d9663d562e25033a25dea1ce8201c"
+    },
+    {
+      "path": "tools/modding/nexus-publish/completion-xml.py",
+      "sha256": "75a813b687b9fc5d53371ae71ec84807f953ba74af50198828bbbdfcd6903674"
+    },
+    {
+      "path": "tools/modding/nexus-publish/fetch-guard.mjs",
+      "sha256": "c6354b213a53a75a1548624402d281b8362fab817399cbedb764e51c795b6082"
+    },
+    {
+      "path": "tools/modding/nexus-publish/manifest.example.json",
+      "sha256": "c48c2a312a4273f36f3432b7bff59071e4a0fe7dbb1b89b9d81c30a8a1dde666"
+    },
+    {
+      "path": "tools/modding/nexus-publish/manual-release.workflow.yml",
+      "sha256": "79787c70e222bbf34ae532f14e66d14d0a5866a19e079bd5083b04cfb1508e80"
+    },
+    {
+      "path": "tools/modding/nexus-publish/native-transport.mjs",
+      "sha256": "de3cc8ca425ee4b86db1cab9744bd0ff509d1d25eddd3b914ba4c8f2a7e01a43"
+    },
+    {
+      "path": "tools/modding/nexus-publish/publish.py",
+      "sha256": "b7515f2e3cce1a8c372b9939eb45703ae0324cd2a95693bcb0fec4f3d05ee242"
+    },
+    {
+      "path": "tools/modding/nexus-publish/README.md",
+      "sha256": "ef79897c6bba72ddb13c1cda29f883d6cec34f9f34050711acb03fba48d132d9"
+    },
+    {
+      "path": "tools/modding/nexus-publish/release-assets.py",
+      "sha256": "5085e7760c8304898f688a2b9d0264e1886e81f5114ffc19b767c4d39765de4c"
+    },
+    {
+      "path": "tools/modding/nexus-publish/safe-action.mjs",
+      "sha256": "7943e6677d3c03189a47c1d48cf737aaea0e21d30b1d7e377577cc78784359bc"
+    },
+    {
+      "path": "tools/modding/nexus-publish/windows-credential.py",
+      "sha256": "0c043386d747fd0af075c6890f85bca628898f1197f35b9ff6d488e7a467f429"
+    },
+    {
+      "path": "tools/modding/nexus-publish/tests/check-workflow.mjs",
+      "sha256": "d52c3c5152f67819a9ac176a32c73e50ef13ec4a33b81dd14df81ca64abedc3d"
+    },
+    {
+      "path": "tools/modding/nexus-publish/tests/fetch-guard.test.mjs",
+      "sha256": "4d9e5e2311287c3407859e88c8d081f392fa82fc412a363a5b0da1a63e60d002"
+    },
+    {
+      "path": "tools/modding/nexus-publish/tests/lock-worker.py",
+      "sha256": "8ed0ffcdadda471cd627b05aacd8a01787f8dedce97b1b2b5b88568c64d7b03c"
+    },
+    {
+      "path": "tools/modding/nexus-publish/tests/mock-network.mjs",
+      "sha256": "5f913ce46a09755cc80f087a17b6bcc5402b3392a5728d7c66a83ceb7a6457cf"
+    },
+    {
+      "path": "tools/modding/nexus-publish/tests/native-transport.test.mjs",
+      "sha256": "9eb2bd37a05acdffef9897520b9fe03309d35613e216019c845502f19ae2fb1e"
+    },
+    {
+      "path": "tools/modding/nexus-publish/tests/test_publish.py",
+      "sha256": "bfe9332b59af3e513259d25711149e58f2d1e1bd0c3275547b995b39e909b728"
+    },
+    {
+      "path": "tools/modding/inspect_environment.py",
+      "sha256": "91645108ac6049b5f8ebfe15512ebbb725e3de9a01e8d3122be64fbe282c8eaf"
+    },
+    {
+      "path": "tools/modding/inspect_clients.py",
+      "sha256": "26b6c18602d0876290055e9a24e31083adc895f37852cb0b9cf3d4182d994313"
+    },
+    {
+      "path": "tools/modding/skills-check.mjs",
+      "sha256": "f6339e8812e67d35afdbd49a468fd166d6254ede348f18207f52bc09ba01b09c"
+    },
+    {
+      "path": "tools/modding/skills-check.test.mjs",
+      "sha256": "41cf8fac5a6da54ecd2d04bef8e59995525203c5f76c15d55a6b9eb9b38f6d55"
+    },
+    {
+      "path": "tools/modding/AGENT-TOOLS.md",
+      "sha256": "e562b0f24316b0f92454b26a72966f819234f88e9a7891b8dc01c9d365f4fbba"
+    },
+    {
+      "path": "tools/modding/run-background-tool.py",
+      "sha256": "9813188cf638642ff08dcf6ca05f327fa0f57ce06a13e7662c1b55b6e8d358a5"
+    },
+    {
+      "path": "tools/modding/WCC-BACKGROUND.md",
+      "sha256": "d3e30130e481b99bd7fb55faabc18a7feb44b148ad4ef35eaeab3e0968a37e3e"
+    }
+  ]
+}

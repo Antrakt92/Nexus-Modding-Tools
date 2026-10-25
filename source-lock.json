@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "scope": "Complete committed upstream source only; excludes working-tree changes and credentials",
+  "upstreams": [
+    {
+      "name": "vortex-mcp",
+      "upstream": "https://github.com/alandtse/vortex-mcp",
+      "commit": "d10277b8858ad6d411765aa93131219f4a24533e",
+      "license": "GPL-3.0-only",
+      "bundle": "vortex-mcp-d10277b8858a.bundle",
+      "bytes": 286479,
+      "sha256": "fcb0e08a271a02a79b1aad2728fc9bb9c0ffe42c080d509d2b4d419d395eb46f",
+      "url": "https://github.com/Antrakt92/Nexus-Modding-Tools/releases/download/recovery-sources-20261025/vortex-mcp-d10277b8858a.bundle"
+    },
+    {
+      "name": "nexus-upload-action",
+      "upstream": "https://github.com/Nexus-Mods/upload-action",
+      "commit": "98532f7670c27cbecc78fae03fa3e278147827e2",
+      "license": "MIT",
+      "bundle": "nexus-upload-action-98532f7670c2.bundle",
+      "bytes": 3222296,
+      "sha256": "04361da260ff76f3b41d4ae7bc713b39db8f7435d3a5f6b58d285033cf18189a",
+      "url": "https://github.com/Antrakt92/Nexus-Modding-Tools/releases/download/recovery-sources-20261025/nexus-upload-action-98532f7670c2.bundle"
+    },
+    {
+      "name": "nexusmods-cli",
+      "upstream": "https://github.com/vadimtrifonov/nexusmods-cli",
+      "commit": "494f061e9f277414c4df306826b4d92cd1e6b90c",
+      "license": "MIT",
+      "bundle": "nexusmods-cli-494f061e9f27.bundle",
+      "bytes": 73311,
+      "sha256": "deb16ccd531f751972b0ea77997fadb98e918aba4a24da705938fcf6f31202c4",
+      "url": "https://github.com/Antrakt92/Nexus-Modding-Tools/releases/download/recovery-sources-20261025/nexusmods-cli-494f061e9f27.bundle"
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "name": "vortex-mcp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Vortex extension exposing an MCP server for programmatic control of Vortex",
+  "homepage": "https://github.com/alandtse/vortex-mcp#readme",
+  "bugs": "https://github.com/alandtse/vortex-mcp/issues",
+  "license": "GPL-3.0-only",
+  "author": "Alan Tse",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alandtse/vortex-mcp.git"
+  },
+  "type": "commonjs",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint . --fix",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "ci": "pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm run test && pnpm run build",
+    "install-plugin": "node scripts/install-local.mjs",
+    "docs:tools": "node scripts/generate-readme-tools-table.mjs",
+    "docs:tools:check": "node scripts/generate-readme-tools-table.mjs --check"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/node": "2.1.2",
+    "@modelcontextprotocol/server": "2.4.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@nexusmods/vortex-api": "2.9.0",
+    "@types/node": "^22.10.2",
+    "oxfmt": "0.65.0",
+    "oxlint": "1.80.0",
+    "redux": "4.2.1",
+    "tsup": "9.0.0",
+    "typescript": "^5.7.2",
+    "vite": "7.3.7",
+    "vitest": "5.0.5"
+  },
+  "engines": {
+    "node": "^24.11.0 || >=26.0.0"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "pnpm": {
+    "overrides": {
+      "hono": "4.13.13",
+      "tinypool": "2.1.2"
+    }
+  }
+}

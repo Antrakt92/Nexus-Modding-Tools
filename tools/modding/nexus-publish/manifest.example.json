@@ -1,0 +1,16 @@
+{
+  "game": "examplegame",
+  "expected_user_id": "1",
+  "mod_page_id": "1",
+  "mod_id": "1",
+  "file_id": "1",
+  "existing_file": true,
+  "archive": "C:/NexusWorkspace/local-state/nexus-publish-setup/example.zip",
+  "version": "1.0.0",
+  "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "category": "main",
+  "display_name": "Example mod",
+  "description": "Example version description",
+  "archive_existing_version": false,
+  "update_mod_version": false
+}

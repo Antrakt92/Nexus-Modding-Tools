@@ -1,0 +1,526 @@
+{
+  "schema": 1,
+  "digest": "SHA-256 after CRLF-to-LF normalization",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "sha256_lf": "841e1fe3e2e86b551480fb411313911325c6589dc6d338be68a662dd4969659d"
+    },
+    {
+      "path": ".gitignore",
+      "sha256_lf": "3c1ece9a2d7a4d08ad89ab44e7530cc7f4bba9dcf7b556f120e4bf3203c95d1a"
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256_lf": "dbab22b7b74c3cb315bd770f0b8f18f6ce4da92148621a9d3df52bf845bd5176"
+    },
+    {
+      "path": "LICENSE",
+      "sha256_lf": "3c61a4b99007718626612c474991852b9428a3d4ed27a77e46b42fdfb80f896f"
+    },
+    {
+      "path": "README.md",
+      "sha256_lf": "9fb0903de0c67a58f1060cd84fdcd4865df8ac1794a4bfa2226427b897bbdf03"
+    },
+    {
+      "path": "dependencies/vortex-mcp/.gitattributes",
+      "sha256_lf": "730a35ae3d558080083c3103d9ac8100c3f6561678092abe341701dfa331eb1d"
+    },
+    {
+      "path": "dependencies/vortex-mcp/.github/workflows/ci.yml",
+      "sha256_lf": "64c6f5d85057a18548f8ad3ec6f8c275a0e82cb37e5fa5f14893106a07b21895"
+    },
+    {
+      "path": "dependencies/vortex-mcp/.github/workflows/nexus-upload.yml",
+      "sha256_lf": "65d3b0211c061666f38c1d4ee4d8476e02fcdea1d4c082df05f7b7e09c5e36f5"
+    },
+    {
+      "path": "dependencies/vortex-mcp/.github/workflows/release.yml",
+      "sha256_lf": "e3ae657e94b2ae7f2be35a351d90608d38cd9148b4fd40b64fd3860b318367f0"
+    },
+    {
+      "path": "dependencies/vortex-mcp/.gitignore",
+      "sha256_lf": "431e3322bd5f05d8489cfd89979a59f1a697e04a3abe9311862d366166ebc67a"
+    },
+    {
+      "path": "dependencies/vortex-mcp/.npmrc",
+      "sha256_lf": "5f947ee7a93b78e2d3131807d3f9b355b5bb237b9a88b6909113f4a3fb6de740"
+    },
+    {
+      "path": "dependencies/vortex-mcp/.oxlintrc.json",
+      "sha256_lf": "ec3fa8c3e4354a0a2961229c64fdc2ae1075ca14db63d1cef151f0ab953e7091"
+    },
+    {
+      "path": "dependencies/vortex-mcp/.pre-commit-config.yaml",
+      "sha256_lf": "40d5c09109d25d33048f0789271b2c24eab039fc0b2a17f9e6471d1fb1bd5d09"
+    },
+    {
+      "path": "dependencies/vortex-mcp/.releaserc.json",
+      "sha256_lf": "07080d1c204b83d925980f26c4388f2e6d96668b9da6ce16cc07426f1ffa952c"
+    },
+    {
+      "path": "dependencies/vortex-mcp/ARCHITECTURE.md",
+      "sha256_lf": "110bf208725a18d9fc56ab76efde6b551803d775eaa263aafd6f7bdeedae9566"
+    },
+    {
+      "path": "dependencies/vortex-mcp/LICENSE.md",
+      "sha256_lf": "3c61a4b99007718626612c474991852b9428a3d4ed27a77e46b42fdfb80f896f"
+    },
+    {
+      "path": "dependencies/vortex-mcp/LOCAL-CHANGES.md",
+      "sha256_lf": "3380b257944b308121439d493da6730378fecea7380124c7092f945f364782cd"
+    },
+    {
+      "path": "dependencies/vortex-mcp/NEXUS_DESCRIPTION.bbcode",
+      "sha256_lf": "caddcb4c08e56f90105b137eaa67ba4d626702f7a949c278ee47d218c3ede318"
+    },
+    {
+      "path": "dependencies/vortex-mcp/PNPM-BOOTSTRAP.json",
+      "sha256_lf": "ad6369791f91f55e2979fdbcb636c2e37aacbe26cbc4f1b455b747fb729da055"
+    },
+    {
+      "path": "dependencies/vortex-mcp/README.md",
+      "sha256_lf": "85cd1d093053bdc2d87310ddbbb2654c1ea1e4d97a42be43e2e5ec4861276e38"
+    },
+    {
+      "path": "dependencies/vortex-mcp/THIRD-PARTY-NOTICES.md",
+      "sha256_lf": "94b1e071f7ed602587abaf6e7eea7327f53f70a121d1755ff99ebd8714ca5318"
+    },
+    {
+      "path": "dependencies/vortex-mcp/UPSTREAM-PROVENANCE.json",
+      "sha256_lf": "7d06ca9cb9eec6406eb33b6195283cdaf357882d2a8eaa2afc23c16235ecc744"
+    },
+    {
+      "path": "dependencies/vortex-mcp/info.json",
+      "sha256_lf": "1f5248540d472cab8a5db09b00b7b8f727b737c9401e3c9fbcb2e45206611441"
+    },
+    {
+      "path": "dependencies/vortex-mcp/package.json",
+      "sha256_lf": "cc2fc3ec0cb36fc30e62563479c74fa17189f756b59f025318eebd59084c0743"
+    },
+    {
+      "path": "dependencies/vortex-mcp/pnpm-lock.yaml",
+      "sha256_lf": "a8159b08f406132ac3d8828eae52b1045489061e7aa3ad1565293bc7122416d9"
+    },
+    {
+      "path": "dependencies/vortex-mcp/scripts/generate-readme-tools-table.mjs",
+      "sha256_lf": "5b21e96b2e1a7f075df71efb5e90d17e6745175f4f4e394ba7120d65bc638c18"
+    },
+    {
+      "path": "dependencies/vortex-mcp/scripts/install-local.mjs",
+      "sha256_lf": "8f22ee0d9f55c7f4c526149a9ff9a6ec5594554612e3313d5c8af0e43955e634"
+    },
+    {
+      "path": "dependencies/vortex-mcp/src/index.ts",
+      "sha256_lf": "1fe71d6b654b7fb2da70052ba73998e157be219874fb2fe1c3a7257962fc10e7"
+    },
+    {
+      "path": "dependencies/vortex-mcp/src/mcpServer.test.ts",
+      "sha256_lf": "84fb676324dffb42b55437205f1ec6ee7a45081b0efc40329d4bbd4ce5308ff1"
+    },
+    {
+      "path": "dependencies/vortex-mcp/src/mcpServer.token.test.ts",
+      "sha256_lf": "9c34ca1c9444abc98befe3c8258ecc5fccbb10ec418e9824035a29e459f7305f"
+    },
+    {
+      "path": "dependencies/vortex-mcp/src/mcpServer.ts",
+      "sha256_lf": "0c6ec74e703dc72681c2261d945ea7a80ee3b46a40bcd0ee0aed42e11fb2b934"
+    },
+    {
+      "path": "dependencies/vortex-mcp/src/test/vortex-api.stub.ts",
+      "sha256_lf": "552f5b1fdf76a58c781ea1c7628f309a9495a7b14644354eff7f9eb549601cb0"
+    },
+    {
+      "path": "dependencies/vortex-mcp/src/vortexControl.test.ts",
+      "sha256_lf": "f634ee1e6633152d8d612184fcc529508839faf5b323995c8f06865158f81867"
+    },
+    {
+      "path": "dependencies/vortex-mcp/src/vortexControl.ts",
+      "sha256_lf": "8dbbd475899c356c073a949b099603543ab900713310ee7018f3dc96a4e2d731"
+    },
+    {
+      "path": "dependencies/vortex-mcp/tsconfig.json",
+      "sha256_lf": "647f7e338322223ed1955a9a8025fead482a6be8a245eaf5f0c7489f0577ae7c"
+    },
+    {
+      "path": "dependencies/vortex-mcp/tsup.config.ts",
+      "sha256_lf": "8b4755f27ffbe2dfa39c29198234368930908c7f41b40371c36d4ad1f841b67c"
+    },
+    {
+      "path": "dependencies/vortex-mcp/vitest.config.ts",
+      "sha256_lf": "b375df0e047cbab150a04ba818dea195a3cd201ccc024417e983ffe6fd3c47ea"
+    },
+    {
+      "path": "docs/AUDIT-20261025.md",
+      "sha256_lf": "b5a48638be05244e57b90cc6f183188e7548075bcf8cece1a40db1394b816acb"
+    },
+    {
+      "path": "docs/CONFIGURATION.md",
+      "sha256_lf": "e8076538c466ef36a7aa731baa4dce164eb4c0bbb20b8d4aec338f1db71deb0b"
+    },
+    {
+      "path": "docs/DEPENDENCY-AUDIT.md",
+      "sha256_lf": "0b11b92706081b97c3872b5025e45ac1e389a5d1635f1272ca1b5c90c681d27d"
+    },
+    {
+      "path": "docs/LICENSES.md",
+      "sha256_lf": "724088f6e9abb3f7e3ae4fb60ed664dbd44870cb20906cfc519a7d3372540fb6"
+    },
+    {
+      "path": "docs/NO-RESTART-WORKFLOW.md",
+      "sha256_lf": "ea0ed13e3b4eff15c65fbc26de0392b0ce3e8a897c21dded05f9fae29f5a9787"
+    },
+    {
+      "path": "docs/RESTORE.md",
+      "sha256_lf": "f8220f98e060c7ec99f1c8939d3e1661355ca012a54f61af1ab3426a9f71d76f"
+    },
+    {
+      "path": "recovery/accepted-adapter/README.md",
+      "sha256_lf": "fb84d18e383d2ccfa35a021c1f500cde48727af8dccadb61b65a89a8a2a7358e"
+    },
+    {
+      "path": "recovery/accepted-adapter/bridge.mjs",
+      "sha256_lf": "e1cc9fe30e01882e60879e602252ea0f53d133b45a8a9b975c0bd3893a100326"
+    },
+    {
+      "path": "recovery/accepted-adapter/build.mjs",
+      "sha256_lf": "c3392a20e16356d433606ddbdd3d707fb54932ce698af77ea05dac20b957eed0"
+    },
+    {
+      "path": "recovery/accepted-adapter/credential.cjs",
+      "sha256_lf": "4d5641d030e66123c10fa6399ce67ed94c3d8c8ade92605222327205aa79c561"
+    },
+    {
+      "path": "recovery/accepted-adapter/download-identity.cjs",
+      "sha256_lf": "75ea877635d65241d9aeec074d7b07a60a33bc50e08e8fba844b3429cfcf2cdc"
+    },
+    {
+      "path": "recovery/accepted-adapter/extension.cjs",
+      "sha256_lf": "615d4abcb417515e75029af76f7a7ba4ec237515fb6bc039654d4b7fcda99bd2"
+    },
+    {
+      "path": "recovery/accepted-adapter/guard.cjs",
+      "sha256_lf": "45d4244ed968da1d1a92c0c568e50510ca533cee56e2a07e32faa42959a92c50"
+    },
+    {
+      "path": "recovery/accepted-adapter/http-ingress.cjs",
+      "sha256_lf": "876aa29d6218cf6999ebd9fdc9667caee4a6761d22b83aa66ca74f183c11ae7a"
+    },
+    {
+      "path": "recovery/accepted-adapter/inspection.cjs",
+      "sha256_lf": "833b9e58ab87c096489874ce8f5600cef4c5c9dbcc4db7561dc4a641cc5b3d25"
+    },
+    {
+      "path": "recovery/accepted-adapter/manage-install.py",
+      "sha256_lf": "82e6b10b90833f2fdb212279226f5ad1c52a7196cf6a481fa4681146a8bbd101"
+    },
+    {
+      "path": "recovery/accepted-adapter/provenance.json",
+      "sha256_lf": "9db0af3bee1feb10ece7c1d24e55595c171dc855a6c745b086d895860ddf5712"
+    },
+    {
+      "path": "recovery/accepted-adapter/receipts.cjs",
+      "sha256_lf": "3eb8083635803a0fe93902f77df020637d890b23a54053b649da9a83a229347c"
+    },
+    {
+      "path": "recovery/accepted-adapter/serialization.cjs",
+      "sha256_lf": "64be6018fbb6eeac6ed47b4afda0690ac75139545b36eec4be013e0d1ea71c8a"
+    },
+    {
+      "path": "recovery/initial-import-manifest.json",
+      "sha256_lf": "0d858b30d67b01c30794e3aa870a134dbf3936a2b3ee9f1560164184d8dbadb0"
+    },
+    {
+      "path": "scripts/bootstrap_pnpm.py",
+      "sha256_lf": "94480bf14764c0d0d058158fc2137a3d0b7a80cbbbc9291d0ab3f47d498458c5"
+    },
+    {
+      "path": "scripts/recovery.py",
+      "sha256_lf": "0158d6e07f2f32cb15c588171ae3117ceb3ebf10f6d7092729a494db078c5e94"
+    },
+    {
+      "path": "scripts/update_manifest.py",
+      "sha256_lf": "28415f32751024d074a7fe275866be50386aac0ef6cf236054d0656325d615a5"
+    },
+    {
+      "path": "source-lock.json",
+      "sha256_lf": "180661aa3758b96b44ae1e0f19f365bda9cacea0ac45408e89a446c11f63d03c"
+    },
+    {
+      "path": "tests/test_bootstrap.py",
+      "sha256_lf": "985ff73d61cb120c36f4e096884b16d2df4077043f007f6f256dc479a7133996"
+    },
+    {
+      "path": "tests/test_recovery.py",
+      "sha256_lf": "f3617b37e3b744aa2e3fd1de5bb8b0ba107221ae821f5f8c4a3d6842dd2c38aa"
+    },
+    {
+      "path": "tools/modding/AGENT-TOOLS.md",
+      "sha256_lf": "c5f5fb18b3719558401b8eee29a95560f16c3e95bb560322f5018795bd02d0fd"
+    },
+    {
+      "path": "tools/modding/nexus-cli/README.md",
+      "sha256_lf": "c4dfb6a1663e78ca2c855f5281ebcaf27ddc7134ebe15bde765b63fba7220481"
+    },
+    {
+      "path": "tools/modding/nexus-cli/credential_setup.py",
+      "sha256_lf": "c30db6ea363bae5d815495c9fe4ba2fdf4f2a1851e9139605bb0d38b16550cf7"
+    },
+    {
+      "path": "tools/modding/nexus-cli/install.py",
+      "sha256_lf": "cc886dbcea33fb2a3ca321cee08d85ad833be85680bfa57f618ce0b1aec207e3"
+    },
+    {
+      "path": "tools/modding/nexus-cli/nexusmods.ps1",
+      "sha256_lf": "fff1982b4cf0a1b9c612fd67ac6197e8c3f1af75179e4b17d7af2db96ee65f76"
+    },
+    {
+      "path": "tools/modding/nexus-cli/test_credential_setup.py",
+      "sha256_lf": "e8a2d6657eece85b86f9d63aeb1d167d6fa3337389f317b0295059eae4bddaa7"
+    },
+    {
+      "path": "tools/modding/nexus-cli/test_portable_paths.py",
+      "sha256_lf": "72fe5f52d998bedadce76f5eb681cd5e445919a061c81acdbe9ce7496c44af5f"
+    },
+    {
+      "path": "tools/modding/nexus-publish/README.md",
+      "sha256_lf": "6fddcf5144da17d6443510c2e7d8a2f040fde7585beade2c805b27649aab898b"
+    },
+    {
+      "path": "tools/modding/nexus-publish/check-credential.py",
+      "sha256_lf": "dffd763490ccf15c31866ece67807bf14c0d9663d562e25033a25dea1ce8201c"
+    },
+    {
+      "path": "tools/modding/nexus-publish/completion-xml.py",
+      "sha256_lf": "75a813b687b9fc5d53371ae71ec84807f953ba74af50198828bbbdfcd6903674"
+    },
+    {
+      "path": "tools/modding/nexus-publish/fetch-guard.mjs",
+      "sha256_lf": "c6354b213a53a75a1548624402d281b8362fab817399cbedb764e51c795b6082"
+    },
+    {
+      "path": "tools/modding/nexus-publish/manifest.example.json",
+      "sha256_lf": "32982a2fe07810cc91e3c9c1539f7dbb9edc99bbd2291a135ef061ab34c45fbd"
+    },
+    {
+      "path": "tools/modding/nexus-publish/manual-release.workflow.yml",
+      "sha256_lf": "efa4532105e95b2a5c25d77ee6136d8606fa4842e3068ce7569e84906983a4b0"
+    },
+    {
+      "path": "tools/modding/nexus-publish/native-transport.mjs",
+      "sha256_lf": "de3cc8ca425ee4b86db1cab9744bd0ff509d1d25eddd3b914ba4c8f2a7e01a43"
+    },
+    {
+      "path": "tools/modding/nexus-publish/publish.py",
+      "sha256_lf": "7fe8dafaec5a90614ad1b684d67f9f3b6823889828d6b140d99d00aa3e3bf1ce"
+    },
+    {
+      "path": "tools/modding/nexus-publish/release-assets.py",
+      "sha256_lf": "5085e7760c8304898f688a2b9d0264e1886e81f5114ffc19b767c4d39765de4c"
+    },
+    {
+      "path": "tools/modding/nexus-publish/safe-action.mjs",
+      "sha256_lf": "7943e6677d3c03189a47c1d48cf737aaea0e21d30b1d7e377577cc78784359bc"
+    },
+    {
+      "path": "tools/modding/nexus-publish/tests/action-context.mjs",
+      "sha256_lf": "0f3bf5577c72e581d4e22c7b695da37e4c0238b3d0768cd4a5e0d33bf20dd9ae"
+    },
+    {
+      "path": "tools/modding/nexus-publish/tests/check-workflow.mjs",
+      "sha256_lf": "913a36efcee169cbf114d3de23e07355f68bfe5262fdd72d0fca95c76d8f709a"
+    },
+    {
+      "path": "tools/modding/nexus-publish/tests/fetch-guard.test.mjs",
+      "sha256_lf": "849728794b15aa159da454b59fe2a3ef0949771e2612131c8d05c95ffb78ce82"
+    },
+    {
+      "path": "tools/modding/nexus-publish/tests/lock-worker.py",
+      "sha256_lf": "8ed0ffcdadda471cd627b05aacd8a01787f8dedce97b1b2b5b88568c64d7b03c"
+    },
+    {
+      "path": "tools/modding/nexus-publish/tests/mock-network.mjs",
+      "sha256_lf": "5f913ce46a09755cc80f087a17b6bcc5402b3392a5728d7c66a83ceb7a6457cf"
+    },
+    {
+      "path": "tools/modding/nexus-publish/tests/native-transport.test.mjs",
+      "sha256_lf": "d2eda93de2b1e4b9d0fe593d58f95161f65fa2eb419a3e5e8f6367f78ca2d8d2"
+    },
+    {
+      "path": "tools/modding/nexus-publish/tests/test_publish.py",
+      "sha256_lf": "a9e9495584aaea6c7d3882b7bde030ae3e131103047cf32c78aa904be1e85847"
+    },
+    {
+      "path": "tools/modding/nexus-publish/tests/test_repair.py",
+      "sha256_lf": "50a9dc118238f7e7489215293fe39b8ef3e27a1fcbe81476f01d5e0d74236521"
+    },
+    {
+      "path": "tools/modding/nexus-publish/tests/transport-repair.test.mjs",
+      "sha256_lf": "2ae10fb6a04727bebf4a626c9951b52911dc1963c50a3c6fd2158415ba2dd1b8"
+    },
+    {
+      "path": "tools/modding/nexus-publish/windows-credential.py",
+      "sha256_lf": "0c043386d747fd0af075c6890f85bca628898f1197f35b9ff6d488e7a467f429"
+    },
+    {
+      "path": "tools/modding/tests/test_audit_package.py",
+      "sha256_lf": "4178c1f60025442620cf24561657d1d73c9bbb3870dc83d3527ae92bb7f1e408"
+    },
+    {
+      "path": "tools/modding/tests/test_decompile_pristine.py",
+      "sha256_lf": "c8bc4f2ab469c059cec26516213006c09f3116dbb8bb1d36d89c13b9f0682c54"
+    },
+    {
+      "path": "tools/modding/vortex-agent/LOCAL-PACKAGE-INSTALL-DESIGN.md",
+      "sha256_lf": "4c2d55725b08104b05fee5fb62fbaa039b5b8d649c72686fff9553e00e39930e"
+    },
+    {
+      "path": "tools/modding/vortex-agent/README.md",
+      "sha256_lf": "1bf1c948fb39feba3ea22fef36702c9943f450664a43d5bb7526b8935a816b9a"
+    },
+    {
+      "path": "tools/modding/vortex-agent/audit-fixes.test.mjs",
+      "sha256_lf": "4afbfd2e9529e11c01c80c0c0954ff974b5a62d357bd6890b9ee7b88facd873b"
+    },
+    {
+      "path": "tools/modding/vortex-agent/bridge.mjs",
+      "sha256_lf": "78ec8e4741fe98d2c9f4bc066ecb0e5524dc538530c5f51a1e09dddf140c4fd8"
+    },
+    {
+      "path": "tools/modding/vortex-agent/build.mjs",
+      "sha256_lf": "c19a1c953128aa3db97dfd042393fae399b135d4fbc99f4bda742bdd27d56716"
+    },
+    {
+      "path": "tools/modding/vortex-agent/credential.cjs",
+      "sha256_lf": "2ed91c00fc8d349fdaa8b3af0b979ddc70f66268d6e53bc85e91116a9eadaa4f"
+    },
+    {
+      "path": "tools/modding/vortex-agent/download-identity.cjs",
+      "sha256_lf": "75ea877635d65241d9aeec074d7b07a60a33bc50e08e8fba844b3429cfcf2cdc"
+    },
+    {
+      "path": "tools/modding/vortex-agent/extension.cjs",
+      "sha256_lf": "4451963bef09b40dc468a4086e71c1b2938c2f0cba53c667bb46c629bed8fe2c"
+    },
+    {
+      "path": "tools/modding/vortex-agent/guard.cjs",
+      "sha256_lf": "0a9903127e5dc53d7b29e72adf8aaea793e63e3153cc3ce790ce9596719c4dc2"
+    },
+    {
+      "path": "tools/modding/vortex-agent/http-ingress.cjs",
+      "sha256_lf": "876aa29d6218cf6999ebd9fdc9667caee4a6761d22b83aa66ca74f183c11ae7a"
+    },
+    {
+      "path": "tools/modding/vortex-agent/inspection.cjs",
+      "sha256_lf": "d2a7eb5586332c2d46d43fef64c7115fa184d979296c0f67197ec2e0eb8bfd36"
+    },
+    {
+      "path": "tools/modding/vortex-agent/install.test.py",
+      "sha256_lf": "3bc4070b37e26911ed8c334987d86864cf881f48e49190da939f824303a5246d"
+    },
+    {
+      "path": "tools/modding/vortex-agent/live-check.mjs",
+      "sha256_lf": "f167cbcb157ffbce20fcec5f20280c3c797d150fc57f0a37836bb446461937d1"
+    },
+    {
+      "path": "tools/modding/vortex-agent/local-import-readiness.cjs",
+      "sha256_lf": "3452dcc7edaf593a26a2096a723e3b59d40708531272740461727be06dd8dc83"
+    },
+    {
+      "path": "tools/modding/vortex-agent/local-import-readiness.md",
+      "sha256_lf": "4193200d56f5c3a6aa93c05174587237a725e0bd0a4e83fa9ab42cc87889cf4e"
+    },
+    {
+      "path": "tools/modding/vortex-agent/local-import-readiness.test.cjs",
+      "sha256_lf": "449a21ba807a01b217b93915fdd4f8bf347e9fc53018c7291e0721795aef3667"
+    },
+    {
+      "path": "tools/modding/vortex-agent/manage-install.py",
+      "sha256_lf": "0c1e720a3314799c848a3ea4c1cf6beb604cfa2378d7548f090b3680f0366a5a"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-conflicts.test.mjs",
+      "sha256_lf": "9c50555d82f0699ee8926f155cd28d5bf2e49efb3a6b4debbc8fa2f27512ccb6"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-fixture-close.ps1",
+      "sha256_lf": "8e2f5f8772061332301aa007e6e5191dcd4de65d9face4a5f07c40c67c8d7f07"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-fixture-verify.mjs",
+      "sha256_lf": "eb15b28adbd8b263a3b2ed6b5b76266c681286845900eaabebb38f234f0281da"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-fixture-worker.cjs",
+      "sha256_lf": "829b1f160431501775d7f34d72774b226c3b6e80743ea7c0cd4ef367a54e038f"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-fixture.mjs",
+      "sha256_lf": "2b3993b855d7744572a49dda2fbbbf90f2c3a0a18eb0de7601bd8a81a7b46d2d"
+    },
+    {
+      "path": "tools/modding/vortex-agent/package.test.mjs",
+      "sha256_lf": "076349e873c5bc3dfc4a41fa6682e8f0d36549421fbb988c18cdedf0f4930820"
+    },
+    {
+      "path": "tools/modding/vortex-agent/paths.cjs",
+      "sha256_lf": "e8f568ef6f1ba5c74bdd7ee026df1542d69520cb2d3c636d8e1cf08f8dad4fc8"
+    },
+    {
+      "path": "tools/modding/vortex-agent/paths.test.mjs",
+      "sha256_lf": "0d42092789dd02482060d9daa11a7a6fde475e145839404ec6d8f4cef5415731"
+    },
+    {
+      "path": "tools/modding/vortex-agent/process-guard.test.mjs",
+      "sha256_lf": "5204409a634bfdd385ec503172eb5e7cf25e55c46dbd2557cbc7d0ba8b211e8f"
+    },
+    {
+      "path": "tools/modding/vortex-agent/receipts.cjs",
+      "sha256_lf": "3eb8083635803a0fe93902f77df020637d890b23a54053b649da9a83a229347c"
+    },
+    {
+      "path": "tools/modding/vortex-agent/regression.test.ts",
+      "sha256_lf": "efa72c9df1a2c115ea31add50e66b5c857052c21c81eeb467e49ceb3f6aefa8d"
+    },
+    {
+      "path": "tools/modding/vortex-agent/rereview.test.mjs",
+      "sha256_lf": "b30086c166575e30ac4472db6d290750301e71228ca31d0ea49a588e07895a4d"
+    },
+    {
+      "path": "tools/modding/vortex-agent/response-cleanup.test.mjs",
+      "sha256_lf": "c9df2f6c03bfb934dde3d844a36e6f6dfc13ce15f479c59feb3ad3703dcf431e"
+    },
+    {
+      "path": "tools/modding/vortex-agent/review.test.mjs",
+      "sha256_lf": "baf5cde1bbeb81c957387b17bfe549c8e7f609c6b68bfa77b4f7b1bf87f6c4e6"
+    },
+    {
+      "path": "tools/modding/vortex-agent/serialization.cjs",
+      "sha256_lf": "64be6018fbb6eeac6ed47b4afda0690ac75139545b36eec4be013e0d1ea71c8a"
+    },
+    {
+      "path": "tools/modding/vortex-agent/session.mjs",
+      "sha256_lf": "6ffedb89561a12436ecab9228764bf20042d4255120d9ef6b825814daae88b94"
+    },
+    {
+      "path": "tools/modding/vortex-agent/session.test.mjs",
+      "sha256_lf": "a901e80f67d1f80cb3bf87f408c829def24fc71f13791c18eaae01f00b0c323e"
+    },
+    {
+      "path": "tools/modding/vortex-agent/stdio.test.mjs",
+      "sha256_lf": "7410a289ba67639beff091d60382067748cffab7e26ac408545c0fadaaaf2a41"
+    },
+    {
+      "path": "tools/modding/vortex-agent/tests.mjs",
+      "sha256_lf": "a7f36934cb63a4e882f837b2ac5796023e479671370c9a726bf4d50499801e59"
+    },
+    {
+      "path": "tools/modding/vortex-agent/wire.test.mjs",
+      "sha256_lf": "0c1593e65f7a6b07dc6ea33fe1cb223b92b492855e1d6a7354f399ae55951535"
+    },
+    {
+      "path": "tools/modding/workspace_paths.py",
+      "sha256_lf": "d54508ee570bc3e9a79380f31d6eaaa182a12f560bbd9a524764b8f7db66f2dd"
+    }
+  ]
+}

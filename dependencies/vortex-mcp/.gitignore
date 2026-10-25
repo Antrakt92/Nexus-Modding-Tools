@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.log
+.env
+coverage/
+
+# Local verified build-tool bootstrap; source pin is PNPM-BOOTSTRAP.json.
+.tooling/
