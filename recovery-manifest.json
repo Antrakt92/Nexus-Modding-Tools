@@ -20,7 +20,7 @@
     },
     {
       "path": "README.md",
-      "sha256_lf": "88101e88836057463f1bfb2315c9731b785a6f7ea83b7aadd055474fdb7c6b8f"
+      "sha256_lf": "dfe6e9f467c1dc6a3d4891cd5457b8cec08e899b5ae528a775ba763e855e875a"
     },
     {
       "path": "dependencies/vortex-mcp/.gitattributes",
@@ -268,7 +268,7 @@
     },
     {
       "path": "tools/modding/nexus-cli/README.md",
-      "sha256_lf": "8e04b5b7d145fb529f45977a06909a151d5845a11365fbc7261ad9f72ac2226f"
+      "sha256_lf": "b12acb3f1b1a29550b791e1a3b8c9cd7e68b266a82bce5083761257d90ef5ddd"
     },
     {
       "path": "tools/modding/nexus-cli/credential_setup.py",
@@ -292,7 +292,7 @@
     },
     {
       "path": "tools/modding/nexus-publish/README.md",
-      "sha256_lf": "e5da7c3e0c40e6e722a1e9cd861d1a4cd28fcdcee5dbbfe11a474236b8716414"
+      "sha256_lf": "f81d40f4bebd592d22fdd70868d4211cacd3128f27a7a88821cc5b1aefe6440c"
     },
     {
       "path": "tools/modding/nexus-publish/check-credential.py",
