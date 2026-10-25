@@ -2,10 +2,13 @@ import base64
 import hashlib
 import importlib.util
 import io
+import json
 from pathlib import Path
 import sys
 import tarfile
+import tempfile
 import unittest
+from unittest import mock
 
 scripts = Path(__file__).resolve().parents[1] / 'scripts'
 sys.path.insert(0, str(scripts))
@@ -34,6 +37,17 @@ def fixture(name='package/bin/tool.cjs', link=False):
 
 
 class BootstrapTests(unittest.TestCase):
+    def test_retained_build_tool_path_cannot_escape_vendor_root(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            vendor = root / 'dependencies/vortex-mcp'; vendor.mkdir(parents=True)
+            for value in ['../../../outside', str(root / 'outside')]:
+                (vendor / 'PNPM-BOOTSTRAP.json').write_text(json.dumps({'retainedUnderIgnored': value}))
+                with mock.patch.object(b, 'ROOT', root):
+                    with self.assertRaisesRegex(ValueError, 'recovery path'):
+                        b.bootstrap()
+            self.assertFalse((root / 'outside').exists())
+
     def test_pinned_content(self):
         data, lock = fixture()
         self.assertEqual(b.entries(data, lock), {'bin/tool.cjs': b'example'})

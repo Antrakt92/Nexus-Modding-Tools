@@ -272,6 +272,13 @@ def receipt_path(manifest, state):
     return state / "receipts" / (hashlib.sha256(identity.encode()).hexdigest() + ".json")
 
 
+def ledger_root(state):
+    state = Path(state)
+    if not state.is_absolute():
+        raise Blocked("Publication ledger requires an absolute persistent path; relative paths depend on the working directory.")
+    return state
+
+
 def target_lock_path(manifest, state):
     identity = json.dumps([manifest["game"], manifest["mod_id"], manifest["file_id"]])
     return state / "locks" / (hashlib.sha256(identity.encode()).hexdigest() + ".json")
@@ -424,6 +431,7 @@ def frozen_archive(path):
 
 def execute(manifest, *, publish=False, state=STATE, action=DEFAULT_ACTION,
             credential=None, invoke=invoke_action, read=api_read):
+    state = ledger_root(state)
     manifest = preflight(manifest)
     path = receipt_path(manifest, state)
     if not publish:
@@ -476,7 +484,8 @@ def execute_locked(manifest, path, state, action, credential, invoke, read):
             data.update(outcome="unknown", uploaded=None, metadata_verified=False)
         finally:
             key = None
-            data["action_running"] = False
+            # Only a returned invocation establishes termination. An interrupted
+            # invocation can leave its child alive after the parent releases the OS lock.
             update_owned(path, data, manifest)
             update_owned(lock, data, manifest)
             if data["outcome"] == "done":
@@ -485,6 +494,7 @@ def execute_locked(manifest, path, state, action, credential, invoke, read):
 
 
 def reconcile(manifest, key=None, *, state=STATE, version_id=None, read=api_read, credential=None):
+    state = ledger_root(state)
     manifest = preflight(manifest)
     with operation_lock(manifest, state):
         return reconcile_locked(manifest, key, state, version_id, read, credential)

@@ -110,6 +110,36 @@ class UpgradeTests(unittest.TestCase):
         self.assertEqual(upgrade.sha(self.plugins / 'vortex-agent/index.js'), self.old)
         self.assertTrue(self.marker.exists())
 
+    def test_keyboard_interrupt_after_swap_restores_old_plugin(self):
+        actual = upgrade.package
+        def validate(directory, expected, version=None, **kwargs):
+            if directory == self.plugins / 'vortex-agent' and expected == self.new:
+                raise KeyboardInterrupt('synthetic interruption')
+            return actual(directory, expected, version, **kwargs)
+        with patch.object(upgrade, 'package', validate):
+            with self.assertRaises(KeyboardInterrupt):
+                upgrade.install(self.new, self.old)
+        self.assertEqual(upgrade.sha(self.plugins / 'vortex-agent/index.js'), self.old)
+        self.assertTrue(self.marker.exists())
+
+    def test_failed_swap_preserves_concurrent_foreign_target_in_place(self):
+        actual = Path.rename
+        target = self.plugins / 'vortex-agent'
+        def rename(source, destination):
+            if source.name.startswith('vortex-agent-upgrade-') and destination == target:
+                target.mkdir()
+                (target / 'foreign-sentinel').write_bytes(b'preserve in place')
+                raise OSError('synthetic concurrent target')
+            return actual(source, destination)
+        with patch.object(Path, 'rename', rename):
+            with self.assertRaisesRegex((RuntimeError, OSError), 'rollback refused|concurrent target'):
+                upgrade.install(self.new, self.old)
+        self.assertEqual((target / 'foreign-sentinel').read_bytes(), b'preserve in place')
+        retained = list((self.plugins.parent / 'temp').glob('vortex-agent-old-*/index.js'))
+        self.assertEqual(len(retained), 1)
+        self.assertEqual(upgrade.sha(retained[0]), self.old)
+        self.assertTrue(self.marker.exists())
+
     def test_unexpected_owned_plugin_file_is_preserved_and_refused(self):
         extra = self.plugins / 'vortex-agent/primary-added'
         extra.write_bytes(b'preserve')
@@ -162,6 +192,17 @@ class UpgradeTests(unittest.TestCase):
             upgrade.sync_provenance(self.new)
         self.assertEqual(receipt.read_bytes(), original)
 
+    def test_metadata_sync_refuses_different_runtime_workspace(self):
+        receipt = self.matching_target()
+        original = receipt.read_bytes()
+        source = self.source / 'provenance.json'
+        value = json.loads(source.read_text())
+        value['workspaceRoot'] = str(self.root / 'foreign-workspace')
+        source.write_text(json.dumps(value))
+        with self.assertRaisesRegex(RuntimeError, 'runtime workspace differs'):
+            upgrade.sync_provenance(self.new)
+        self.assertEqual(receipt.read_bytes(), original)
+
     def test_metadata_sync_refuses_source_contract_and_source_hash_drift(self):
         receipt = self.matching_target()
         original = receipt.read_bytes()
@@ -193,6 +234,30 @@ class UpgradeTests(unittest.TestCase):
                 upgrade.sync_provenance(self.new)
         self.assertEqual(receipt.read_bytes(), original)
         self.assertEqual({p.name for p in receipt.parent.iterdir()}, {'index.js', 'LICENSE.md', 'THIRD-PARTY-NOTICES.md', 'info.json', 'provenance.json'})
+
+    def test_metadata_sync_rechecks_maintained_sources_after_staging_metadata(self):
+        receipt = self.matching_target()
+        original = receipt.read_bytes()
+        maintained = self.root / 'maintained'
+        maintained.mkdir()
+        source = maintained / 'bridge.mjs'
+        source.write_bytes(b'original source')
+        metadata = self.source / 'provenance.json'
+        value = json.loads(metadata.read_text())
+        value.update(maintainedSource=str(maintained), sources={'bridge.mjs': upgrade.sha(source)})
+        metadata.write_text(json.dumps(value))
+        actual = upgrade.os.fsync
+        calls = 0
+        def fsync(descriptor):
+            nonlocal calls
+            calls += 1
+            actual(descriptor)
+            if calls == 2:
+                source.write_bytes(b'changed during metadata staging')
+        with patch.object(upgrade.os, 'fsync', fsync):
+            with self.assertRaisesRegex(RuntimeError, 'source provenance'):
+                upgrade.sync_provenance(self.new)
+        self.assertEqual(receipt.read_bytes(), original)
 
     def test_metadata_sync_refuses_concurrent_installer_and_preserves_its_lock(self):
         receipt = self.matching_target()

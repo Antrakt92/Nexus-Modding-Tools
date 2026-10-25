@@ -20,6 +20,9 @@ ZIP size 377388 bytes; GitHub release asset SHA256
 `install.py` downloads/reuses that exact asset, verifies hash and ZIP CRC, refuses
 changed installed files, and writes the executable pin to
 `<workspace>/local-state/nexus-cli/installation.json`. No global PATH change.
+The installer rejects reparse points in output paths, including dangling links.
+It checks all existing files and the receipt before extraction and unpacks the
+same in-memory archive bytes whose size/hash passed verification.
 
 Basic research works without authentication. Check JSON `status` and `errors`:
 partial results also exit 0. Details and pagination are in the shared `nexus-research` skill.

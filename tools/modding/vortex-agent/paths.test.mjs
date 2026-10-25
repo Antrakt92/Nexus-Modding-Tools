@@ -16,6 +16,39 @@ const directory = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(directory, '../../..');
 const absoluteFixture = name => path.resolve(os.tmpdir(), name);
 
+test('build preparation refuses a workspace reparse point before creating artifacts', async t => {
+  const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'vortex-build-reparse-'));
+  t.after(() => fs.rm(temp, { recursive: true, force: true }));
+  const outside = path.join(temp, 'outside'), alias = path.join(temp, 'workspace');
+  await fs.mkdir(outside);
+  await fs.symlink(outside, alias, process.platform === 'win32' ? 'junction' : 'dir');
+  const result = spawnSync(process.execPath, [path.join(directory, 'build.mjs'), '--prepare'], {
+    env: { ...process.env, NEXUS_WORKSPACE: alias }, encoding: 'utf8', windowsHide: true,
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /reparse/i);
+  assert.deepEqual(await fs.readdir(outside), []);
+});
+
+test('build patch refuses an adapted-source symlink and preserves the outside target', async t => {
+  const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'vortex-build-copy-'));
+  t.after(() => fs.rm(temp, { recursive: true, force: true }));
+  const env = { ...process.env, NEXUS_WORKSPACE: temp };
+  const prepare = spawnSync(process.execPath, [path.join(directory, 'build.mjs'), '--prepare'], {
+    env, encoding: 'utf8', windowsHide: true,
+  });
+  assert.equal(prepare.status, 0, prepare.stderr);
+  const outside = path.join(temp, 'outside.cjs');
+  await fs.writeFile(outside, 'preserve this unrelated content');
+  await fs.symlink(outside, path.join(temp, 'local-state/vortex-agent-build/upstream/src/guard.cjs'));
+  const result = spawnSync(process.execPath, [path.join(directory, 'build.mjs'), '--patch'], {
+    env, encoding: 'utf8', windowsHide: true,
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /reparse/i);
+  assert.equal(await fs.readFile(outside, 'utf8'), 'preserve this unrelated content');
+});
+
 test('source defaults derive shared workspace-local state and cache paths', () => {
   const p = paths.resolvePaths({ env: {}, sourceDir: path.join(root, 'tools/modding/vortex-agent'), compiledWorkspace: undefined });
   assert.equal(p.workspace, root);

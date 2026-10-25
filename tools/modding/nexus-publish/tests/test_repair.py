@@ -16,6 +16,23 @@ class RepairTests(unittest.TestCase):
     read = base.RunnerTests.read
     execute = base.RunnerTests.execute
 
+    def test_relative_ledger_is_refused_before_any_write_or_credential_access(self):
+        import os
+        original = Path.cwd()
+        try:
+            os.chdir(self.root)
+            for operation in ('dry-run', 'publish', 'reconcile'):
+                with self.subTest(operation=operation), self.assertRaisesRegex(p.Blocked, 'absolute'):
+                    if operation == 'reconcile':
+                        p.reconcile(self.m, state=Path('relative-ledger'),
+                                    credential=lambda: self.fail('key accessed'))
+                    else:
+                        p.execute(self.m, state=Path('relative-ledger'), publish=operation == 'publish',
+                                  credential=lambda: self.fail('key accessed'))
+            self.assertFalse((self.root / 'relative-ledger').exists())
+        finally:
+            os.chdir(original)
+
     def test_creation_schema_rejects_invalid_before_key_or_action(self):
         for change in [{"version": "1_2"}, {"version": "1.2+build"}, {"version": "A" * 51},
                        {"display_name": "A" * 51}, {"display_name": "Invalid: name"},
@@ -134,11 +151,32 @@ class RepairTests(unittest.TestCase):
                                invoke=cancel, read=self.read)
         self.assertEqual(result["outcome"], "unknown")
         self.assertIsNone(result["uploaded"])
-        self.assertFalse(result["action_running"])
+        self.assertTrue(result["action_running"])
         self.assertEqual(p.load_receipt(p.target_lock_path(self.m, self.root), self.m)["attempt_id"], result["attempt_id"])
         with p.operation_lock(self.m, self.root):
             with self.assertRaises(p.Blocked):
                 with p.operation_lock(self.m, self.root): self.fail("nested operation acquired")
+
+    def test_interrupted_invoke_cannot_reconcile_while_uploader_may_still_run(self):
+        child = subprocess.Popen([sys.executable, '-c', 'import sys; sys.stdin.read()'],
+                                 stdin=subprocess.PIPE, stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL)
+        try:
+            def interrupted(*args):
+                self.assertIsNone(child.poll())
+                raise KeyboardInterrupt()
+            with patch.object(p, 'verify_action', return_value='modeled-node'):
+                result = p.execute(self.m, publish=True, state=self.root,
+                                   credential=lambda: 'mock-secret-never-log',
+                                   invoke=interrupted, read=self.read)
+            self.assertIsNone(child.poll())
+            with self.assertRaisesRegex(p.Blocked, 'uploader termination'):
+                p.reconcile(self.m, state=self.root, version_id='987', read=self.read,
+                            credential=lambda: self.fail('key accessed while uploader may run'))
+            self.assertTrue(result['action_running'])
+            self.assertTrue(p.target_lock_path(self.m, self.root).exists())
+        finally:
+            child.communicate(timeout=5)
 
     def test_account_wrong_identity_missing_owner_types_and_target_fail_closed(self):
         for account, owner, mod_id, domain in [(99, 42, 12, "examplegame"), (42, None, 12, "examplegame"),

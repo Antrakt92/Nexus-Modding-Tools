@@ -7,6 +7,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import vm from 'node:vm';
 import http from 'node:http';
+import { PassThrough } from 'node:stream';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 const require = createRequire(import.meta.url);
@@ -14,6 +15,20 @@ const guard = require('./guard.cjs');
 const inspection = require('./inspection.cjs');
 const ROOT = paths.build + '/tests';
 await fs.mkdir(ROOT, { recursive: true });
+
+test('audit: HTTP parser rejects malformed UTF-8 instead of altering tool arguments', async () => {
+  const ingress = require('./http-ingress.cjs');
+  for (const bytes of [Buffer.from([0xff]), Buffer.from([0xc3])]) {
+    const input = new PassThrough();
+    const parsed = ingress.body(input, new AbortController().signal);
+    input.end(Buffer.concat([Buffer.from('{"modId":"'), bytes, Buffer.from('"}') ]));
+    await assert.rejects(parsed, error => error.message === 'HTTP_BODY_INVALID' && error.status === 400);
+  }
+  const input = new PassThrough(), parsed = ingress.body(input, new AbortController().signal);
+  for (const byte of Buffer.from('{"modId":"проверка"}')) input.write(Buffer.from([byte]));
+  input.end();
+  assert.deepEqual(await parsed, { modId: 'проверка' });
+});
 async function fixture(hook = async () => {}) {
   const dir = await fs.mkdtemp(path.join(ROOT, 'audit-'));
   const state = { settings: { gameMode: { discovered: { cyberpunk2077: { path: dir } } } }, persistent: {

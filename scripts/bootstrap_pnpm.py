@@ -9,7 +9,7 @@ import tarfile
 import tempfile
 import urllib.request
 
-from recovery import no_links
+from recovery import no_links, relative as recovery_relative
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -42,7 +42,7 @@ def entries(data, lock):
 def bootstrap(apply=False, archive_path=None):
     vendor = ROOT / 'dependencies/vortex-mcp'
     lock = json.loads((vendor / 'PNPM-BOOTSTRAP.json').read_text())
-    target = vendor / lock['retainedUnderIgnored']
+    target = vendor / recovery_relative(lock['retainedUnderIgnored'])
     no_links(target)
     if not apply:
         return {'mode': 'plan', 'target': str(target), 'network_accessed': False}
