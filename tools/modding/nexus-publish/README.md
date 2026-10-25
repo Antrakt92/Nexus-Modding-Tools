@@ -55,7 +55,7 @@ recovery review below; this successful case does not authorize blind retries.
 The safe launcher reports only enum stage/failure codes in addition to its original
 ok/version_id projection. It continues discarding all raw upstream messages.
 
-Exact current-main pin inspected on 2026-10-01:
+Pinned upstream revision verified on 2026-10-01:
 `98532f7670c27cbecc78fae03fa3e278147827e2`.
 
 The latest listed release in the 2026-10-01 inspection was `v1.0.0-beta.10` at
@@ -379,9 +379,10 @@ node --check tools/modding/nexus-publish/native-transport.mjs
 The tests include real concurrent processes, killed-runner marker survival,
 normal post-action reconciliation, ownership tampering, atomic replacement failure,
 malformed/legacy receipts, account mismatch, creation-schema boundaries and the
-actual pinned bundle with wholly mocked upload networking. Repair evidence and
-primary/skill-writer contract are in `REPAIR-20261002.md`. Historical setup commands
-below are not instructions to install/rebuild again during a repair audit.
+actual pinned bundle with wholly mocked upload networking. The committed
+[integration audit](../../../docs/FULL-AUDIT-20261025.md) records the later repairs
+and acceptance boundaries; the tests above are the executable contract. Historical
+setup commands below are not instructions to install/rebuild again during a repair audit.
 
 Commands executed locally:
 
@@ -419,9 +420,9 @@ added 464 packages in the context cache, with no lockfile changes. Lifecycle
 markers were only `esbuild` (dev) and `fsevents` (optional macOS); all were disabled.
 No package upgrades/audit fixes were applied.
 
-**Unresolved upstream dependency findings:** full audit reports 21 findings
-(7 moderate, 14 high); production-only audit reports 2 (1 moderate, 1 high)
-through `@actions/http-client` / `undici`. Other affected locked tooling includes
+**Historical upstream dependency snapshot (2026-10-01):** that audit reported 21 findings
+(7 moderate, 14 high); the production-only audit reported 2 (1 moderate, 1 high)
+through `@actions/http-client` / `undici`. Other affected locked tooling included
 Rollup, serialize-javascript, YAML parsers and glob libraries. These audit results
 are not a safety certification. Runtime uploads use explicitly selected built-in
 Node fetch/dispatcher as described above. Bundled Actions-core HTTP code still
@@ -431,15 +432,17 @@ The dev dependencies are retained solely for trusted local verification.
 Typecheck and build passed. Build reproduced the **exact tracked bundle**
 (Git blob `1ccac3f4082d1c2cb4a40f7c6db33f47a3931eaf`); source-map-only path drift
 remains in the disposable context checkout. Build emitted the existing
-Actions-core/OIDC circular-dependency warning. Test and dry-run results are recorded
-in `local-state/nexus-publish-setup/verification.md`.
-Independent-audit repairs, fail-before/pass-after evidence and current test/build
-results are in `AUDIT-REPAIR.md` beside this README.
+Actions-core/OIDC circular-dependency warning. Original raw setup/test logs remain
+in private ignored local-state and are not required public setup inputs.
+Use the committed [full audit](../../../docs/FULL-AUDIT-20261025.md) and
+[regression suites](tests/) for subsequent repair evidence and verification scope.
 
 ## Recommended contract for the primary skill writer
 
 Route publication preparation to this runner/manifest and record the source pin
-and archive pin. Require separate explicit authority for each actual public upload.
+and archive pin. Confirm each actual upload is covered by the task or existing
+user release delegation; do not request the same permission again. Explicit task
+limits and candidate acceptance gates still control.
 Use default dry-run until global v3 mod/file IDs and credential source are approved.
 Keep initial mod/file creation as a separate manual prerequisite. Distinguish local
 validation, modeled action behavior, metadata-confirmed publication and independent

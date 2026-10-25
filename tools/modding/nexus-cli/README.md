@@ -1,20 +1,15 @@
 # Nexus CLI installation
 
-Stable shell entrypoint, from any working directory:
+Stable shell entrypoint for the pinned community CLI.
 
 The examples below run from the repository root. From elsewhere, invoke the
 wrapper by its full path; it derives the workspace from its own location. Set
 `NEXUS_WORKSPACE` to an absolute directory to keep runtime files elsewhere.
 Installation uses `<workspace>/local-state/nexus-cli`; no personal drive is built in.
 
-```powershell
-& "tools/modding/nexus-cli/nexusmods.ps1" --version
-& "tools/modding/nexus-cli/nexusmods.ps1" search --game cyberpunk2077 --query "SPLAT" --field name-stemmed --limit 3
-```
-
-Installed community tool: [vadimtrifonov/nexusmods-cli](https://github.com/vadimtrifonov/nexusmods-cli), MIT,
+Pinned community tool: [vadimtrifonov/nexusmods-cli](https://github.com/vadimtrifonov/nexusmods-cli), MIT,
 release 1.1.1, source commit `494f061e9f277414c4df306826b4d92cd1e6b90c`.
-Windows x64 distribution requires the already installed .NET 10 runtime.
+The Windows x64 distribution requires a separately installed .NET 10 runtime.
 ZIP size 377388 bytes; GitHub release asset SHA256
 `4790715ab94847757eb405c6442dae8dcc73c2f656ec43c367038b7b79c5812d`.
 `install.py` downloads/reuses that exact asset, verifies hash and ZIP CRC, refuses
@@ -24,9 +19,38 @@ The installer rejects reparse points in output paths, including dangling links.
 It checks all existing files and the receipt before extraction and unpacks the
 same in-memory archive bytes whose size/hash passed verification.
 
-Basic research works without authentication. Check JSON `status` and `errors`:
-partial results also exit 0. Details and pagination are in the shared `nexus-research` skill.
-Managed downloads/install/deployment remain routed through Vortex.
+To install or reuse the verified release, run this explicit installation command
+from the repository root; it may download the pinned asset:
+
+```powershell
+python tools/modding/nexus-cli/install.py
+```
+
+Then check the installed version and run a public search:
+
+```powershell
+& "tools/modding/nexus-cli/nexusmods.ps1" --version
+& "tools/modding/nexus-cli/nexusmods.ps1" search --game cyberpunk2077 --query "SPLAT" --field name-stemmed --limit 3
+```
+
+## Read the result, not just the exit code
+
+Basic public research works without authentication. Inspect JSON `status`, `data`,
+source-attributed `errors` and `meta`: both `complete` and `partial` exit 0;
+`failed` exits 1. A partial response is not a complete audit. Preserve decimal IDs
+and sizes as strings, and distinguish game-scoped IDs from global v3 IDs.
+
+Use `--help` or `inspect --help` for the current command contract. Search uses
+`--offset`/`--limit`; uploaded-file lists use `--file-offset`/`--file-limit`;
+indexed contents use `--content-offset`/`--content-limit`. Compare returned counts
+with reported totals before claiming full coverage. File-list options cannot be
+combined with a selected `--file`; `--contents` needs that selected file.
+
+Author-declared requirements and file-specific dependencies are separate evidence,
+not compatibility proof. Selected-file dependencies may require existing Nexus
+authentication; an unavailable section does not justify configuring a key for
+ordinary anonymous metadata work. An empty contents index does not prove an
+archive is empty. Managed downloads, installation and deployment use Vortex.
 
 For future file-dependency queries or publication, configure a personal Nexus API key
 once in an interactive terminal:
