@@ -125,6 +125,14 @@ def no_reparse(file):
             raise RuntimeError('Reparse path refused')
 
 
+def directory_identity(directory):
+    no_reparse(directory)
+    value = directory.stat()
+    if not directory.is_dir():
+        raise RuntimeError('Plugin directory identity unavailable')
+    return value.st_dev, value.st_ino
+
+
 def package(directory, expected_sha, target_version=None, *, allow_historical=False):
     if not expected_sha or not re.fullmatch('[a-f0-9]{64}', expected_sha):
         raise RuntimeError('Explicit frozen bundle SHA-256 required')
@@ -246,18 +254,25 @@ def install(expected_sha, from_sha=None, package_root=None):
         verify_sources(staged_provenance)
         if receipt_pins() != pins:
             raise RuntimeError('Receipt pins changed before swap')
-        if target.exists():
-            package(target, from_sha, allow_historical=True)
-            target.rename(old)
+        staged_identity = directory_identity(staged)
         try:
+            if target.exists():
+                package(target, from_sha, allow_historical=True)
+                target.rename(old)
             staged.rename(target)
             package(target, expected_sha, '1.0.4')
             if receipt_pins() != pins:
                 raise RuntimeError('Receipt pins changed during upgrade')
-        except Exception:
-            if target.exists():
-                target.rename(temp_parent / ('vortex-agent-failed-' + run.name))
+        except BaseException:
+            # Recover an interrupted swap, but never move a concurrent foreign
+            # target just because it occupies the installation pathname.
+            if target.exists() or target.is_symlink():
+                if directory_identity(target) == staged_identity:
+                    target.rename(temp_parent / ('vortex-agent-failed-' + run.name))
+                elif old.exists():
+                    raise RuntimeError('Plugin target changed during failed swap; rollback refused; old plugin retained')
             if old.exists():
+                package(old, from_sha, allow_historical=True)
                 old.rename(target)
             raise
         result = {'installed': str(target), 'version': '1.0.4', 'sha256': expected_sha, 'oldBundleBackup': str(run / 'old-plugin') if from_sha else None,
@@ -270,6 +285,7 @@ def sync_provenance(expected_sha):
     with install_lock():
         provenance = package(SOURCE, expected_sha, '1.0.4')
         package(target, expected_sha, '1.0.4')
+        verify_runtime_workspace(provenance)
         verify_sources(provenance)
         pins = receipt_pins()
         metadata = (SOURCE / 'provenance.json').read_bytes()
@@ -283,6 +299,10 @@ def sync_provenance(expected_sha):
                 os.fsync(handle.fileno())
             if receipt_pins() != pins:
                 raise RuntimeError('Receipt pins changed before metadata sync')
+            verify_runtime_workspace(provenance)
+            verify_sources(provenance)
+            if (SOURCE / 'provenance.json').read_bytes() != metadata:
+                raise RuntimeError('Source provenance changed during metadata staging')
             os.replace(temp, target / 'provenance.json')
         finally:
             if temp.exists():

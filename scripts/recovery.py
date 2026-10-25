@@ -32,8 +32,12 @@ def no_links(path):
             info = p.lstat()
         except FileNotFoundError:
             continue
+        except NotADirectoryError as error:
+            raise ValueError('Recovery parent is not a directory') from error
         if stat.S_ISLNK(info.st_mode) or getattr(info, 'st_file_attributes', 0) & 0x400:
             raise ValueError('Recovery through reparse paths is refused')
+        if p != path and not stat.S_ISDIR(info.st_mode):
+            raise ValueError('Recovery parent is not a directory')
 
 
 def absolute(value):
@@ -112,7 +116,7 @@ def restore_skills(snapshot, destination, apply=False):
 
 def run_git(args, cwd=None):
     return subprocess.check_output(['git', *map(str, args)], cwd=cwd, stderr=subprocess.PIPE,
-                                   text=True, timeout=120).strip()
+                                   encoding='utf-8', timeout=120).strip()
 
 
 def fetch_sources(workspace, archive_dir=None, apply=False):
@@ -123,9 +127,14 @@ def fetch_sources(workspace, archive_dir=None, apply=False):
         name = relative(row['name']).as_posix()
         if '/' in name:
             raise ValueError('Invalid upstream name')
+        bundle_name = relative(row['bundle']).as_posix()
+        if '/' in bundle_name:
+            raise ValueError('Invalid recovery bundle name')
         target = workspace / 'local-state/upstream-sources' / name
         no_links(target)
         if target.exists():
+            if Path(run_git(['rev-parse', '--show-toplevel'], target)).resolve() != target.resolve():
+                raise ValueError('Existing upstream checkout root differs: ' + name)
             if run_git(['rev-parse', 'HEAD'], target) != row['commit'] or run_git(['status', '--porcelain', '--untracked-files=no'], target):
                 raise ValueError('Existing upstream checkout differs: ' + name)
             results.append({'name': name, 'state': 'already_verified'})
@@ -133,7 +142,7 @@ def fetch_sources(workspace, archive_dir=None, apply=False):
         if not apply:
             results.append({'name': name, 'state': 'would_restore'})
             continue
-        bundle = (absolute(archive_dir) / row['bundle']) if archive_dir else workspace / 'local-state/recovery-downloads' / row['bundle']
+        bundle = (absolute(archive_dir) / bundle_name) if archive_dir else workspace / 'local-state/recovery-downloads' / bundle_name
         no_links(bundle)
         if not bundle.exists():
             if archive_dir:

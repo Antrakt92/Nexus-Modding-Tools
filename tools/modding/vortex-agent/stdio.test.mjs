@@ -33,3 +33,19 @@ test('stdio parse errors also wait for output and a broken output rejects cleanl
   const broken = new Writable({ write(_chunk, _encoding, callback) { callback(new Error('synthetic pipe failure')); } });
   await assert.rejects(bridge.runStdio([Buffer.from('bad-json\n')], broken, async () => ({})), /synthetic pipe failure/);
 });
+
+test('stdio refuses malformed UTF-8 before dispatch and accepts split valid Unicode afterward', async () => {
+  const invalid = Buffer.concat([Buffer.from('{"jsonrpc":"2.0","id":1,"method":"'), Buffer.from([0xff]), Buffer.from('"}\n')]);
+  const valid = Buffer.from('{"jsonrpc":"2.0","id":2,"method":"проверка"}\n');
+  const output = new PassThrough(); let text = ''; const dispatched = [];
+  output.on('data', chunk => { text += chunk; });
+  const chunks = [invalid, ...Array.from(valid, byte => Buffer.from([byte]))];
+  await bridge.runStdio(chunks, output, async request => {
+    dispatched.push(request); return { jsonrpc: '2.0', id: request.id, result: {} };
+  });
+  assert.equal(dispatched.length, 1);
+  assert.equal(dispatched[0].method, 'проверка');
+  const responses = text.trim().split('\n').map(JSON.parse);
+  assert.equal(responses[0].error.code, -32700);
+  assert.equal(responses[1].id, 2);
+});

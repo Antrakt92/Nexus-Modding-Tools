@@ -8,6 +8,7 @@ function cancelBody(body) { if (body) void body.cancel().catch(() => {}); }
 function releaseReader(reader) { cancelBody(reader); reader.releaseLock(); }
 export async function* boundedLines(input, max = 1024 * 1024) {
   let pieces = [], bytes = 0, dropping = false;
+  const decode = data => { try { return new TextDecoder('utf-8', { fatal: true }).decode(data); } catch { return null; } };
   for await (const chunk of input) {
     const data = Buffer.from(chunk); let start = 0;
     while (start < data.length) {
@@ -19,12 +20,12 @@ export async function* boundedLines(input, max = 1024 * 1024) {
         else pieces.push(fragment);
       }
       if (newline < 0) break;
-      yield dropping ? null : Buffer.concat(pieces, bytes).toString('utf8').replace(/\r$/, '');
+      yield dropping ? null : decode(Buffer.concat(pieces, bytes))?.replace(/\r$/, '') ?? null;
       pieces = []; bytes = 0; dropping = false; start = newline + 1;
     }
   }
   if (dropping) yield null;
-  else if (bytes) yield Buffer.concat(pieces, bytes).toString('utf8');
+  else if (bytes) yield decode(Buffer.concat(pieces, bytes));
 }
 export async function remote(method, params = {}, fetcher = fetch, tokenProvider = credential.readToken) {
   if (method === 'tools/call' && params.name === 'install_download') {

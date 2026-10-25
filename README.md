@@ -21,6 +21,9 @@ and [license details](docs/LICENSES.md). Build inputs and upstream source revisi
 are pinned. A fresh computer needs its own local credentials; this repository
 contains no keys, personal Vortex database, game files or mod downloads.
 
+The [full integration audit](docs/FULL-AUDIT-20261025.md) records confirmed fixes,
+local tests, native acceptance and the remaining verification boundaries.
+
 The combined project and adapted Vortex component use GPL-3.0-only. Independent
 MIT/Apache dependencies retain their own notices. This is a community project,
 not an official Nexus Mods or Vortex product.

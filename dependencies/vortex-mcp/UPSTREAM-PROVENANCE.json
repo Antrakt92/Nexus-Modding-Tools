@@ -64,13 +64,7 @@
     "THIRD-PARTY-NOTICES.md",
     "UPSTREAM-PROVENANCE.json"
   ],
-  "safeExcludedPaths": [
-    ".git/",
-    "node_modules/",
-    ".tooling/",
-    "dist/",
-    "adapted-dist/"
-  ],
+  "safeExcludedPaths": [".git/", "node_modules/", ".tooling/", "dist/", "adapted-dist/"],
   "selfPinPolicy": "The provenance manifest excludes itself from currentFileSHA256 to avoid a recursive hash. expectedPublicFiles includes it; Git/source review establishes this manifest.",
   "currentFileSHA256": {
     ".gitattributes": "730a35ae3d558080083c3103d9ac8100c3f6561678092abe341701dfa331eb1d",

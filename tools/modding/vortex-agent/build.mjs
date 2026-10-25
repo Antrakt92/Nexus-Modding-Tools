@@ -12,7 +12,31 @@ const vendor = path.join(source, '../../../dependencies/vortex-mcp');
 const modules = ['paths.cjs', 'guard.cjs', 'extension.cjs', 'credential.cjs', 'inspection.cjs', 'serialization.cjs', 'download-identity.cjs', 'receipts.cjs', 'http-ingress.cjs'];
 const sha = async file => crypto.createHash('sha256').update(await fs.readFile(file)).digest('hex');
 
+async function noReparsePaths(...files) {
+  for (const file of files) {
+    for (let entry = path.resolve(file); ; entry = path.dirname(entry)) {
+      try {
+        if ((await fs.lstat(entry)).isSymbolicLink()) throw Error('Build reparse path refused');
+      } catch (error) { if (error.code !== 'ENOENT') throw error; }
+      if (entry === path.dirname(entry)) break;
+    }
+  }
+}
+
+async function noReparseTree(directory) {
+  await noReparsePaths(directory);
+  let entries;
+  try { entries = await fs.readdir(directory, { withFileTypes: true }); }
+  catch (error) { if (error.code === 'ENOENT') return; throw error; }
+  for (const entry of entries) {
+    const file = path.join(directory, entry.name);
+    await noReparsePaths(file);
+    if (entry.isDirectory()) await noReparseTree(file);
+  }
+}
+
 export async function verifyPinnedSnapshot(tree) {
+  await noReparsePaths(path.join(tree, 'UPSTREAM-PROVENANCE.json'));
   const provenance = JSON.parse(await fs.readFile(path.join(tree, 'UPSTREAM-PROVENANCE.json'), 'utf8'));
   if (provenance.upstream !== 'https://github.com/alandtse/vortex-mcp' || provenance.commit !== PIN
       || provenance.license !== 'GPL-3.0-only' || !provenance.currentFileSHA256
@@ -73,12 +97,14 @@ export function adaptedConfig(config, workspace = runtimeWorkspace()) {
 
 export async function compileInputs(tree, workspace = runtimeWorkspace()) {
   const runtime = paths.absolute(workspace, 'NEXUS_RUNTIME_WORKSPACE');
+  const names = [...modules.map(n => 'src/' + n), 'src/adapted.cjs', 'tsup.adapted.config.ts',
+    'tsup.config.ts', 'package.json', 'pnpm-lock.yaml', 'src/vortexControl.ts'];
+  await noReparsePaths(...names.map(name => path.join(tree, name)));
   const config = await fs.readFile(path.join(tree, 'tsup.config.ts'), 'utf8');
   if (await fs.readFile(path.join(tree, 'tsup.adapted.config.ts'), 'utf8') !== adaptedConfig(config, runtime))
     throw Error('Workspace or generated build configuration changed; patch again');
   const inputs = {};
-  for (const name of [...modules.map(n => 'src/' + n), 'src/adapted.cjs', 'tsup.adapted.config.ts',
-    'tsup.config.ts', 'package.json', 'pnpm-lock.yaml', 'src/vortexControl.ts']) inputs[name] = await sha(path.join(tree, name));
+  for (const name of names) inputs[name] = await sha(path.join(tree, name));
   return { workspaceRoot: runtime, inputs };
 }
 
@@ -95,6 +121,7 @@ async function preservePreviousBuild() {
   const digest = crypto.createHash('sha256').update(await fs.readFile(path.join(plugin, 'index.js'))).digest('hex');
   if (digest !== previous.pluginSha256) throw Error('Previous package provenance mismatch');
   const archive = path.join(BUILD, 'archives', previous.version + '-' + digest);
+  await noReparsePaths(archive);
   try {
     await fs.access(archive);
     const archived = crypto.createHash('sha256').update(await fs.readFile(path.join(archive, 'plugin/index.js'))).digest('hex');
@@ -109,6 +136,14 @@ async function preservePreviousBuild() {
 }
 const run = (cmd, args, cwd = BUILD) => execFileSync(cmd, args, { cwd, stdio: 'inherit', shell: process.platform === 'win32' && cmd.endsWith('.cmd') });
 export async function main(argv = process.argv.slice(2)) {
+  // COPYFILE_EXCL protects new files only. Existing adapted inputs and outputs
+  // also need ancestry checks before any write can follow a planted link.
+  const buildTree = path.join(BUILD, 'upstream');
+  await noReparsePaths(BUILD, path.join(BUILD, 'adapted-compile.json'),
+    ...[...modules, 'adapted.cjs', 'regression.test.ts'].map(name => path.join(buildTree, 'src', name)),
+    path.join(buildTree, 'tsup.adapted.config.ts'));
+  await noReparseTree(path.join(buildTree, 'adapted-dist'));
+  await noReparseTree(path.join(BUILD, 'plugin/vortex-agent'));
 if (argv.includes('--prepare')) {
   await fs.mkdir(BUILD, { recursive: true });
   const tree = path.join(BUILD, 'upstream');

@@ -139,6 +139,8 @@ unknown. Always examine `outcome`, `uploaded`, `metadata_verified`,
 `--action-dir` supports another checkout only if HEAD and bundle hash match the
 same exact pin. `--state-dir` supports the future workflow's durable ledger;
 **never change/delete the ledger to bypass an attempt**.
+An explicit `--state-dir` must be absolute, so changing working directories cannot
+silently select another ledger.
 
 Dry-run validates the stated IDs' syntax and existing-file declaration offline;
 it reports `account_verified`, `ownership_verified` and
@@ -287,6 +289,10 @@ helper is not invoked by this action. No dependency or bundle changes were made.
   uploader termination and exact version/account/artifact evidence independently;
   deliberate recovery requires separately reviewed ledger migration. The runner
   provides no unsafe automatic stopped-process assumption or migration/reset mode.
+- A cancellation or exception before the action invocation returns also retains
+  `action_running: true`. Releasing the parent's OS lock does not establish that
+  its child uploader stopped. An invocation that returned before a readback
+  interruption remains separately reconcilable using its durable version ID.
 - Existing schema-1 receipts/markers remain effective retry blockers. Reconciliation
   refuses automatic migration or clearing because they lack account/attempt ownership
   evidence. Malformed, missing, mismatched or partially written records fail closed.
