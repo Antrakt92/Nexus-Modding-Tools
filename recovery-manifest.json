@@ -363,14 +363,6 @@
       "sha256_lf": "0c043386d747fd0af075c6890f85bca628898f1197f35b9ff6d488e7a467f429"
     },
     {
-      "path": "tools/modding/tests/test_audit_package.py",
-      "sha256_lf": "4178c1f60025442620cf24561657d1d73c9bbb3870dc83d3527ae92bb7f1e408"
-    },
-    {
-      "path": "tools/modding/tests/test_decompile_pristine.py",
-      "sha256_lf": "c8bc4f2ab469c059cec26516213006c09f3116dbb8bb1d36d89c13b9f0682c54"
-    },
-    {
       "path": "tools/modding/vortex-agent/LOCAL-PACKAGE-INSTALL-DESIGN.md",
       "sha256_lf": "4c2d55725b08104b05fee5fb62fbaa039b5b8d649c72686fff9553e00e39930e"
     },
