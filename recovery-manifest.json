@@ -12,7 +12,7 @@
     },
     {
       "path": "AGENTS.md",
-      "sha256_lf": "dbab22b7b74c3cb315bd770f0b8f18f6ce4da92148621a9d3df52bf845bd5176"
+      "sha256_lf": "b18c7526276e3bcc3dbeb4aedb75246ebd39a8a74033b818094befe7ef3c6ea9"
     },
     {
       "path": "LICENSE",
@@ -149,6 +149,10 @@
     {
       "path": "dependencies/vortex-mcp/vitest.config.ts",
       "sha256_lf": "b375df0e047cbab150a04ba818dea195a3cd201ccc024417e983ffe6fd3c47ea"
+    },
+    {
+      "path": "docs/AGENT-WORKFLOW.md",
+      "sha256_lf": "168d2912debe0d78eb5c2928b831412db971dd760af9ebcd55a61eca8d20d20b"
     },
     {
       "path": "docs/AUDIT-20261025.md",
@@ -288,7 +292,7 @@
     },
     {
       "path": "tools/modding/nexus-publish/README.md",
-      "sha256_lf": "49349b1e7ad3f5c329dcff7f14279c00289393958e33308b436f27a01ff81274"
+      "sha256_lf": "e5da7c3e0c40e6e722a1e9cd861d1a4cd28fcdcee5dbbfe11a474236b8716414"
     },
     {
       "path": "tools/modding/nexus-publish/check-credential.py",

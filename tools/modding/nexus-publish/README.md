@@ -6,7 +6,9 @@ repair contract below. Historical setup evidence recorded validation of the shar
 Credential Manager key with Nexus and confirmation of Premium access;
 `check-credential.py` verifies the publisher's own reader without an upload.
 Current local checks do not revalidate credentials, Premium status or account access.
-No live upload or actual publication-target ownership verification has been performed.
+The original test-only acceptance did not include a live upload or target-ownership
+check. The later dated transport section below records a separate completed upload;
+neither historical result establishes current account or target access.
 
 ## Files and prerequisites
 
