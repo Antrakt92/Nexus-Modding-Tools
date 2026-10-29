@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="260" viewBox="0 0 1200 260" role="img" aria-labelledby="title description">
+  <title id="title">Nexus Modding Tools</title>
+  <desc id="description">Vortex automation for Windows: inspect, plan and deploy.</desc>
+  <rect width="1200" height="260" rx="24" fill="#101c2a"/>
+  <path d="M960 0h240v260H720Z" fill="#162b39"/>
+  <path d="M72 160V88h52l36 72h52" fill="none" stroke="#5eead4" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="72" cy="160" r="14" fill="#5eead4"/>
+  <circle cx="124" cy="88" r="14" fill="#5eead4"/>
+  <circle cx="212" cy="160" r="14" fill="#fb923c"/>
+  <g font-family="Segoe UI,Arial,sans-serif">
+    <text x="264" y="112" fill="#f8fafc" font-size="54" font-weight="700">Nexus Modding Tools</text>
+    <text x="268" y="159" fill="#b7c9d8" font-size="25">Vortex automation for Windows</text>
+    <text x="268" y="207" fill="#5eead4" font-size="18" letter-spacing="3">INSPECT  /  PLAN  /  DEPLOY</text>
+  </g>
+</svg>

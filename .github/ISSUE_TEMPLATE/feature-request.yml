@@ -1,0 +1,23 @@
+name: Feature request
+description: Describe a modding workflow the tools could support.
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the concrete workflow and where the current tools get in your way.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Include an example input and expected result, using synthetic data.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Current workaround and constraints
+      description: Mention the game, Vortex version and whether this needs reads, downloads, installation or deployment. No keys or private state.

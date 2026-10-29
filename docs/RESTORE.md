@@ -1,5 +1,8 @@
 # Restore the tooling on another Windows computer
 
+For a first installation overview and troubleshooting, start with
+[Get started](GETTING-STARTED.md). This document contains the full build/recovery procedure.
+
 This restores source and prepares local tooling. It does not restore a Vortex
 database, game files, mod collection, credentials or account session. Existing
 files that differ are refused; recovery never resets or cleans a checkout.

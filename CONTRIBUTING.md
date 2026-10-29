@@ -1,13 +1,14 @@
 # Contributing to Nexus Modding Tools
 
-[Overview](README.md) · [Setup](docs/RESTORE.md) · [Tool routes](docs/AGENT-WORKFLOW.md)
+[Overview](README.md) · [Setup](docs/GETTING-STARTED.md) · [Tool routes](docs/AGENT-WORKFLOW.md)
 
 ## Report a problem
 
-Use [GitHub Issues](https://github.com/Antrakt92/Nexus-Modding-Tools/issues).
+Use the [bug report or feature request form](https://github.com/Antrakt92/Nexus-Modding-Tools/issues/new/choose).
 Include the tool, version, exact command, reproduction steps and expected result.
 Remove keys, bearer tokens, signed URLs, account state and private paths from
 reports. Do not attach Vortex databases, mod archives or credential stores.
+Report suspected vulnerabilities through [private security reporting](.github/SECURITY.md).
 
 ## Run local checks
 
@@ -26,13 +27,17 @@ behavior. Report those observations separately when they are relevant.
 For native-helper preparation, settlement or physical proof changes, also run:
 
 ```powershell
-node --test tools/modding/vortex-agent/prepare-native-helper.test.mjs tools/modding/vortex-agent/native-install-wait.test.cjs tools/modding/vortex-agent/physical-proof.test.cjs tools/modding/vortex-agent/install-settlement.test.cjs tools/modding/vortex-agent/local-import-readiness.test.cjs
+node --test tools/modding/vortex-agent/prepare-native-helper.test.mjs tools/modding/vortex-agent/native-install-wait.test.cjs tools/modding/vortex-agent/physical-proof.test.cjs tools/modding/vortex-agent/install-settlement.test.cjs tools/modding/vortex-agent/payload-size-proof.test.cjs tools/modding/vortex-agent/local-import-readiness.test.cjs tools/modding/vortex-agent/tracked-nexus.test.mjs
 ```
 
 Use the [helper preparation guide](docs/NATIVE-HELPER-PREPARATION.md) for fresh
 bindings and the final `verify DIR --materialization` gate. Never retrofit an
 attempted or completed helper, replay an uncertain import or clear its receipts.
 Copied template tests are executable code: review them before running them.
+The tracked-Nexus integration case needs the separately reviewed source-family
+fixtures documented in [its guide](docs/TRACKED-NEXUS-HELPER-REVIEW.md).
+Without those private fixtures that case is explicitly skipped; report the skip
+and run the portable policy tests. Do not claim full integration from that run.
 
 ## Update the source inventory
 

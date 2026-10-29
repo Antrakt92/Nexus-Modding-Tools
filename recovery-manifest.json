@@ -7,8 +7,28 @@
       "sha256_lf": "841e1fe3e2e86b551480fb411313911325c6589dc6d338be68a662dd4969659d"
     },
     {
+      "path": ".github/ISSUE_TEMPLATE/bug-report.yml",
+      "sha256_lf": "f1d26ff2af3763037dcf8f1a579160ce7ea12ea51a7e955d8021abe0868707f0"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/config.yml",
+      "sha256_lf": "ec70b13976a74d69663ff8b82aa1293bc3891a1151d87718e60d384cde4bd1f6"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/feature-request.yml",
+      "sha256_lf": "51f483fe7470e9a691a629ec13e335a8b43dac17998c6fc76cd707fc9634c4cb"
+    },
+    {
+      "path": ".github/SECURITY.md",
+      "sha256_lf": "4cd88ff44181e69d6c0741a673e63b8c62fd58da0b437d35489cc7248ecab3de"
+    },
+    {
       "path": ".github/dependabot.yml",
       "sha256_lf": "e8ba2311634f3dd562bd4904d3be34942f01b4ce07dd09e01fbd196c90a4d143"
+    },
+    {
+      "path": ".github/pull_request_template.md",
+      "sha256_lf": "52caa5f45b10fedec731c4945be708e908cf222bde5f3c93673a4e7d6888cd94"
     },
     {
       "path": ".gitignore",
@@ -20,11 +40,11 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "0520af0d38e9be7f5c18baade59c017188bcc6658d2a217317daa0a661be4e6e"
+      "sha256_lf": "fa0c9f681b4ad13b27aa4dbd88bfc642009355ff95a3b6464230be78908850d9"
     },
     {
       "path": "CONTRIBUTING.md",
-      "sha256_lf": "5b99d927a3b3ea1c7963474f7f7c60646cf0f53a68790799f65684d477317342"
+      "sha256_lf": "5ef4a41a8a25d66d6ca82eb2826e6a6899d80d77d064dfd819ee8d4e30242e73"
     },
     {
       "path": "LICENSE",
@@ -32,11 +52,19 @@
     },
     {
       "path": "README.md",
-      "sha256_lf": "266dcc5830d9ee8a69a97b524ab230eac850e1d75b7e5106926ecbe5f066b088"
+      "sha256_lf": "d1055fc310b51ab72b9c42f61f30772f9dcae7fd0034a16b6f75e8d393a01b92"
+    },
+    {
+      "path": "SUPPORT.md",
+      "sha256_lf": "57e4c472e89f611cc3e0f533c366d60efab9cae1852f032306eaf0b307311d84"
     },
     {
       "path": "VERSION",
-      "sha256_lf": "e9dd8507f4bf0c6f42458e41aea833ad0bd3f6127272335eee9bf4d58541ed67"
+      "sha256_lf": "d915cc95d6ca8f47ae297713ed46d4e5c5d99ddd29fc3c61e263bdf305f2b5b0"
+    },
+    {
+      "path": "assets/banner.svg",
+      "sha256_lf": "db3607ce0efe3c4b3c4d5ee2976e6530bf642bc75a866ae653bcf56ba66da4c4"
     },
     {
       "path": "dependencies/vortex-mcp/.gitattributes",
@@ -203,12 +231,16 @@
       "sha256_lf": "c5e2fff81d596552cc82c8d6cce520af26d931767d4b46dd98196de804464cc6"
     },
     {
+      "path": "docs/GETTING-STARTED.md",
+      "sha256_lf": "881a3eddaca9945640a712b0e3fd63bc129784778ea9f84fc5a7f5e5c620b311"
+    },
+    {
       "path": "docs/LICENSES.md",
       "sha256_lf": "724088f6e9abb3f7e3ae4fb60ed664dbd44870cb20906cfc519a7d3372540fb6"
     },
     {
       "path": "docs/MAINTENANCE.md",
-      "sha256_lf": "9af4ca882eea2c80800bbf1dd7b8a41614490ddb0b81ac42266a03314ab777e2"
+      "sha256_lf": "2099b19c6fc9a5e0dfd224fbf5694bdafdebc1b45f44bb545a43be1da1e05312"
     },
     {
       "path": "docs/NATIVE-HELPER-PREPARATION.md",
@@ -219,8 +251,12 @@
       "sha256_lf": "65bbbf1f0fbd0b85d330e699fa8eaef74111d629eee2299ccacaf9cd3ba1d3b7"
     },
     {
+      "path": "docs/README.md",
+      "sha256_lf": "fd26e1b1a734f5bc36cfc3dc43e78bbedf45e752a125fbc1c6882d7a50178da6"
+    },
+    {
       "path": "docs/RESTORE.md",
-      "sha256_lf": "0bfb85b25ce34e7631969df70e8b5f9462a21fbc8fe65a3183176d58d2a2cefe"
+      "sha256_lf": "cc960632690d3b436d34e4593bf98109ce6c2223aef2031af2d239259bddc5b2"
     },
     {
       "path": "docs/TRACKED-NEXUS-HELPER-REVIEW.md",
@@ -305,6 +341,10 @@
     {
       "path": "tests/test_recovery.py",
       "sha256_lf": "9d3695f2e0cc5904f5bc8b4964eb6a7ba408662d193c252970571aa25419167f"
+    },
+    {
+      "path": "tests/test_release_metadata.py",
+      "sha256_lf": "f23900b200536821f6ac9bc9c9e8c5b2b9970317db2ea8a012f004f1f8c35462"
     },
     {
       "path": "tools/modding/AGENT-TOOLS.md",
