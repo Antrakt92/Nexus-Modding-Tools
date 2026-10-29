@@ -3,7 +3,7 @@ const fs = require('node:fs/promises');
 const disk = require('node:fs');
 const path = require('node:path');
 const { insist, normalized, identity } = require('./guard.cjs');
-const { resolveDownload } = require('./download-identity.cjs');
+const { resolveDownload, catalogSnapshot } = require('./download-identity.cjs');
 function externalChanges(api) {
   const scalar = value => ['string', 'number', 'boolean'].includes(typeof value) ? value : undefined;
   return (api.getState().session?.mods?.changes || []).map(item => Object.fromEntries(
@@ -13,7 +13,8 @@ function listDownloads(api, selectors, args, catalog) {
   const state = api.getState(), gameId = args.gameId ?? selectors.activeGameId(state);
   insist(typeof gameId === 'string' && (selectors.knownGames?.(state) || []).some(g => g.id === gameId), 'UNKNOWN_GAME');
   const states = new Set(args.states || ['finished', 'started', 'paused', 'failed', 'init', 'finalizing']);
-  return Object.entries(state.persistent?.downloads?.files || {}).map(([id, item]) => ({ id, item, identity: resolveDownload(item, state, selectors, catalog) }))
+  const snapshot = catalogSnapshot(catalog);
+  return Object.entries(state.persistent?.downloads?.files || {}).map(([id, item]) => ({ id, item, identity: resolveDownload(item, state, selectors, snapshot) }))
     .filter(({ item, identity }) => states.has(item?.state) && (identity.gameId === gameId || identity.games.includes(gameId)))
     .sort((a, b) => (Number(b.item.startTime) || 0) - (Number(a.item.startTime) || 0)).slice(0, args.limit || 100)
     .map(({ id, item, identity }) => ({ id, name: typeof item.modInfo?.name === 'string' ? item.modInfo.name : typeof item.localPath === 'string' ? item.localPath : id,

@@ -115,15 +115,25 @@ function validCollectionHealth(value) {
 
 export async function inspectSession({call = createToolCaller(), concurrency = 4, diagnostics = false} = {}) {
   insist(typeof diagnostics === 'boolean', 'INVALID_INSPECTION_OPTIONS');
+  const names = ['list_mods', 'list_downloads', 'list_dialogs', 'list_external_changes'];
+  if (diagnostics) names.push('list_unsolved_conflicts', 'read_collection_health');
+  return inspectReads({call, concurrency, names});
+}
+
+export async function inspectDownloadSession({call = createToolCaller(), gameId} = {}) {
+  insist(typeof gameId === 'string' && /^[a-z0-9_-]{1,200}$/.test(gameId), 'INVALID_COLLECTION_REQUEST');
+  return inspectReads({call, concurrency: 1, names: ['list_downloads'], expectedGameId: gameId});
+}
+
+async function inspectReads({call, concurrency, names, expectedGameId}) {
   const results = {}, errors = [];
   try {
     results.health = await call('health', {});
     insist(results.health?.protocol === PROTOCOL, 'WRONG_ADAPTER_PROTOCOL');
     validateContext(Object.fromEntries(CONTEXT_KEYS.map(key => [key, results.health[key]])));
+    if (expectedGameId !== undefined) insist(results.health.gameId === expectedGameId, 'REQUESTED_GAME_NOT_ACTIVE');
   } catch (error) { return {status: 'partial', snapshotAtomic: false, results, errors: [{tool: 'health', code: errorCode(error)}]}; }
   const game = {gameId: results.health.gameId};
-  const names = ['list_mods', 'list_downloads', 'list_dialogs', 'list_external_changes'];
-  if (diagnostics) names.push('list_unsolved_conflicts', 'read_collection_health');
   const reads = await readPool(names.map(name => async () => {
     const value = await call(name, ['list_mods', 'list_downloads'].includes(name) ? {...game, limit: 500} : {});
     if (name === 'read_collection_health') {
@@ -135,7 +145,7 @@ export async function inspectSession({call = createToolCaller(), concurrency = 4
     if (reads[i].error) errors.push({tool: names[i], code: reads[i].error});
     else {
       results[names[i]] = reads[i].value;
-      if (i < 2 && reads[i].value.length >= 500) errors.push({tool: names[i], code: 'INVENTORY_LIMIT_REACHED'});
+      if (['list_mods', 'list_downloads'].includes(names[i]) && reads[i].value.length >= 500) errors.push({tool: names[i], code: 'INVENTORY_LIMIT_REACHED'});
     }
   }
   try {
