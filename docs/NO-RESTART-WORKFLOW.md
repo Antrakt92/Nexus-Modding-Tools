@@ -33,6 +33,11 @@ diagnostic tools and unavailable native details remain per-read errors; they
 are never converted into zero conflicts. A successful read can still return
 unavailable (`null`) observations; `ok` describes acquisition, not collection
 health. The MCP result retains successful reads and sets `isError` for `partial`.
+Diagnostic responses must contain the native flags, nullable nonnegative counts
+and collection counters with their expected types. Missing or malformed fields
+produce `INVALID_COLLECTION_HEALTH_RESPONSE`. When a tool returns both JSON text
+and structured content, they must describe the same value; contradictory copies
+are refused before a snapshot or a write acknowledgement is trusted.
 
 The equivalent command, also available before reloading an existing MCP client:
 

@@ -4,11 +4,11 @@ The adapter is GPL-3.0-only. The following components retain their own licenses.
 
 | Component                    | Version | License    |
 | ---------------------------- | ------- | ---------- |
-| @hono/node-server            | 1.19.17 | MIT        |
+| @hono/node-server            | 2.1.5   | MIT        |
 | @modelcontextprotocol/core   | 2.4.0   | Apache-2.0 |
 | @modelcontextprotocol/node   | 2.1.2   | Apache-2.0 |
 | @modelcontextprotocol/server | 2.4.0   | Apache-2.0 |
-| hono                         | 4.13.13 | MIT        |
+| hono                         | 4.13.14 | MIT        |
 | zod                          | 4.6.7   | MIT        |
 
 ## zod 4.6.7
@@ -262,7 +262,7 @@ CC-BY-4.0. See https://creativecommons.org/licenses/by/4.0/legalcode for
 the full license text.
 ```
 
-## hono 4.13.13
+## hono 4.13.14
 
 Source package license, retained verbatim:
 
@@ -290,7 +290,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-## @hono/node-server 1.19.17
+## @hono/node-server 2.1.5
 
 Source package license, retained verbatim:
 

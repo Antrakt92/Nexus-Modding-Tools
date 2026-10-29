@@ -78,14 +78,14 @@
     ".releaserc.json": "07080d1c204b83d925980f26c4388f2e6d96668b9da6ce16cc07426f1ffa952c",
     "ARCHITECTURE.md": "110bf208725a18d9fc56ab76efde6b551803d775eaa263aafd6f7bdeedae9566",
     "LICENSE.md": "3c61a4b99007718626612c474991852b9428a3d4ed27a77e46b42fdfb80f896f",
-    "LOCAL-CHANGES.md": "3380b257944b308121439d493da6730378fecea7380124c7092f945f364782cd",
+    "LOCAL-CHANGES.md": "bc553aaf7404ea6db59993ed6f0a11281e7519d5a32251f74a7a80b5797dd56a",
     "NEXUS_DESCRIPTION.bbcode": "caddcb4c08e56f90105b137eaa67ba4d626702f7a949c278ee47d218c3ede318",
     "PNPM-BOOTSTRAP.json": "ad6369791f91f55e2979fdbcb636c2e37aacbe26cbc4f1b455b747fb729da055",
     "README.md": "85cd1d093053bdc2d87310ddbbb2654c1ea1e4d97a42be43e2e5ec4861276e38",
-    "THIRD-PARTY-NOTICES.md": "94b1e071f7ed602587abaf6e7eea7327f53f70a121d1755ff99ebd8714ca5318",
+    "THIRD-PARTY-NOTICES.md": "e2fc6ae76a7664a5c454451a07d82a87f5493e8d1aa7c0d1c779b58446407dfc",
     "info.json": "1f5248540d472cab8a5db09b00b7b8f727b737c9401e3c9fbcb2e45206611441",
-    "package.json": "cc2fc3ec0cb36fc30e62563479c74fa17189f756b59f025318eebd59084c0743",
-    "pnpm-lock.yaml": "a8159b08f406132ac3d8828eae52b1045489061e7aa3ad1565293bc7122416d9",
+    "package.json": "2469ca88eb4eecc07b66d7e690d0bd9092366f8aab834e940db4ac064f1f9a23",
+    "pnpm-lock.yaml": "1152d03b9959fe1206d4c2b021268b6bd5cb41d182ae55cb1b95d765a5f4d975",
     "scripts/generate-readme-tools-table.mjs": "5b21e96b2e1a7f075df71efb5e90d17e6745175f4f4e394ba7120d65bc638c18",
     "scripts/install-local.mjs": "8f22ee0d9f55c7f4c526149a9ff9a6ec5594554612e3313d5c8af0e43955e634",
     "src/index.ts": "1fe71d6b654b7fb2da70052ba73998e157be219874fb2fe1c3a7257962fc10e7",
@@ -133,14 +133,14 @@
     "tsup.config.ts",
     "vitest.config.ts"
   ],
-  "acceptedSourceTreeSHA256": "481d621e5b725ab6b105a9636859b3a200028c644c47dbf22e12395c1ed4882b",
+  "acceptedSourceTreeSHA256": "d1a8772781c4e5b94d5410e4b1619c0e97974dffcd2b6dea25d007d0a07db760",
   "runtimeLicenses": {
     "zod@4.6.7": "MIT",
     "@modelcontextprotocol/server@2.4.0": "Apache-2.0",
     "@modelcontextprotocol/core@2.4.0": "Apache-2.0",
     "@modelcontextprotocol/node@2.1.2": "Apache-2.0",
-    "hono@4.13.13": "MIT",
-    "@hono/node-server@1.19.17": "MIT"
+    "hono@4.13.14": "MIT",
+    "@hono/node-server@2.1.5": "MIT"
   },
   "packageInstallScriptsExecuted": false,
   "liveVortexChanged": false
