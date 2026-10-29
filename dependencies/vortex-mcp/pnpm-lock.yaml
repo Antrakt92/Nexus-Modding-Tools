@@ -25,7 +25,7 @@ importers:
     devDependencies:
       '@nexusmods/vortex-api':
         specifier: 2.9.1
-        version: 2.9.1(redux@4.2.1)
+        version: 2.9.1(redux@5.0.1)
       '@types/node':
         specifier: ^22.10.2
         version: 22.20.1
@@ -36,8 +36,8 @@ importers:
         specifier: 1.80.0
         version: 1.80.0
       redux:
-        specifier: 4.2.1
-        version: 4.2.1
+        specifier: 5.0.1
+        version: 5.0.1
       tsup:
         specifier: 9.0.0
         version: 9.0.0(postcss@8.5.28)(typescript@5.9.3)
@@ -52,10 +52,6 @@ importers:
         version: 5.0.5(@types/node@22.20.1)(vite@7.3.7(@types/node@22.20.1))
 
 packages:
-
-  '@babel/runtime@7.29.7':
-    resolution: {integrity: sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==}
-    engines: {node: '>=6.9.0'}
 
   '@esbuild/aix-ppc64@0.28.2':
     resolution: {integrity: sha512-XExcO+dvLKvVtNTibSTBej1NCAbaGhWn9Ww1ZPx80qsahhPFe/8jgWP0IchNe0F3HwkU7n8ejhH8bjonqht8mQ==}
@@ -841,8 +837,8 @@ packages:
     resolution: {integrity: sha512-Kko+Y5XQ6fM+Ce3dq3m9YGxnacYZYl9cA1wZjaF3Vbry2L3i1qVg8+CAgNPsXRArPMUMCaOR7oa9Nqntc43JKA==}
     engines: {node: '>= 20.19.0'}
 
-  redux@4.2.1:
-    resolution: {integrity: sha512-LAUYz4lc+Do8/g7aeRa8JkyDErK6ekstQaqWQrNRW//MY1TvCEpMtpTWvlQ+FPbWCx+Xixu/6SHt5N0HR+SB4w==}
+  redux@5.0.1:
+    resolution: {integrity: sha512-M9/ELqF6fy8FwmkpnF0S3YKOqMyoWJ4+CS5Efg2ct3oY9daQvd/Pc71FpGZsVsbl3Cpb+IIcjBDUnnyBdQbq4w==}
 
   resolve-from@5.0.0:
     resolution: {integrity: sha512-qYg9KP24dD5qka9J47d0aVky0N+b4fTU89LN9iDnjB5waksiC49rvMB0PrUJQGoTmH50XPiqOvAjDfaijGxYZw==}
@@ -1016,8 +1012,6 @@ packages:
 
 snapshots:
 
-  '@babel/runtime@7.29.7': {}
-
   '@esbuild/aix-ppc64@0.28.2':
     optional: true
 
@@ -1132,9 +1126,9 @@ snapshots:
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     optional: true
 
-  '@nexusmods/vortex-api@2.9.1(redux@4.2.1)':
+  '@nexusmods/vortex-api@2.9.1(redux@5.0.1)':
     dependencies:
-      redux: 4.2.1
+      redux: 5.0.1
 
   '@oxfmt/binding-android-arm-eabi@0.65.0':
     optional: true
@@ -1535,9 +1529,7 @@ snapshots:
 
   readdirp@5.1.1: {}
 
-  redux@4.2.1:
-    dependencies:
-      '@babel/runtime': 7.29.7
+  redux@5.0.1: {}
 
   resolve-from@5.0.0: {}
 
