@@ -52,7 +52,9 @@ function validOperational(type, value) {
   if (type === 'operation') return OPERATIONS.has(value);
   if (type === 'extensionVersion') return value === '1.0.4';
   if (type === 'targetVortexVersion') return value === '2.7.2.0';
-  if (type === 'version') return value.length > 0 && value.length <= 200 && !/[\r\n\0]/.test(value);
+  // Vortex preserves an empty version when native metadata is unknown. Do not
+  // fail an entire inventory or invent a version for that legitimate record.
+  if (type === 'version') return value.length <= 200 && !/[\r\n\0]/.test(value);
   if (type === 'security') return value === 'per-user-DPAPI-bearer';
   if (type === 'requestId') return /^[a-zA-Z0-9_-]{8,80}$/.test(value);
   if (type === 'filesystemId') return /^\d+:\d+$/.test(value);

@@ -20,7 +20,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "bc9e649a3e6281a0bfaf71205a61a764904da74dea9a4d08342cfb3a14d8eb20"
+      "sha256_lf": "d06e486b0f858bc299f5b1fe4bf873215c1bf52344d37bac795600d7d0a4518d"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -604,7 +604,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/rereview.test.mjs",
-      "sha256_lf": "b30086c166575e30ac4472db6d290750301e71228ca31d0ea49a588e07895a4d"
+      "sha256_lf": "5c18b1c985195a92fc8e1cdee695e0610121123b42ec66403cdecf88f779a45b"
     },
     {
       "path": "tools/modding/vortex-agent/response-cleanup.test.mjs",
@@ -616,7 +616,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/serialization.cjs",
-      "sha256_lf": "64be6018fbb6eeac6ed47b4afda0690ac75139545b36eec4be013e0d1ea71c8a"
+      "sha256_lf": "0e09b157c6bf7bfc229ce40541ec280929334d38715edf9a8a8d95091ad7b9fa"
     },
     {
       "path": "tools/modding/vortex-agent/session.mjs",
@@ -656,7 +656,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/wire.test.mjs",
-      "sha256_lf": "0c1593e65f7a6b07dc6ea33fe1cb223b92b492855e1d6a7354f399ae55951535"
+      "sha256_lf": "7eea162e253b74df86bd286aa3bd47605ed01e078188789dc8717345195f323c"
     },
     {
       "path": "tools/modding/workspace_paths.py",

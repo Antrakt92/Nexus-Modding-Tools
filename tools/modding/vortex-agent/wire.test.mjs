@@ -87,6 +87,13 @@ test('built extension wire: allowlist, SDK2 HTTP, legacy bridge, schemas and bro
     const inventory = await call('tools/call', { name: 'list_mods', arguments: { gameId: 'cyberpunk2077' } });
     assert.equal(JSON.parse(inventory.content[0].text)[0].installed, false);
     assert.equal(JSON.parse(inventory.content[0].text)[0].installationState, 'downloaded');
+    // Native inactive DEV records can legitimately have an unknown, empty version.
+    state.persistent.mods.cyberpunk2077.inactive = { id: 'inactive', state: 'installed',
+      installationPath: 'inactive', type: '', attributes: { version: '' } };
+    const withUnknownVersion = await call('tools/call', { name: 'list_mods', arguments: { gameId: 'cyberpunk2077' } });
+    assert.notEqual(withUnknownVersion.isError, true, JSON.stringify(withUnknownVersion));
+    const unknown = JSON.parse(withUnknownVersion.content[0].text).find(row => row.id === 'inactive');
+    assert.equal(unknown.version, ''); assert.equal(unknown.enabled, false); assert.equal(unknown.installed, true);
     state.persistent.downloads.files.d = { state: 'finished', localPath: 'synthetic.zip', size: 12, modInfo: { nexus: { ids: { gameId: 'cyberpunk2077', modId: 42, fileId: 43 } } } };
     const downloads = await call('tools/call', { name: 'list_downloads', arguments: {} });
     const projected = JSON.parse(downloads.content[0].text)[0]; assert.equal(projected.nexusModId, 42); assert.equal(projected.identityVerified, true);
