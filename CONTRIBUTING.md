@@ -62,10 +62,12 @@ reviewed and either preserved or explicitly rejected.
 
 Dependency updates need compatibility review, the relevant local suites and
 regenerated source/provenance pins. A Dependabot PR alone does not satisfy these
-checks. Routine version PRs are paused; security updates use a separate GitHub
-limit. See [maintenance](docs/MAINTENANCE.md) for deferred proposals and required
-build checks. Do not run hosted checks or native Vortex effects merely to tidy
-the repository.
+checks. Dependabot checks weekly and opens version proposals, grouping minor
+and patch updates; security updates use a separate GitHub limit. A pending
+proposal branch is legitimate work, not clutter to delete merely to leave one
+branch. See [maintenance](docs/MAINTENANCE.md) for compatibility decisions and
+required build checks. Do not run hosted checks or native Vortex effects merely
+to tidy the repository.
 
 Release the full change range since the previous immutable tag. New capabilities
 require a minor release; fixes and documentation alone require a patch. Keep the

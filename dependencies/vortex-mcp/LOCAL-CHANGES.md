@@ -11,9 +11,17 @@ extension is not the installed product.
 - Runtime dependencies are pinned to MCP server/core 2.4.0, MCP Node transport
   2.1.2 and Zod 4.6.7. Hono 4.13.14 is a compatible transitive override because
   the previous lock retained a vulnerable older version.
-- Vitest 5.0.5, Vite 7.3.7 and tsup 9.0.0 replace development versions with known
-  advisories. The Vortex API declarations now match host 2.9.1. Tinypool 2.1.2 is
-  a compatible patch override for the formatter's worker dependency.
+- Vitest 5.0.5 and tsup 9.0.0 retain the earlier patched build/test baseline.
+  The 29 October refresh uses Vite 8.3.5, TypeScript 7.0.2, oxfmt 0.75.0 and
+  oxlint 1.90.0. Node declarations 24.19.2 match the build/runtime major rather
+  than exposing Node 26 APIs. The Vortex API declarations remain 2.9.1, with
+  Redux 4.2.1 retained to satisfy that package's exact peer requirement.
+  Tinypool's override advances to 2.2.0, the formatter's own required version.
+- The new `scripts/check-source.mjs` passes the reviewed inventory as explicit
+  file arguments to Oxc. Newer directory traversal respects parent Git ignores,
+  which otherwise skips the entire isolated build under `local-state/`.
+  Source/provenance inventories remain mandatory; checks never accept zero files.
+  `ARCHITECTURE.md` receives formatting only for the current formatter.
 - The Node HTTP adapter is pinned to `@hono/node-server` 2.1.5, within MCP Node
   2.1.2's declared `^1.19.9 || ^2.1.3` range. This removes the locked 1.19.17
   dependency flagged by GHSA-rmxm-3fg6-px4f. The advisory concerns static-file

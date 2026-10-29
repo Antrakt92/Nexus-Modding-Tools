@@ -3,21 +3,27 @@
 ## Branches and dependency proposals
 
 `main` is the integration and resting branch. Review work on short-lived branches
-and remove them after completion. Routine Dependabot version PRs are paused with
-`open-pull-requests-limit: 0`; security updates have a separate limit, so a security
-PR may still create a branch. This does not enable or disable repository security
-settings. See [GitHub's option reference](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#open-pull-requests-limit).
+and remove completed branches. Pending dependency proposals are legitimate work:
+do not close them merely to reduce the branch count. Dependabot checks weekly,
+keeps up to five version PRs open and groups minor/patch updates. Security updates
+have their own limit. The earlier zero limit was reversed because version
+notifications are required; no repository security setting was disabled.
 
-The following version proposals were reviewed for repository cleanup on
-29 October 2026 and deferred, not merged. Their package and lockfile diffs remain
-available in the closed PRs. No dependency version was changed by this cleanup.
+The four earlier PRs remain closed with their original diffs retained. The
+29 October dependency refresh applies newer compatible versions directly:
 
-| Proposal | Decision and required follow-up |
+| Earlier proposal | Current decision |
 | --- | --- |
-| [#11](https://github.com/Antrakt92/Nexus-Modding-Tools/pull/11): oxfmt 0.65.0 to 0.74.0, oxlint 1.80.0 to 1.89.0 | Development-tool update; review formatter/linter behavior, native binding packages and resulting source changes in an isolated build. |
-| [#12](https://github.com/Antrakt92/Nexus-Modding-Tools/pull/12): Redux 4.2.1 to 5.0.1 | Major update to the declaration/build dependency tree; check the Vortex API peer contract and type compatibility before adoption. |
-| [#13](https://github.com/Antrakt92/Nexus-Modding-Tools/pull/13): Vite 7.3.7 to 8.3.5 | Major build-tool update with substantial lockfile churn; validate bundler/test compatibility rather than merging it as housekeeping. |
-| [#14](https://github.com/Antrakt92/Nexus-Modding-Tools/pull/14): Node declarations 22.20.1 to 26.6.5 | Reconcile declared APIs with supported host/runtime versions; newer declarations alone do not provide newer runtime APIs. |
+| [#11](https://github.com/Antrakt92/Nexus-Modding-Tools/pull/11): oxfmt 0.74.0 / oxlint 1.89.0 | Superseded by tested oxfmt 0.75.0 / oxlint 1.90.0. |
+| [#12](https://github.com/Antrakt92/Nexus-Modding-Tools/pull/12): Redux 5.0.1 | Not adopted: Vortex API 2.9.1 declares the exact peer Redux 4.2.1. Keep that contract until the host API supports a migration. |
+| [#13](https://github.com/Antrakt92/Nexus-Modding-Tools/pull/13): Vite 8.3.5 | Adopted with typecheck, test, lint, format and build verification. |
+| [#14](https://github.com/Antrakt92/Nexus-Modding-Tools/pull/14): Node declarations 26.6.5 | Use current Node 24 declarations 24.19.2 for the Node 24 build/runtime; newer API declarations do not upgrade the runtime. |
+
+TypeScript advances from 5.9.3 to 7.0.2. Tinypool advances from 2.1.2 to 2.2.0,
+matching the formatter's current direct requirement. Production MCP, Zod and HTTP
+packages were already current in the registry check and remain unchanged.
+See [the dependency audit](DEPENDENCY-AUDIT.md#29-october-toolchain-refresh) for
+verification and limitations.
 
 Before adopting any proposal, recheck current registry/advisory evidence, inspect
 the complete lock diff, and run the dependency audit's typecheck, lint, formatting,

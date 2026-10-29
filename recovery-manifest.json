@@ -8,7 +8,7 @@
     },
     {
       "path": ".github/dependabot.yml",
-      "sha256_lf": "bcedd03571e597359ec4c56b2bd1e87cd1f834c6abbc07540bbe7722a339c3a4"
+      "sha256_lf": "e8ba2311634f3dd562bd4904d3be34942f01b4ce07dd09e01fbd196c90a4d143"
     },
     {
       "path": ".gitignore",
@@ -20,11 +20,11 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "5a1328fa81f6a353bc4a533f95b6f9b0968cf3da49d5e2c0e5a213d9353c9932"
+      "sha256_lf": "867b3ef088cedc7bccafa5da836deddd0994ee5112b6aad5132d66735714096d"
     },
     {
       "path": "CONTRIBUTING.md",
-      "sha256_lf": "8ceb4c0002f1cd95ac2fcdd894e9d96b73cb33b1e7e688420c1e9384f7401239"
+      "sha256_lf": "5b99d927a3b3ea1c7963474f7f7c60646cf0f53a68790799f65684d477317342"
     },
     {
       "path": "LICENSE",
@@ -32,7 +32,7 @@
     },
     {
       "path": "README.md",
-      "sha256_lf": "39329cb68d70f70422222216130427fc9bf18cd6795dbf86f485433125de2c1f"
+      "sha256_lf": "1c15ed11d43da9fc57a7f0b98e5ece3afd8440694d3843f3f544234ff4f5f044"
     },
     {
       "path": "VERSION",
@@ -76,7 +76,7 @@
     },
     {
       "path": "dependencies/vortex-mcp/ARCHITECTURE.md",
-      "sha256_lf": "110bf208725a18d9fc56ab76efde6b551803d775eaa263aafd6f7bdeedae9566"
+      "sha256_lf": "ab9c7c948da5346b0216ed6d2c2c1c34b60213c6dd06d2c1d039727a219e5edc"
     },
     {
       "path": "dependencies/vortex-mcp/LICENSE.md",
@@ -84,7 +84,7 @@
     },
     {
       "path": "dependencies/vortex-mcp/LOCAL-CHANGES.md",
-      "sha256_lf": "bc553aaf7404ea6db59993ed6f0a11281e7519d5a32251f74a7a80b5797dd56a"
+      "sha256_lf": "ded4cabb88b7f821b1ab6de164fb57b2e7d41d745f173c0c5cf84ec6e4519759"
     },
     {
       "path": "dependencies/vortex-mcp/NEXUS_DESCRIPTION.bbcode",
@@ -104,7 +104,7 @@
     },
     {
       "path": "dependencies/vortex-mcp/UPSTREAM-PROVENANCE.json",
-      "sha256_lf": "bdee44d58d389a9770e3d71278651208f3b0e2a756147b9db358eb7ad25d0cf2"
+      "sha256_lf": "4107e560c52761f9066f7c9e5c704861b9bf3c2d98c26b407af150cd7d180182"
     },
     {
       "path": "dependencies/vortex-mcp/info.json",
@@ -112,11 +112,15 @@
     },
     {
       "path": "dependencies/vortex-mcp/package.json",
-      "sha256_lf": "2469ca88eb4eecc07b66d7e690d0bd9092366f8aab834e940db4ac064f1f9a23"
+      "sha256_lf": "b61d4a53ae825f20f7e46f6cf3d97b7791d60bab71eca53b07fa92937236fd44"
     },
     {
       "path": "dependencies/vortex-mcp/pnpm-lock.yaml",
-      "sha256_lf": "1152d03b9959fe1206d4c2b021268b6bd5cb41d182ae55cb1b95d765a5f4d975"
+      "sha256_lf": "88f4e036fb5a3b1815c02a173d84e4e6b968d322bb2bccaf0dfc2392c047443c"
+    },
+    {
+      "path": "dependencies/vortex-mcp/scripts/check-source.mjs",
+      "sha256_lf": "c49be7078198ebab0237965af74e805ef1f8e952cacb2aee35c94743e170d967"
     },
     {
       "path": "dependencies/vortex-mcp/scripts/generate-readme-tools-table.mjs",
@@ -188,7 +192,7 @@
     },
     {
       "path": "docs/DEPENDENCY-AUDIT.md",
-      "sha256_lf": "0b11b92706081b97c3872b5025e45ac1e389a5d1635f1272ca1b5c90c681d27d"
+      "sha256_lf": "34eabb63937ab8e689ac218c6dde36ce780ff631cc297750cd3e4df8224af2d9"
     },
     {
       "path": "docs/FULL-AUDIT-20261025.md",
@@ -204,7 +208,7 @@
     },
     {
       "path": "docs/MAINTENANCE.md",
-      "sha256_lf": "2e643fc81c9fb8ae7f9de5ebfbe18e5b4c71bb579b0165ab67c95c98c35fd062"
+      "sha256_lf": "7047f55bc411bc31218c07d393e690541b1a211c904b04a30e54e23c84990697"
     },
     {
       "path": "docs/NATIVE-HELPER-PREPARATION.md",

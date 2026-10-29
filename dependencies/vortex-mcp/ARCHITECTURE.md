@@ -144,7 +144,7 @@ script (`ACCESS_TIER` in `scripts/generate-readme-tools-table.mjs`).
 - `src/mcpServer.ts` — MCP tool definitions + a `NodeStreamableHTTPServerTransport`
   HTTP server, bound to `127.0.0.1` only. Stateless: a fresh transport is
   connected to the shared `McpServer` per request (`sessionIdGenerator:
-undefined`), matching the 2026-07-28 spec's removal of sessions — there is
+  undefined`), matching the 2026-07-28 spec's removal of sessions — there is
   no session state to leak, TTL, or clobber across requests.
 - `src/index.ts` — the Vortex extension entry point (`context.once`). This
   has to run in the renderer process: the event listeners and Redux store
