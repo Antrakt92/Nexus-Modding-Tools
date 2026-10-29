@@ -19,6 +19,33 @@ The output says `partial` and exits with code 1 if a read fails, the context
 changes, or a mods/downloads list reaches its 500-entry cap. It is a bounded
 inspection, not an atomic snapshot or a claim that all mods work in the game.
 
+For native unresolved-conflict and collection observations in the same snapshot:
+
+```powershell
+node tools/modding/vortex-agent/session.mjs inspect --diagnostics
+```
+
+Agents can make the same combined read through the bridge's `inspect_session`
+MCP tool, with `{ "diagnostics": true }` to include those observations. The
+default is the basic inspection above. It overlaps at most four existing reads
+and performs no mutations, conflict recalculation or staging-file scan. Missing
+diagnostic tools and unavailable native details remain per-read errors; they
+are never converted into zero conflicts. A successful read can still return
+unavailable (`null`) observations; `ok` describes acquisition, not collection
+health. The MCP result retains successful reads and sets `isError` for `partial`.
+
+The equivalent command, also available before reloading an existing MCP client:
+
+```powershell
+node tools/modding/vortex-agent/bridge.mjs --call inspect_session '{"diagnostics":true}'
+```
+
+This operation is composed in the bridge, rather than added to the loaded host
+extension. Existing MCP processes need reloading to discover it; Vortex stays
+running. CLI partial results exit with code 1. Both paths verify context again
+after the reads, but changes that leave and return to the same context between
+checks cannot be excluded by this bounded, non-atomic inspection.
+
 ## Review a write plan offline
 
 Save a JSON plan with context copied from a fresh health result. Use the actual

@@ -92,7 +92,8 @@ async function readPool(tasks, concurrency) {
   return result;
 }
 
-export async function inspectSession({call = createToolCaller(), concurrency = 4} = {}) {
+export async function inspectSession({call = createToolCaller(), concurrency = 4, diagnostics = false} = {}) {
+  insist(typeof diagnostics === 'boolean', 'INVALID_INSPECTION_OPTIONS');
   const results = {}, errors = [];
   try {
     results.health = await call('health', {});
@@ -101,9 +102,14 @@ export async function inspectSession({call = createToolCaller(), concurrency = 4
   } catch (error) { return {status: 'partial', snapshotAtomic: false, results, errors: [{tool: 'health', code: errorCode(error)}]}; }
   const game = {gameId: results.health.gameId};
   const names = ['list_mods', 'list_downloads', 'list_dialogs', 'list_external_changes'];
+  if (diagnostics) names.push('list_unsolved_conflicts', 'read_collection_health');
   const reads = await readPool(names.map(name => async () => {
     const value = await call(name, ['list_mods', 'list_downloads'].includes(name) ? {...game, limit: 500} : {});
-    insist(Array.isArray(value), 'INVALID_INVENTORY_RESPONSE'); return value;
+    if (name === 'read_collection_health') {
+      insist(object(value) && object(value.nativeConflicts) && object(value.collectionSession)
+        && value.recalculationVerified === false && value.diskDeploymentVerified === false, 'INVALID_COLLECTION_HEALTH_RESPONSE');
+    } else insist(Array.isArray(value), 'INVALID_INVENTORY_RESPONSE');
+    return value;
   }), concurrency);
   for (let i = 0; i < names.length; ++i) {
     if (reads[i].error) errors.push({tool: names[i], code: reads[i].error});
@@ -209,7 +215,8 @@ async function readPlan(filename) {
 export async function main(argv = process.argv.slice(2), {call = createToolCaller(), read = readPlan, output = value => process.stdout.write(JSON.stringify(value) + '\n')} = {}) {
   let result;
   try {
-    if (argv.length === 1 && argv[0] === 'inspect') result = await inspectSession({call});
+    if (argv[0] === 'inspect' && (argv.length === 1 || argv.length === 2 && argv[1] === '--diagnostics'))
+      result = await inspectSession({call, diagnostics: argv[1] === '--diagnostics'});
     else if ((argv.length === 2 || argv.length === 3 && argv[2] === '--apply') && argv[0] === 'plan')
       result = await runPlan(await read(argv[1]), {apply: argv[2] === '--apply', call});
     else throw new Error('USAGE_INSPECT_OR_PLAN_FILE_OPTIONAL_APPLY');
