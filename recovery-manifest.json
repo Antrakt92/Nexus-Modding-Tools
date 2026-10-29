@@ -7,6 +7,10 @@
       "sha256_lf": "841e1fe3e2e86b551480fb411313911325c6589dc6d338be68a662dd4969659d"
     },
     {
+      "path": ".github/dependabot.yml",
+      "sha256_lf": "fb1f1b790a0587af5775688a8f13f17d519851af8ca7b21c2a75e5636f9c01ac"
+    },
+    {
       "path": ".gitignore",
       "sha256_lf": "3c1ece9a2d7a4d08ad89ab44e7530cc7f4bba9dcf7b556f120e4bf3203c95d1a"
     },

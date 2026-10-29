@@ -1,0 +1,14 @@
+version: 2
+updates:
+  # Proposed updates must also pass source inventory and adapter verification.
+  - package-ecosystem: npm
+    directory: /dependencies/vortex-mcp
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    groups:
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+    commit-message:
+      prefix: "[skip ci]"
