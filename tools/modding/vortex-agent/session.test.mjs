@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {PassThrough} from 'node:stream';
+import {clientRemote, handler, runStdio} from './bridge.mjs';
 import { createToolCaller, inspectSession, main, runPlan, validatePlan } from './session.mjs';
 
 const context = () => ({gameId: 'cyberpunk2077', profileId: 'test-profile', gamePath: 'F:/Games/Cyberpunk',
@@ -12,6 +14,11 @@ const plan = () => ({version: 1, context: context(), steps: [
 const unused = () => ({protocol: 'vortex-agent/1', attempt: null, completion: null, failure: null, interlock: null,
   receiptIssues: [], incompleteCompletionObserved: false, adapterTerminalReceiptObserved: false, terminalOperationVerified: false});
 const health = () => ({protocol: 'vortex-agent/1', ...context()});
+const download = () => ({operation: 'download_nexus', requestId: 'session_download_0000', nexusModId: 42,
+  nexusFileId: 43, size: 123, sha256: 'a'.repeat(64), reuseOnly: true});
+const acquisitionPlan = () => {const p = plan(); p.steps.unshift(download()); return p;};
+const reply = value => ({content: [{type: 'text', text: JSON.stringify(value)}]});
+function deferred() {let resolve; const promise = new Promise(r => {resolve = r;}); return {promise, resolve};}
 function server({beforeCall = () => {}} = {}) {
   const calls = [], writes = [], receipts = new Map(); let activeWrites = 0, maxWrites = 0;
   async function call(name, args = {}) {
@@ -21,12 +28,14 @@ function server({beforeCall = () => {}} = {}) {
     if (name === 'health') return health();
     if (name === 'reconcile_operation') return receipts.get(args.requestId) ?? unused();
     if (['list_mods', 'list_downloads', 'list_dialogs', 'list_external_changes'].includes(name)) return [];
-    assert.ok(['set_mods_enabled', 'deploy_mods'].includes(name), 'No arbitrary operation allowed: ' + name);
+    assert.ok(['set_mods_enabled', 'deploy_mods', 'download_nexus'].includes(name), 'No arbitrary operation allowed: ' + name);
     maxWrites = Math.max(maxWrites, ++activeWrites);
     await new Promise(resolve => setTimeout(resolve, 2));
     const result = {protocol: 'vortex-agent/1', requestId: args.requestId, operation: name,
       operationCompleted: true, diskDeploymentVerified: false,
-      ...(name === 'deploy_mods' ? {deploymentPromiseResolved: true} : {modIds: args.modIds, enabled: args.enabled, enabledFlagsVerified: true})};
+      ...(name === 'deploy_mods' ? {deploymentPromiseResolved: true} : name === 'download_nexus'
+        ? {downloadId: 'tracked-download', reused: true, archiveSha256Verified: true, archiveCRCVerified: false, autoInstall: false, size: args.size}
+        : {modIds: args.modIds, enabled: args.enabled, enabledFlagsVerified: true})};
     writes.push({name, args: structuredClone(args)});
     // Actual Zod/serializer output need not preserve the caller's object key order.
     const reversed = Object.fromEntries(Object.entries(args).reverse());
@@ -196,4 +205,164 @@ test('CLI never applies without explicit --apply, has no restart/install/dispatc
   assert.equal(s.calls.length, 0);
   assert.equal(await main(['plan', 'p', '--apply'], {read: async () => plan(), call: s.call, output: () => {}}), 0);
   assert.equal(s.writes.length, 3);
+});
+
+test('pinned download steps validate offline and execute serially before enable/deploy with exact receipts', async () => {
+  const offline = await runPlan(acquisitionPlan(), {call: async () => assert.fail('offline transport')});
+  assert.equal(offline.operationCount, 4);
+  for (const mutate of [d => {d.size = 0;}, d => {d.sha256 = 'bad';}, d => {d.nexusFileId = '43';},
+    d => {delete d.reuseOnly;}, d => {d.install = true;}, d => {d.nexusModId = Number.MAX_SAFE_INTEGER + 1;}]) {
+    const p = acquisitionPlan(); mutate(p.steps[0]); assert.throws(() => validatePlan(p), /INVALID_PLAN_STEP/);
+  }
+  const s = server(); const result = await runPlan(acquisitionPlan(), {apply: true, call: s.call});
+  assert.equal(result.status, 'completed'); assert.equal(s.maxWrites, 1);
+  assert.deepEqual(s.writes.map(w => w.name), ['download_nexus', 'set_mods_enabled', 'set_mods_enabled', 'deploy_mods']);
+  assert.equal(result.completed[0].downloadId, 'tracked-download');
+  assert.equal(result.completed[0].archiveCRCVerified, false);
+  assert.deepEqual(s.writes[0].args, {...context(), ...Object.fromEntries(Object.entries(download()).filter(([k]) => k !== 'operation'))});
+});
+
+test('initial receipt reads overlap at most four; all finish before the first write', async () => {
+  let active = 0, maximum = 0;
+  const s = server({beforeCall: async (name, args, {receipts, writes}) => {
+    if (name === 'reconcile_operation' && !receipts.has(args.requestId) && writes.length === 0) {
+      maximum = Math.max(maximum, ++active); await new Promise(r => setTimeout(r, 3)); --active;
+    }
+    if (name === 'set_mods_enabled') assert.equal(active, 0);
+  }});
+  const p = plan(); p.steps = Array.from({length: 8}, (_, i) => ({...p.steps[0], requestId: 'batch_request_' + i}));
+  assert.equal((await runPlan(p, {apply: true, call: s.call})).status, 'completed');
+  assert.equal(maximum, 4); assert.equal(s.maxWrites, 1);
+});
+
+test('unsafe download acknowledgements and acknowledgement/receipt ID disagreement stop later changes', async () => {
+  for (const change of [v => {v.autoInstall = true;}, v => {v.archiveSha256Verified = false;},
+    v => {v.archiveCRCVerified = true;}, v => {v.size++;}, v => {v.reused = false;}, v => {v.downloadId = 'different';}]) {
+    const s = server();
+    const result = await runPlan(acquisitionPlan(), {apply: true, call: async (name, args) => {
+      const value = await s.call(name, args); if (name === 'download_nexus') change(value); return value;
+    }});
+    assert.equal(result.status, 'stopped'); assert.equal(s.writes.length, 1);
+    assert.ok(['WRITE_ACKNOWLEDGEMENT_UNCERTAIN', 'ACK_RECEIPT_MISMATCH'].includes(result.code));
+    assert.equal(result.requestId, download().requestId);
+  }
+});
+
+test('cancellation before dispatch prevents every effect; cancellation during a write still verifies that receipt', async () => {
+  const prior = new AbortController(); prior.abort(); const noCalls = server();
+  const stopped = await runPlan(plan(), {apply: true, call: noCalls.call, signal: prior.signal});
+  assert.equal(stopped.code, 'PLAN_CANCELLED'); assert.equal(noCalls.calls.length, 0);
+  const controller = new AbortController(), s = server();
+  const result = await runPlan(acquisitionPlan(), {apply: true, signal: controller.signal, call: async (name, args) => {
+    const value = await s.call(name, args); if (name === 'download_nexus') controller.abort('private cancellation detail'); return value;
+  }});
+  assert.equal(result.status, 'stopped'); assert.equal(result.code, 'PLAN_CANCELLED');
+  assert.equal(s.writes.length, 1); assert.equal(result.completed.length, 1);
+  assert.equal(result.completed[0].adapterReceiptVerified, true);
+  assert.equal(s.calls.at(-1).name, 'reconcile_operation');
+  assert.ok(!JSON.stringify(result).includes('private cancellation detail'));
+  const duringRead = new AbortController(), r = server({beforeCall: name => {if (name === 'health') duringRead.abort();}});
+  assert.equal((await runPlan(plan(), {apply: true, signal: duringRead.signal, call: r.call})).code, 'PLAN_CANCELLED');
+  assert.equal(r.writes.length, 0);
+});
+
+test('MCP plan validation is offline by default, and malformed/failed plans return tool errors', async () => {
+  const inventory = await clientRemote('tools/list', {}, async () => ({tools: []}));
+  const definition = inventory.tools.find(tool => tool.name === 'run_mod_plan');
+  assert.equal(definition.annotations.readOnlyHint, false); assert.equal(definition.annotations.idempotentHint, false);
+  assert.equal(definition.inputSchema.properties.apply.default, false);
+  const result = await clientRemote('tools/call', {name: 'run_mod_plan', arguments: {plan: acquisitionPlan()}}, async () => assert.fail('offline call'));
+  assert.equal(result.structuredContent.status, 'validated'); assert.equal(result.isError, undefined);
+  for (const args of [undefined, null, {}, {plan: plan(), apply: 'true'}, {plan: plan(), dispatch: true},
+    {plan: {...plan(), steps: [{operation: 'install_download'}]}}]) {
+    const invalid = await clientRemote('tools/call', {name: 'run_mod_plan', arguments: args}, async () => assert.fail('invalid call'));
+    assert.equal(invalid.isError, true);
+  }
+  const s = server();
+  const applied = await clientRemote('tools/call', {name: 'run_mod_plan', arguments: {plan: acquisitionPlan(), apply: true}},
+    async (_method, params) => reply(await s.call(params.name, params.arguments)));
+  assert.equal(applied.structuredContent.status, 'completed'); assert.equal(s.writes.length, 4);
+  const replay = await clientRemote('tools/call', {name: 'run_mod_plan', arguments: {plan: acquisitionPlan(), apply: true}},
+    async (_method, params) => reply(await s.call(params.name, params.arguments)));
+  assert.equal(replay.isError, true); assert.equal(s.writes.length, 4);
+});
+
+test('batching ten disables and ten enables preserves requested IDs while reducing native mutations from 21 to three', async () => {
+  const disables = Array.from({length: 10}, (_, i) => 'old-' + i), enables = Array.from({length: 10}, (_, i) => 'new-' + i);
+  const individual = plan(); individual.steps = [...disables.map((modId, i) => ({operation: 'set_mods_enabled', modIds: [modId], enabled: false, requestId: 'disable_request_' + i})),
+    ...enables.map((modId, i) => ({operation: 'set_mods_enabled', modIds: [modId], enabled: true, requestId: 'enable_request_' + i}))];
+  const grouped = plan(); grouped.steps = [{...grouped.steps[1], modIds: disables}, {...grouped.steps[0], modIds: enables}];
+  const a = server(), b = server();
+  assert.equal((await runPlan(individual, {apply: true, call: a.call})).status, 'completed');
+  assert.equal((await runPlan(grouped, {apply: true, call: b.call})).status, 'completed');
+  assert.equal(a.writes.length, 21); assert.equal(b.writes.length, 3);
+  assert.deepEqual(b.writes[0].args.modIds, disables); assert.deepEqual(b.writes[1].args.modIds, enables);
+  assert.equal(a.calls.length, 105); assert.equal(b.calls.length, 15);
+});
+
+test('lost download acknowledgement is reconciled once and never followed by enable or deploy', async () => {
+  const s = server();
+  const result = await runPlan(acquisitionPlan(), {apply: true, call: async (name, args) => {
+    const value = await s.call(name, args); if (name === 'download_nexus') throw Error('private lost response detail'); return value;
+  }});
+  assert.equal(result.status, 'stopped'); assert.equal(result.requestId, download().requestId);
+  assert.equal(result.reconciliation.terminalOperationVerified, true); assert.equal(s.writes.length, 1);
+  assert.equal(result.completed.length, 0); assert.ok(!JSON.stringify(result).includes('private lost response detail'));
+});
+
+test('an unrelated cancellation cannot stop another request', async () => {
+  const entered = deferred(), release = deferred();
+  const s = server({beforeCall: async name => {if (name === 'download_nexus') {entered.resolve(); await release.promise;}}});
+  const handle = handler(async (_method, params) => reply(await s.call(params.name, params.arguments)));
+  await handle({jsonrpc: '2.0', id: 1, method: 'initialize'});
+  const work = handle({jsonrpc: '2.0', id: 'actual', method: 'tools/call', params: {name: 'run_mod_plan', arguments: {plan: acquisitionPlan(), apply: true}}});
+  await entered.promise;
+  await handle({jsonrpc: '2.0', method: 'notifications/cancelled', params: {requestId: 'unrelated'}});
+  release.resolve(); assert.equal((await work).result.structuredContent.status, 'completed');
+});
+
+test('MCP cancellation targets the original request; a duplicate active request is refused', async () => {
+  const entered = deferred(), release = deferred();
+  const s = server({beforeCall: async name => {if (name === 'download_nexus') {entered.resolve(); await release.promise;}}});
+  const handle = handler(async (_method, params) => reply(await s.call(params.name, params.arguments)));
+  await handle({jsonrpc: '2.0', id: 1, method: 'initialize'});
+  const request = {jsonrpc: '2.0', id: 7, method: 'tools/call', params: {name: 'run_mod_plan', arguments: {plan: acquisitionPlan(), apply: true}}};
+  const work = handle(request); await entered.promise;
+  assert.match((await handle(request)).error.message, /DUPLICATE_ACTIVE_PLAN_REQUEST/);
+  assert.equal(await handle({jsonrpc: '2.0', method: 'notifications/cancelled', params: {requestId: 7, reason: 'private'}}), undefined);
+  release.resolve(); const result = (await work).result.structuredContent;
+  assert.equal(result.code, 'PLAN_CANCELLED'); assert.equal(result.completed.length, 1); assert.equal(s.writes.length, 1);
+});
+
+test('invalid RPC IDs cannot start a plan whose cancellation identity cannot be tracked', async () => {
+  let calls = 0;
+  const handle = handler(async (_method, params) => {calls++; return reply(params.name === 'health' ? health() : []);});
+  await handle({jsonrpc: '2.0', id: 1, method: 'initialize'});
+  for (const id of [null, {}, [], true, 1.5, Number.MAX_SAFE_INTEGER + 1]) {
+    const result = await handle({jsonrpc: '2.0', id, method: 'tools/call', params: {name: 'run_mod_plan', arguments: {plan: plan(), apply: true}}});
+    assert.equal(result.error.code, -32600); assert.equal(result.id, null);
+  }
+  assert.equal(calls, 1);
+});
+
+test('stdio EOF or a closed output cancels future effects while settling the in-flight write', async () => {
+  for (const closeOutput of [false, true]) {
+    const entered = deferred(), release = deferred();
+    const s = server({beforeCall: async name => {if (name === 'download_nexus') {entered.resolve(); await release.promise;}}});
+    const handle = handler(async (_method, params) => reply(await s.call(params.name, params.arguments)));
+    await handle({jsonrpc: '2.0', id: 1, method: 'initialize'});
+    const input = new PassThrough(), output = new PassThrough(); let text = '';
+    output.on('data', b => {text += b;});
+    const work = runStdio(input, output, handle);
+    const settled = work.then(() => null, e => e);
+    input.write(JSON.stringify({jsonrpc: '2.0', id: 7, method: 'tools/call', params: {name: 'run_mod_plan', arguments: {plan: acquisitionPlan(), apply: true}}}) + '\n');
+    await entered.promise;
+    if (closeOutput) output.destroy(); else input.end();
+    await new Promise(r => setImmediate(r)); release.resolve();
+    if (closeOutput) input.end();
+    const error = await settled;
+    assert.equal(s.writes.length, 1); assert.equal(s.calls.at(-1).name, 'reconcile_operation');
+    if (!closeOutput) {assert.equal(error, null); assert.equal(JSON.parse(text).result.structuredContent.code, 'PLAN_CANCELLED');}
+    else assert.ok(error);
+  }
 });

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import credential from './credential.cjs';
+import {RUN_PLAN_TOOL} from './plan-tool.mjs';
 export const ENDPOINT = 'http://127.0.0.1:3701/mcp';
 function parse(text) { try { return JSON.parse(text); } catch { throw new Error('Invalid MCP JSON payload'); } }
 export const MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
@@ -108,13 +109,13 @@ const COLLECTION_DOWNLOADS_TOOL = {
   }},
   annotations: {readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false},
 };
-const LOCAL_TOOLS = [INSPECT_TOOL, COLLECTION_DOWNLOADS_TOOL];
+const LOCAL_TOOLS = [INSPECT_TOOL, COLLECTION_DOWNLOADS_TOOL, RUN_PLAN_TOOL];
 function localToolResult(result) {
-  return {content: [{type: 'text', text: JSON.stringify(result)}], structuredContent: result, ...(result.status === 'partial' ? {isError: true} : {})};
+  return {content: [{type: 'text', text: JSON.stringify(result)}], structuredContent: result, ...(['partial', 'stopped'].includes(result.status) ? {isError: true} : {})};
 }
 
-// Compose existing curated reads in the client; no host upgrade or native API is needed.
-export async function clientRemote(method, params = {}, transport = remote) {
+// Compose existing guarded operations; their native eligibility/receipt guards remain authoritative.
+export async function clientRemote(method, params = {}, transport = remote, {signal} = {}) {
   if (method === 'tools/list') {
     const result = await transport(method, params);
     if (!Array.isArray(result?.tools)) throw new Error('Invalid Vortex tool inventory');
@@ -140,15 +141,33 @@ export async function clientRemote(method, params = {}, transport = remote) {
       return {isError: true, content: [{type: 'text', text: '{"error":"INVALID_COLLECTION_REQUEST"}'}]};
     }
   }
+  if (method === 'tools/call' && params.name === 'run_mod_plan') {
+    const args = params.arguments;
+    if (!args || typeof args !== 'object' || Array.isArray(args) || !Object.hasOwn(args, 'plan')
+      || Object.keys(args).some(key => !['plan', 'apply'].includes(key))
+      || args.apply !== undefined && typeof args.apply !== 'boolean')
+      return localToolResult({status: 'stopped', code: 'INVALID_PLAN_REQUEST', diskDeploymentVerified: false});
+    const {runPlan, createToolCaller} = await import('./session.mjs');
+    try {return localToolResult(await runPlan(args.plan, {apply: args.apply ?? false, call: createToolCaller(transport), signal}));}
+    catch (error) {
+      const code = /^(?:INVALID_PLAN(?:_CONTEXT|_STEPS|_STEP|_SIGNAL)?|INVALID_DEPLOY_STEP|INVALID_APPLY_FLAG|DUPLICATE_REQUEST_ID|EMPTY_PLAN)$/.test(error.message)
+        ? error.message : 'PLAN_VALIDATION_FAILED';
+      return localToolResult({status: 'stopped', code, diskDeploymentVerified: false});
+    }
+  }
   return transport(method, params);
 }
 
 export function handler(call = remote) {
   let initialized = false;
-  return async request => {
+  const plans = new Map();
+  const handle = async request => {
     if (!request || request.jsonrpc !== '2.0' || typeof request.method !== 'string') return { jsonrpc: '2.0', id: request?.id ?? null, error: { code: -32600, message: 'Invalid Request' } };
     const hasId = Object.hasOwn(request, 'id');
-    if (!hasId) return undefined;
+    if (!hasId) {
+      if (request.method === 'notifications/cancelled') plans.get(request.params?.requestId)?.abort();
+      return undefined;
+    }
     try {
       let result;
       if (request.method === 'initialize') {
@@ -163,11 +182,20 @@ export function handler(call = remote) {
       } else if (request.method === 'ping') result = {};
       else if (['tools/list', 'tools/call'].includes(request.method)) {
         if (!initialized) throw new Error('Initialize the bridge first');
-        result = await clientRemote(request.method, request.params || {}, call);
+        if (request.method === 'tools/call' && request.params?.name === 'run_mod_plan') {
+          if (typeof request.id !== 'string' && !Number.isSafeInteger(request.id))
+            return {jsonrpc: '2.0', id: null, error: {code: -32600, message: 'Invalid plan request ID'}};
+          if (plans.has(request.id)) throw Error('DUPLICATE_ACTIVE_PLAN_REQUEST');
+          const controller = new AbortController(); plans.set(request.id, controller);
+          try {result = await clientRemote(request.method, request.params, call, {signal: controller.signal});}
+          finally {plans.delete(request.id);}
+        } else result = await clientRemote(request.method, request.params || {}, call);
       } else return { jsonrpc: '2.0', id: request.id, error: { code: -32601, message: 'Method not found' } };
       return { jsonrpc: '2.0', id: request.id, result };
     } catch (error) { return { jsonrpc: '2.0', id: request.id, error: { code: -32000, message: error.message } }; }
   };
+  handle.cancelPendingPlans = () => {for (const controller of plans.values()) controller.abort();};
+  return handle;
 }
 export async function main(argv = process.argv.slice(2)) {
   if (argv.length) {
@@ -200,15 +228,23 @@ export async function runStdio(input, output, handle, maxPending = 100) {
   };
   // Concurrent requests preserve IDs; long writes must not block dialog reads.
   const pending = new Set();
-  for await (const line of boundedLines(input)) {
-    if (line !== null && !line.trim()) continue;
-    let request;
-    try { if (line === null) throw new Error(); request = JSON.parse(line); }
-    catch { await write({ jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error' } }); continue; }
-    const work = handle(request).then(response => response ? write(response) : undefined);
-    pending.add(work);
-    work.then(() => pending.delete(work), () => {});
-    if (pending.size >= maxPending) await Promise.race(pending);
+  const cancelPlans = () => handle.cancelPendingPlans?.();
+  output.on('close', cancelPlans); output.on('error', cancelPlans);
+  try {
+    for await (const line of boundedLines(input)) {
+      if (line !== null && !line.trim()) continue;
+      let request;
+      try { if (line === null) throw new Error(); request = JSON.parse(line); }
+      catch { await write({ jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error' } }); continue; }
+      const work = handle(request).then(response => response ? write(response) : undefined);
+      pending.add(work);
+      work.then(() => pending.delete(work), () => {});
+      if (pending.size >= maxPending) await Promise.race(pending);
+    }
+  } finally {
+    cancelPlans();
+    await Promise.allSettled(pending);
+    output.off('close', cancelPlans); output.off('error', cancelPlans);
   }
   await Promise.all(pending);
 }

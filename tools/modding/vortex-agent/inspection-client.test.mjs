@@ -16,7 +16,7 @@ test('bridge advertises each local read tool once and keeps unsupported installa
     return {tools: [{name: 'health'}, {name: 'install_download'}, {name: 'inspect_session'}]};
   };
   const result = await clientRemote('tools/list', {}, transport);
-  assert.deepEqual(result.tools.map(t => t.name), ['health', 'inspect_session', 'find_collection_downloads']);
+  assert.deepEqual(result.tools.map(t => t.name), ['health', 'inspect_session', 'find_collection_downloads', 'run_mod_plan']);
   assert.equal(result.tools[1].annotations.readOnlyHint, true);
   assert.equal(result.tools[1].inputSchema.additionalProperties, false);
   assert.equal(calls.length, 1);
