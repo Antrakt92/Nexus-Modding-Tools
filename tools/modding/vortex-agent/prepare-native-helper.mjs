@@ -75,8 +75,8 @@ export function prepareHelper({ source, output, sourceSha256, apply = false }) {
   const asars = [...index.matchAll(asar)];
   if (asars.length !== 1) throw Error('UNSUPPORTED_HELPER_TEMPLATE');
   index = index.replace(asar, `need(c.sourcePins?.[c.appAsar]===c.appAsarSHA256&&c.appAsarSHA256==='${asars[0][1]}','APP_ASAR_PIN_REQUIRED');`);
-  if (!index.includes("for(const[p,h]of Object.entries(c.sourcePins))need(hash(p)===h,'SOURCE_CHANGED')"))
-    throw Error('SOURCE_PIN_VERIFIER_REQUIRED');
+  index = replaceOnce(index, "for(const[p,h]of Object.entries(c.sourcePins))need(hash(p)===h,'SOURCE_CHANGED')",
+    "for(const[p,h]of Object.entries(c.sourcePins))need(physical(p).sha256===h,'SOURCE_CHANGED')");
   index = replaceOnce(index, "record('guard-timing-terminal',{guardTiming,serialPoller:pollMetrics})",
     "record('guard-timing-terminal',{guardTiming,serialPoller:pollMetrics,physicalProof:physical.metrics()})");
   content.set('index.prepared.js', Buffer.from(index));

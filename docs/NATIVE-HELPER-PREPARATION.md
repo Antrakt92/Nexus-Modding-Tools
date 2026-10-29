@@ -86,7 +86,9 @@ metadata/replacement admission, exclusive native install hooks and disk checks.
   Counters report hashes, cache hits and logical bytes hashed. Ancestry/root
   containment remains the caller's existing guard responsibility.
 - The explicit `app.asar` check verifies its required source pin and native
-  constant; the retained source-pin loop hashes it once instead of twice.
+  constant; the retained source-pin loop uses the generation-checked physical
+  reader. Repeated guards still sample file metadata and reject changes, while
+  an unchanged source generation is hashed once per cache lifetime.
 
 The physical cache replaces the old helper-lifetime path cache. It belongs only
 to that reviewed helper/checkpoint, is bounded and can be cleared by the caller.
