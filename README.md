@@ -48,7 +48,7 @@ new bridge code; native adapter changes require the reviewed upgrade procedure.
 [native helper preparation workflow](docs/NATIVE-HELPER-PREPARATION.md).
 Preparation does not activate a plugin or grant installation approval. See the
 [changelog](CHANGELOG.md) and [maintenance and release review](docs/MAINTENANCE.md)
-for the release range, deferred updates and remaining verification.
+for the release range, accepted dependency updates and remaining verification.
 
 ## Start here
 
@@ -107,7 +107,7 @@ changes serially and performs at most one requested final deploy.
 | Choose the right skill, tool and verification boundary | [Agent workflow](docs/AGENT-WORKFLOW.md) |
 | Review tested behavior and known limits | [Latest full tooling audit](docs/FULL-AUDIT-20261029.md), [earlier integration evidence](docs/FULL-AUDIT-20261025.md) |
 | Check dependency pins and point-in-time audit evidence | [Dependency audit](docs/DEPENDENCY-AUDIT.md) |
-| Review branch policy, deferred upgrades and the next release | [Maintenance](docs/MAINTENANCE.md) |
+| Review branch policy, dependency decisions and the next release | [Maintenance](docs/MAINTENANCE.md) |
 | Understand licenses and upstream attribution | [Licenses and provenance](docs/LICENSES.md) |
 
 ## Development and verification

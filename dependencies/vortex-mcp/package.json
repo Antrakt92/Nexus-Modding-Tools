@@ -16,10 +16,10 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
-    "lint": "oxlint .",
-    "lint:fix": "oxlint . --fix",
-    "format": "oxfmt .",
-    "format:check": "oxfmt --check .",
+    "lint": "node scripts/check-source.mjs lint",
+    "lint:fix": "node scripts/check-source.mjs lint:fix",
+    "format": "node scripts/check-source.mjs format",
+    "format:check": "node scripts/check-source.mjs format:check",
     "test": "vitest run",
     "test:watch": "vitest",
     "ci": "pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm run test && pnpm run build",
@@ -34,13 +34,13 @@
   },
   "devDependencies": {
     "@nexusmods/vortex-api": "2.9.1",
-    "@types/node": "^22.10.2",
-    "oxfmt": "0.65.0",
-    "oxlint": "1.80.0",
+    "@types/node": "24.19.2",
+    "oxfmt": "0.75.0",
+    "oxlint": "1.90.0",
     "redux": "4.2.1",
     "tsup": "9.0.0",
-    "typescript": "^5.7.2",
-    "vite": "7.3.7",
+    "typescript": "7.0.2",
+    "vite": "8.3.5",
     "vitest": "5.0.5"
   },
   "engines": {
@@ -51,7 +51,7 @@
     "overrides": {
       "@hono/node-server": "2.1.5",
       "hono": "4.13.14",
-      "tinypool": "2.1.2"
+      "tinypool": "2.2.0"
     }
   }
 }

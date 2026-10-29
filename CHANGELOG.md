@@ -12,8 +12,13 @@
   test-runner timeout, retaining the failure/interlock assertions and production timeouts.
 - List all seven published Cyberpunk mods and the Past the Night collection;
   expand contributor checks, helper routing and upstream/license documentation.
-- Keep routine dependency proposals in a reviewed maintenance queue instead of
-  accumulating automatic version-update branches. Security-update limits are separate.
+- Keep weekly Dependabot version proposals enabled and group minor/patch updates;
+  retain pending proposals until reviewed rather than deleting them for branch hygiene.
+- Update development tools to TypeScript 7.0.2, Vite 8.3.5, oxfmt 0.75.0, oxlint
+  1.90.0, Node declarations 24.19.2 and Tinypool 2.2.0. Retain Redux 4.2.1 for
+  the Vortex API's exact peer contract. Production MCP dependencies are unchanged.
+- Pass explicit reviewed file paths to lint/format checks so ignored isolated
+  build directories cannot silently omit source files.
 
 ## 0.1.0 — 2026-10-29
 

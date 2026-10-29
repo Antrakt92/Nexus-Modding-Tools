@@ -54,6 +54,14 @@
     {
       "path": "src/mcpServer.ts",
       "reason": "Give each HTTP request a separate MCP server and transport, closing its server on response close."
+    },
+    {
+      "path": "ARCHITECTURE.md",
+      "reason": "Formatting only for oxfmt 0.75.0."
+    },
+    {
+      "path": "scripts/check-source.mjs",
+      "reason": "Pass reviewed files explicitly so parent Git ignores cannot skip isolated build checks."
     }
   ],
   "purpose": "Source dependency for guarded adapter; no direct installation of upstream unrestricted extension",
@@ -62,7 +70,8 @@
     "PNPM-BOOTSTRAP.json",
     "LOCAL-CHANGES.md",
     "THIRD-PARTY-NOTICES.md",
-    "UPSTREAM-PROVENANCE.json"
+    "UPSTREAM-PROVENANCE.json",
+    "scripts/check-source.mjs"
   ],
   "safeExcludedPaths": [".git/", "node_modules/", ".tooling/", "dist/", "adapted-dist/"],
   "selfPinPolicy": "The provenance manifest excludes itself from currentFileSHA256 to avoid a recursive hash. expectedPublicFiles includes it; Git/source review establishes this manifest.",
@@ -76,16 +85,16 @@
     ".oxlintrc.json": "ec3fa8c3e4354a0a2961229c64fdc2ae1075ca14db63d1cef151f0ab953e7091",
     ".pre-commit-config.yaml": "40d5c09109d25d33048f0789271b2c24eab039fc0b2a17f9e6471d1fb1bd5d09",
     ".releaserc.json": "07080d1c204b83d925980f26c4388f2e6d96668b9da6ce16cc07426f1ffa952c",
-    "ARCHITECTURE.md": "110bf208725a18d9fc56ab76efde6b551803d775eaa263aafd6f7bdeedae9566",
+    "ARCHITECTURE.md": "ab9c7c948da5346b0216ed6d2c2c1c34b60213c6dd06d2c1d039727a219e5edc",
     "LICENSE.md": "3c61a4b99007718626612c474991852b9428a3d4ed27a77e46b42fdfb80f896f",
-    "LOCAL-CHANGES.md": "bc553aaf7404ea6db59993ed6f0a11281e7519d5a32251f74a7a80b5797dd56a",
+    "LOCAL-CHANGES.md": "ded4cabb88b7f821b1ab6de164fb57b2e7d41d745f173c0c5cf84ec6e4519759",
     "NEXUS_DESCRIPTION.bbcode": "caddcb4c08e56f90105b137eaa67ba4d626702f7a949c278ee47d218c3ede318",
     "PNPM-BOOTSTRAP.json": "ad6369791f91f55e2979fdbcb636c2e37aacbe26cbc4f1b455b747fb729da055",
     "README.md": "85cd1d093053bdc2d87310ddbbb2654c1ea1e4d97a42be43e2e5ec4861276e38",
     "THIRD-PARTY-NOTICES.md": "e2fc6ae76a7664a5c454451a07d82a87f5493e8d1aa7c0d1c779b58446407dfc",
     "info.json": "1f5248540d472cab8a5db09b00b7b8f727b737c9401e3c9fbcb2e45206611441",
-    "package.json": "2469ca88eb4eecc07b66d7e690d0bd9092366f8aab834e940db4ac064f1f9a23",
-    "pnpm-lock.yaml": "1152d03b9959fe1206d4c2b021268b6bd5cb41d182ae55cb1b95d765a5f4d975",
+    "package.json": "b61d4a53ae825f20f7e46f6cf3d97b7791d60bab71eca53b07fa92937236fd44",
+    "pnpm-lock.yaml": "88f4e036fb5a3b1815c02a173d84e4e6b968d322bb2bccaf0dfc2392c047443c",
     "scripts/generate-readme-tools-table.mjs": "5b21e96b2e1a7f075df71efb5e90d17e6745175f4f4e394ba7120d65bc638c18",
     "scripts/install-local.mjs": "8f22ee0d9f55c7f4c526149a9ff9a6ec5594554612e3313d5c8af0e43955e634",
     "src/index.ts": "1fe71d6b654b7fb2da70052ba73998e157be219874fb2fe1c3a7257962fc10e7",
@@ -97,7 +106,8 @@
     "src/vortexControl.ts": "8dbbd475899c356c073a949b099603543ab900713310ee7018f3dc96a4e2d731",
     "tsconfig.json": "647f7e338322223ed1955a9a8025fead482a6be8a245eaf5f0c7489f0577ae7c",
     "tsup.config.ts": "8b4755f27ffbe2dfa39c29198234368930908c7f41b40371c36d4ad1f841b67c",
-    "vitest.config.ts": "b375df0e047cbab150a04ba818dea195a3cd201ccc024417e983ffe6fd3c47ea"
+    "vitest.config.ts": "b375df0e047cbab150a04ba818dea195a3cd201ccc024417e983ffe6fd3c47ea",
+    "scripts/check-source.mjs": "c49be7078198ebab0237965af74e805ef1f8e952cacb2aee35c94743e170d967"
   },
   "expectedPublicFiles": [
     ".gitattributes",
@@ -131,9 +141,10 @@
     "src/vortexControl.ts",
     "tsconfig.json",
     "tsup.config.ts",
-    "vitest.config.ts"
+    "vitest.config.ts",
+    "scripts/check-source.mjs"
   ],
-  "acceptedSourceTreeSHA256": "d1a8772781c4e5b94d5410e4b1619c0e97974dffcd2b6dea25d007d0a07db760",
+  "acceptedSourceTreeSHA256": "2ecbedd62f9e12e690561c192184a67aaae823f2f237d891a139a7331dda41a6",
   "runtimeLicenses": {
     "zod@4.6.7": "MIT",
     "@modelcontextprotocol/server@2.4.0": "Apache-2.0",
