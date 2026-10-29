@@ -15,12 +15,20 @@
       "sha256_lf": "b18c7526276e3bcc3dbeb4aedb75246ebd39a8a74033b818094befe7ef3c6ea9"
     },
     {
+      "path": "CHANGELOG.md",
+      "sha256_lf": "ec09caf395c005299cf6dcd163ed26e3f55c5c5e2956f783f611e1d1ca2c50ad"
+    },
+    {
       "path": "LICENSE",
       "sha256_lf": "3c61a4b99007718626612c474991852b9428a3d4ed27a77e46b42fdfb80f896f"
     },
     {
       "path": "README.md",
-      "sha256_lf": "2e727b390add586db27e52364be5f9caef44cb630d6514bc412b4e38bb957274"
+      "sha256_lf": "c6ae3b081c46e88f0103eadfd6cefa42f343cfb620317e1274db6c9f7f54e35e"
+    },
+    {
+      "path": "VERSION",
+      "sha256_lf": "e9dd8507f4bf0c6f42458e41aea833ad0bd3f6127272335eee9bf4d58541ed67"
     },
     {
       "path": "dependencies/vortex-mcp/.gitattributes",
