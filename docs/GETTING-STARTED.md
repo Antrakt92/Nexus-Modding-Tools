@@ -1,8 +1,7 @@
 # Get started on Windows
 
-The current release is a source distribution: setup includes building and
-installing a local Vortex extension. Downloading a ZIP alone does not connect
-an AI client or install mods.
+Releases contain source code. To use the Vortex tools, build and install the
+extension, then connect it to your terminal or MCP client.
 
 ## Choose your route
 
@@ -26,10 +25,10 @@ These routes are independent; the publication runner is not needed to inspect Vo
 | Community CLI, optional | .NET 10 for the pinned Windows x64 executable |
 | AI client, optional | An MCP client that can launch a local stdio command; terminal commands work without one |
 
-The latest ordinary-session acceptance used Vortex 2.9.1 and Cyberpunk 2077.
-Managed-write process guards also exist for Assassin's Creed Unity, Skyrim SE,
-Skyrim VR and Fallout 4. Those guards do not establish full native acceptance for
-every game or Vortex version. Unsupported writes stop with
+The tools were tested with Vortex 2.9.1 and Cyberpunk 2077. Process checks also
+exist for Assassin's Creed Unity, Skyrim SE, Skyrim VR and Fallout 4, but full
+installation and deployment have not been tested for every game. Unsupported
+writes stop with
 `UNSUPPORTED_GAME_PROCESS_GUARD`.
 
 ## Install the adapter
@@ -43,8 +42,8 @@ every game or Vortex version. Unsupported writes stop with
    verify the source, choose an absolute runtime workspace, recover pinned
    inputs and build/package the adapter.
 3. Initialize the local per-user bearer using the documented credential command.
-   Keep the game and Vortex stopped for the pinned install/upgrade command.
-   The installer requires explicit package hashes and does not launch Vortex.
+   Close the game and Vortex before installing or upgrading the extension.
+   The installer checks the package hash and leaves Vortex closed.
 4. Start Vortex normally. Run the first read below. Ordinary supported operations
    reuse this running host without restarting it.
 
@@ -68,10 +67,10 @@ node tools/modding/vortex-agent/bridge.mjs --health
 node tools/modding/vortex-agent/session.mjs inspect --diagnostics
 ```
 
-Health should identify your actual game, profile and paths. Inspection reports
-`status: "ok"` when all requested reads finish; check returned conflicts and
-collection observations too. `partial` means some reads failed or reached their
-limit; it does not mean the profile is healthy. These commands do not deploy mods.
+The health response should show your game, profile and folders. Inspection
+returns `status: "ok"` when all requested reads finish. Check the reported
+conflicts and collection status as well. `partial` means a read failed or a list
+reached its limit. These commands do not change enabled mods or deploy them.
 
 ## Connect an MCP client
 
@@ -89,9 +88,9 @@ configuration and refresh the MCP connection. Some clients use TOML instead of
 JSON; adapt the same command, absolute bridge path and environment values.
 No bearer token or Nexus API key belongs in the client entry.
 
-Private agent skills and the maintainer's personal instruction backup are not
-required. Terminal use does not need an AI subscription. An AI client's own
-model access and costs are separate.
+The command-line tools work without an AI subscription or the maintainer's
+private agent instructions. If you use an AI client, its model access and
+charges depend on that service.
 
 ## Troubleshooting
 

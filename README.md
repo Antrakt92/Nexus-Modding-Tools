@@ -1,8 +1,4 @@
-<div align="center">
-
-![Nexus Modding Tools — Vortex automation for Windows](assets/banner.svg)
-
-**Inspect your mod setup. Reuse downloads. Apply reviewed changes.**
+# Nexus Modding Tools
 
 [![Latest source release](https://img.shields.io/github/v/release/Antrakt92/Nexus-Modding-Tools?label=source%20release&color=0f766e)](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/latest)
 [![Windows](https://img.shields.io/badge/platform-Windows-0078D4)](docs/GETTING-STARTED.md)
@@ -10,30 +6,29 @@
 
 [Get started](docs/GETTING-STARTED.md) · [Download source](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/latest) · [Changelog](CHANGELOG.md) · [Report a problem](https://github.com/Antrakt92/Nexus-Modding-Tools/issues/new/choose)
 
-</div>
-
 Nexus Modding Tools connects a running **Vortex** session to an MCP-compatible
-AI client or your terminal. It also includes tools for public Nexus Mods research
-and author uploads. It is built for collection maintainers, mod authors and
-Windows users who want repeatable operations with a record of what happened.
+AI client or the command line. You can inspect mods and conflicts, find existing
+downloads, enable or disable mods, and deploy them. Separate tools handle Nexus
+Mods metadata searches and uploads.
 
-**Current distribution: source code, with a manual build and setup.** There is
-no one-click installer. Routine inspection, downloads, enable changes and deploy
-reuse the running Vortex process; native mod installation is a separate workflow.
+**Build from source on Windows.** Follow the [setup guide](docs/GETTING-STARTED.md)
+to install the Vortex extension. Inspection, downloads, enabling mods and deployment
+use the running Vortex process. Installing mod archives requires a separate script.
 
 ## What you can do
 
-| Task | How it helps | Guide |
+| Task | What it does | Guide |
 | --- | --- | --- |
 | Inspect a mod setup | Read profiles, mods, downloads, dialogs and conflicts in a combined snapshot | [Session inspection](docs/NO-RESTART-WORKFLOW.md) |
 | Prepare a collection | Match exact Nexus mod/file IDs to existing tracked downloads | [Download reuse](docs/COLLECTION-DOWNLOADS.md) |
-| Change enabled mods and deploy | Validate a plan offline, apply changes serially and request one final deployment | [Reviewed plans](docs/NO-RESTART-WORKFLOW.md#run-the-reviewed-plan-through-mcp) |
+| Change enabled mods and deploy | Check a plan before running it, apply changes one at a time and deploy once at the end | [Plan format](docs/NO-RESTART-WORKFLOW.md#run-the-reviewed-plan-through-mcp) |
 | Research Nexus Mods | Search public metadata and requirements through the community CLI | [Nexus CLI](tools/modding/nexus-cli/README.md) |
-| Publish your own mod | Validate an archive locally and submit an authorized update through the pinned official uploader | [Publication runner](tools/modding/nexus-publish/README.md) |
+| Publish your own mod | Check an archive locally and upload an update through the official Nexus uploader | [Publication runner](tools/modding/nexus-publish/README.md) |
 
 The MCP bridge exposes `inspect_session`, `find_collection_downloads` and
-`run_mod_plan`. Managed changes pin the active profile, paths and filesystem
-identities. Durable receipts help reconcile interrupted operations before a retry.
+`run_mod_plan`. Before changing mods, the adapter checks the active profile and
+folder identities. It records each operation so an interrupted request can be
+checked before retrying it.
 
 ## Start with a read
 
@@ -61,13 +56,13 @@ set the matching `NEXUS_WORKSPACE`; see [configuration](docs/CONFIGURATION.md).
 - **Windows.** Git, Python 3.11+ and Node are required. The adapter build uses
   the Node 24 toolchain; the optional community CLI needs .NET 10. See
   [exact prerequisites](docs/GETTING-STARTED.md#requirements).
-- **Vortex 2.9.1 / Cyberpunk 2077:** the latest ordinary-session acceptance is
+- **Tested with Vortex 2.9.1 and Cyberpunk 2077.** Results are
   recorded in [the live verification report](docs/AUDIT-20261029.md#subsequent-live-upgrade-and-acceptance--2026-10-29).
-  Other game write guards are listed in the setup guide; they are not equivalent
-  to end-to-end validation for every game.
-- **Mod installation is not a resident MCP endpoint.** Expert helper preparation
-  supports specific reviewed template families and fresh native admission.
-  It does not install arbitrary archives. See [native helpers](docs/NATIVE-HELPER-PREPARATION.md)
+  The setup guide lists other games with process checks; those games have not
+  all been tested through a full install and deploy cycle.
+- **The MCP does not install mod archives.** Separate tools prepare installation
+  scripts for specific templates. Each script needs its own source, package and
+  current-state checks. See [native helpers](docs/NATIVE-HELPER-PREPARATION.md)
   and [tracked Nexus batches](docs/TRACKED-NEXUS-HELPER-REVIEW.md).
 - **Credentials stay local.** No account sessions, Vortex database, mod archives
   or game files are included. There is no generic dispatch, game-launch or
@@ -81,10 +76,9 @@ The suite version in [VERSION](VERSION) is separate from the embedded adapter's
 [Setup and troubleshooting](docs/GETTING-STARTED.md) · [Support](SUPPORT.md) ·
 [Contributing](CONTRIBUTING.md) · [Security reporting](.github/SECURITY.md)
 
-For architecture, recovery, dependency pins and verification records, use the
-[documentation index](docs/README.md). Runtime/build outputs belong in ignored
-`local-state/`. Historical recovery snapshots retain provenance; the maintained
-implementation lives in `tools/modding/`.
+See the [documentation index](docs/README.md) for build instructions, configuration
+and test reports. Current code lives in `tools/modding/`; build output and local
+operation records belong in the ignored `local-state/` directory.
 
 This is an independent community project under **GPL-3.0-only**, based on
 [Alan Tse's vortex-mcp](https://github.com/alandtse/vortex-mcp), the

@@ -9,9 +9,7 @@ expected boundary and possible impact. Use synthetic data where possible.
 Never send a bearer token, Nexus API key, credential store, account export or
 Vortex database.
 
-Relevant boundaries include local MCP authentication, guarded operations,
-archive/path validation, credential handling and durable no-replay receipts.
-Source checks and dated dependency audits do not guarantee that an installation
-or third-party dependency is free of vulnerabilities. Reports will be reviewed
-without a guaranteed response time. Ordinary bugs and setup questions belong in
+Examples include authentication bypasses, credential leaks, unsafe file paths
+and operations that can run twice after an interrupted request.
+Ordinary bugs and setup questions belong in
 [Issues](https://github.com/Antrakt92/Nexus-Modding-Tools/issues/new/choose).
