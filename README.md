@@ -1,10 +1,19 @@
-# Nexus Modding Tools
+<h1 align="center">Nexus Modding Tools</h1>
 
-[![Latest source release](https://img.shields.io/github/v/release/Antrakt92/Nexus-Modding-Tools?label=source%20release&color=0f766e)](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/latest)
-[![Windows](https://img.shields.io/badge/platform-Windows-0078D4)](docs/GETTING-STARTED.md)
-[![GPL-3.0-only](https://img.shields.io/badge/license-GPL--3.0--only-2563EB)](LICENSE)
+<p align="center">Nexus research and Vortex automation through MCP or the command line.</p>
 
-[Get started](docs/GETTING-STARTED.md) · [Download source](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/latest) · [Changelog](CHANGELOG.md) · [Report a problem](https://github.com/Antrakt92/Nexus-Modding-Tools/issues/new/choose)
+<p align="center">
+  <a href="docs/GETTING-STARTED.md"><strong>Get started</strong></a>
+  · <a href="https://github.com/Antrakt92/Nexus-Modding-Tools/releases/latest"><strong>Download source</strong></a>
+  · <a href="CHANGELOG.md">Changelog</a>
+  · <a href="https://github.com/Antrakt92/Nexus-Modding-Tools/issues/new/choose">Report a problem</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Antrakt92/Nexus-Modding-Tools/releases/latest"><img src="https://img.shields.io/github/v/release/Antrakt92/Nexus-Modding-Tools?label=source%20release&amp;color=0f766e" alt="Latest source release"></a>
+  <a href="docs/GETTING-STARTED.md"><img src="https://img.shields.io/badge/platform-Windows-0078D4" alt="Windows"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--only-2563EB" alt="GPL-3.0-only license"></a>
+</p>
 
 Nexus Modding Tools connects a running **Vortex** session to an MCP-compatible
 AI client or the command line. You can inspect mods and conflicts, find existing
