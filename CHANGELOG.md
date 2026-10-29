@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Add offline source-pinned preparation and copy-map verification for batches of
+  up to four tracked Nexus originals, plus a separate published-own single batch.
+  Prepare fresh read-capture code separately; neither path authorizes activation.
+- Include required scope data and maintained flag/settlement checks; remove the
+  unused private-overlay policy from Nexus kits and preserve fresh preference
+  values instead of requiring historical Move Your Way settings of two/two.
 - Accept bounded native mod IDs containing spaces, punctuation and Unicode in
   installation settlement. Keep download-ID validation separate and compare all
   identities exactly; paths, control characters and unsafe object keys are rejected.

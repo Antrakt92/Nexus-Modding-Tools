@@ -20,7 +20,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "e4f3e07d21b89ca5cb2e8d01eee60ffefeff5a32a192ff9dd4d1e5098ffd258a"
+      "sha256_lf": "bc9e649a3e6281a0bfaf71205a61a764904da74dea9a4d08342cfb3a14d8eb20"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -32,7 +32,7 @@
     },
     {
       "path": "README.md",
-      "sha256_lf": "6f75bd5d6b32c6d7fea0aa989a8658f27a73047ea12f7167b69b2770e12b9795"
+      "sha256_lf": "266dcc5830d9ee8a69a97b524ab230eac850e1d75b7e5106926ecbe5f066b088"
     },
     {
       "path": "VERSION",
@@ -224,7 +224,7 @@
     },
     {
       "path": "docs/TRACKED-NEXUS-HELPER-REVIEW.md",
-      "sha256_lf": "8c2d248321ee4197995dba6ed5257db00061a2467c6c6cbfa96f566eef45664c"
+      "sha256_lf": "9ac9c6836ac1a6952f4e52d6fc5636a8c8cbbc7a7ac096c5c16f6522d484638b"
     },
     {
       "path": "recovery/accepted-adapter/README.md",
@@ -480,7 +480,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/install-settlement.cjs",
-      "sha256_lf": "9e623558395b59430a817d8fe5f769e10055e658c3171f07ecb01fd441ff1784"
+      "sha256_lf": "99766dbd9fa09398356256a033c220eae708512bfaeff4a9f2b38868e0a08b08"
     },
     {
       "path": "tools/modding/vortex-agent/install-settlement.md",
@@ -587,6 +587,10 @@
       "sha256_lf": "b2f25e359abe662a6ca9c6c25b0d1833ee68752bf84c2cb60994f2c39acaeb04"
     },
     {
+      "path": "tools/modding/vortex-agent/prepare-tracked-nexus.mjs",
+      "sha256_lf": "e4d9f55d405aad91130b3c9c71f6ec606b10dcc61da04fb62aafd78179d7b130"
+    },
+    {
       "path": "tools/modding/vortex-agent/process-guard.test.mjs",
       "sha256_lf": "5204409a634bfdd385ec503172eb5e7cf25e55c46dbd2557cbc7d0ba8b211e8f"
     },
@@ -629,6 +633,26 @@
     {
       "path": "tools/modding/vortex-agent/tests.mjs",
       "sha256_lf": "a7f36934cb63a4e882f837b2ac5796023e479671370c9a726bf4d50499801e59"
+    },
+    {
+      "path": "tools/modding/vortex-agent/tracked-nexus-policy.cjs",
+      "sha256_lf": "b90ba8b0d7fe2e746a6141b7b9865f8f6468b7260b81d466ae409d58edbe41d5"
+    },
+    {
+      "path": "tools/modding/vortex-agent/tracked-nexus-settlement.cjs",
+      "sha256_lf": "5a33261365e879f0c3930667ed7ee96c2461ee96086b603383ee4ed6f68115ac"
+    },
+    {
+      "path": "tools/modding/vortex-agent/tracked-nexus-template.json",
+      "sha256_lf": "409f0c0d61a6c54ff5e8a7eb57b4f9333b9c9cd821e083b5dc11cecb3d6d6406"
+    },
+    {
+      "path": "tools/modding/vortex-agent/tracked-nexus.test.mjs",
+      "sha256_lf": "b77cadc727e926d8590230e934a24398bc827705a2a518b5305941d1f00eac66"
+    },
+    {
+      "path": "tools/modding/vortex-agent/tracked-preferences.cjs",
+      "sha256_lf": "741b6c0b29b302da384298f3eda9fa03a8fa373cfd7448d3b5c1a8b0d70b4e94"
     },
     {
       "path": "tools/modding/vortex-agent/wire.test.mjs",

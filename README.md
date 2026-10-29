@@ -50,6 +50,10 @@ Preparation does not activate a plugin or grant installation approval. See the
 [changelog](CHANGELOG.md) and [maintenance and release review](docs/MAINTENANCE.md)
 for the release range, accepted dependency updates and remaining verification.
 
+Unreleased work on `main` also includes source-pinned
+[tracked Nexus preparation and fresh capture](docs/TRACKED-NEXUS-HELPER-REVIEW.md).
+These are held code kits, not resident installation endpoints or live approvals.
+
 ## Start here
 
 **New machine or first installation?** Follow [Restore the tooling](docs/RESTORE.md).
