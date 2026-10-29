@@ -1,8 +1,28 @@
 # Changelog
 
+Source-release history for [Nexus Modding Tools](https://github.com/Antrakt92/Nexus-Modding-Tools).
+Dates are the original GitHub publication dates, in UTC. Each section describes
+the code and verification available at that version; historical limitations are
+not a statement about the latest release. The suite version is separate from the
+embedded Vortex adapter's 1.0.4 label.
+
+| Version | Published | Main changes |
+| --- | --- | --- |
+| [0.3.0](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/tag/v0.3.0) | 2026-10-29 | Tracked Nexus batch helpers, inventory repair, payload checks and setup guides |
+| [0.2.0](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/tag/v0.2.0) | 2026-10-29 | Offline helper preparation, installation diagnostics and development dependencies |
+| [0.1.0](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/tag/v0.1.0) | 2026-10-29 | Combined inspection, collection download reuse and coordinated plans |
+| [Recovery sources](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/tag/recovery-sources-20261025) | 2026-10-25 | Pinned upstream Git bundles for source recovery |
+
 ## Unreleased
 
+Documentation changes since 0.3.0, made on 29 October 2026:
+
 - Remove the README banner and simplify setup, support and release wording.
+- Center the project title, navigation and badges in the README.
+- Add the dated release index, exact initial dependency updates and clearer
+  release boundaries to this changelog; align the GitHub release descriptions.
+
+These changes do not replace the source archives already published for 0.3.0.
 
 ## 0.3.0 — 2026-10-29
 
@@ -35,6 +55,13 @@ Changes since [0.2.0](https://github.com/Antrakt92/Nexus-Modding-Tools/compare/v
   two/two values. Remove an unused policy module from Nexus helper kits.
 - Set `VERSION` to 0.3.0. Release 0.2.0 accidentally contained 0.1.0 in that file;
   a new test checks that the version and dated changelog entry agree.
+
+### Dependencies and compatibility
+
+- The adapter's package manifest and lockfile are unchanged from 0.2.0. This
+  release adds helper and inventory behavior without another dependency upgrade.
+- Existing supported helper templates remain the preparation boundary. Batch
+  preparation does not add a general-purpose mod-installation API to the MCP.
 
 ### Testing and setup
 
@@ -177,12 +204,27 @@ SemVer series at 0.1.0. The embedded adapter label remains independently 1.0.4.
 - Earlier integration, installer, source-recovery and publication-ledger defects documented
   in the [25 October audit](docs/FULL-AUDIT-20261025.md).
 
-### Dependencies and verification
+### Dependencies
 
-- HTTP build pins: Hono 4.13.14 and `@hono/node-server` 2.1.5; Vortex declarations 2.9.1.
+Changes from the earlier `recovery-sources-20261025` snapshot:
+
+| Dependency | Recovery snapshot | 0.1.0 | Scope |
+| --- | --- | --- | --- |
+| Hono | 4.13.13 | 4.13.14 | HTTP dependency override |
+| `@hono/node-server` | 1.19.17 | 2.1.5 | Node HTTP transport override |
+| `@nexusmods/vortex-api` | 2.9.0 | 2.9.1 | Build-time Vortex API declarations |
+
+MCP server 2.4.0, MCP Node transport 2.1.2 and Zod 4.6.7 were already present in
+the recovery snapshot. The declaration update does not install or upgrade the
+Vortex application. See the [dependency audit](docs/DEPENDENCY-AUDIT.md) for the
+earlier upstream-to-recovery changes, attribution and compatibility checks.
+
+### Verification
+
 - Latest full audit: 509 local tests, isolated package/wire proof, upstream
   typecheck/lint/format/build and source-integrity checks passed. Registry audits
-  reported zero known advisories across 7 production/168 total entries.
+  on 29 October 2026 reported zero known advisories across 7 production/168 total
+  entries. These are dated audit results, not a current registry audit.
 - See the [29 October audit](docs/FULL-AUDIT-20261029.md) for exact scope and evidence.
 
 ### Current limits
@@ -194,3 +236,24 @@ SemVer series at 0.1.0. The embedded adapter label remains independently 1.0.4.
 - Repeated helper hashing and synchronous process enumeration remain performance work.
 - Publishing this source release does not install the new adapter into Vortex,
   reconnect clients, prove deployed bytes or establish gameplay acceptance.
+
+[Changes since the recovery snapshot](https://github.com/Antrakt92/Nexus-Modding-Tools/compare/recovery-sources-20261025...v0.1.0).
+
+## Recovery sources — 2026-10-25
+
+The `recovery-sources-20261025` release hosts immutable upstream Git bundles
+referenced by `source-lock.json`, with exact sizes, hashes and source revisions.
+It predates the suite's SemVer releases and is retained for restoring those
+pinned sources. It is not a newer runtime or an alternative installation package.
+
+The bundles contain committed source, without credentials, Vortex databases,
+game files or mod downloads. See [source recovery](docs/RESTORE.md#2-recover-the-pinned-upstream-repositories).
+
+## Downloads and upgrades
+
+Versioned releases provide a source ZIP and `SHA256SUMS`. Verify the checksum and
+follow [Get started](docs/GETTING-STARTED.md) or the full [restore guide](docs/RESTORE.md).
+Preserve the existing runtime workspace, credentials and uncertain-operation
+records when upgrading. Publishing a source release does not install an adapter,
+restart Vortex or reconnect MCP clients. Native loading, deployed-file checks and
+gameplay acceptance remain separate from source and model tests.
