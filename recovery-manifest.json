@@ -20,7 +20,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "867b3ef088cedc7bccafa5da836deddd0994ee5112b6aad5132d66735714096d"
+      "sha256_lf": "4f882c3a1bfd3673166425f32d9dd44b576190e6321d3dc856bd1edfc1db080a"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -32,7 +32,7 @@
     },
     {
       "path": "README.md",
-      "sha256_lf": "1c15ed11d43da9fc57a7f0b98e5ece3afd8440694d3843f3f544234ff4f5f044"
+      "sha256_lf": "6f75bd5d6b32c6d7fea0aa989a8658f27a73047ea12f7167b69b2770e12b9795"
     },
     {
       "path": "VERSION",
@@ -208,7 +208,7 @@
     },
     {
       "path": "docs/MAINTENANCE.md",
-      "sha256_lf": "7047f55bc411bc31218c07d393e690541b1a211c904b04a30e54e23c84990697"
+      "sha256_lf": "9af4ca882eea2c80800bbf1dd7b8a41614490ddb0b81ac42266a03314ab777e2"
     },
     {
       "path": "docs/NATIVE-HELPER-PREPARATION.md",

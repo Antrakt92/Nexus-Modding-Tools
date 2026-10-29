@@ -1,4 +1,4 @@
-# Maintenance and next release
+# Maintenance and releases
 
 ## Branches and dependency proposals
 
@@ -49,11 +49,11 @@ The baseline is immutable tag `v0.1.0` at
 - More reliable receipt-I/O tests, expanded README/contributor guidance, the full
   published Cyberpunk project list and dependency/branch housekeeping.
 
-These include a new user capability, so the next ordinary SemVer release is
-**0.2.0**, subject to checking that the version remains unused at publication.
-There is no identified incompatible public API/schema migration in this range.
-This assessment does not create a tag, rename historical artifacts or publish a
-release. The embedded adapter's 1.0.4 label is independent.
+These changes are included in **0.2.0**, dated 29 October 2026. The new helper
+preparation capability makes this a minor release. No incompatible public
+API/schema migration was identified in this range. The embedded adapter's 1.0.4
+label is independent. See the [changelog](../CHANGELOG.md) and
+[release](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/tag/v0.2.0).
 
 ## Release readiness
 
