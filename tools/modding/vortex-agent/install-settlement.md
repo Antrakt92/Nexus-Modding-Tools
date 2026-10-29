@@ -5,6 +5,11 @@ helper. It is not a resident MCP operation, installer, replacement policy or
 deployment verifier. It has no filesystem, network, Vortex actions or event API.
 Existing frozen and retired helpers are not rewritten or upgraded by this file.
 
+For a new helper, use the [maintained preparer](../../../docs/NATIVE-HELPER-PREPARATION.md)
+to copy/pin the observer and update the known caller. Verify the prepared code
+contract before activation rather than copying the old settlement module again.
+Diagnostics include separate guard/read/sleep costs and the last awaited operation.
+
 ## Why this observer exists
 
 A retained 29 October installation took 23m42s from request to final response.

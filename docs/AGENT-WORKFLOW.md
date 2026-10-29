@@ -19,6 +19,7 @@ missing capabilities rather than inventing another implementation.
 | Find tracked archives for collection members | `vortex-nexus-api-audit`, then `vortex-mod-lifecycle` for effects | [Batch download lookup](COLLECTION-DOWNLOADS.md); exact Nexus pairs, compact candidates, no archive-integrity claim |
 | Authorized download-only, enable or deploy | `vortex-mod-lifecycle` | Guarded adapter, stable request IDs, [reviewed plans](NO-RESTART-WORKFLOW.md) |
 | Coordinate downloads or installed-mod activation | `vortex-mod-lifecycle` | `run_mod_plan` MCP / session CLI; batch exact installed IDs, one final deploy, reconcile before recovery; native installation remains a separate stage |
+| Prepare a task-owned native install helper | `vortex-mod-lifecycle` | [Maintained code kit](NATIVE-HELPER-PREPARATION.md); offline preparation and code-contract verification before fresh binding/activation; completed helpers stay frozen |
 | Public Nexus search, metadata or requirements | `nexus-research` | [CLI wrapper](../tools/modding/nexus-cli/README.md); inspect JSON status/errors/pagination |
 | Nexus upload preparation or authorized publication | `nexus-publication` | [Guarded publisher](../tools/modding/nexus-publish/README.md); offline by default |
 | Original game-mod implementation | `nexus-mod-workflow`, then the matching engine skill | Follow the owning mod project's source/provenance handoff; this tools repo is not mod source |

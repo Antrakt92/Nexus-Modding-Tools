@@ -18,15 +18,23 @@ const validId = id => typeof id === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(id
 const normalize = p => path.resolve(p).replace(/\\/g, '/').toLowerCase();
 
 function localIdentity(row) {
-  const m = row.modInfo;
-  const holders = [row, row.attributes, row.ids, row.nexus?.ids, m, m?.ids,
-    m?.nexus?.ids, m?.meta, m?.meta?.details, m?.meta?.value?.details];
-  for (const holder of holders) {
-    if (holder?.source === 'nexus') return false;
-    for (const key of ['modId', 'mod_id', 'fileId', 'file_id']) {
-      const value = holder?.[key];
+  const containers = ['attributes', 'ids', 'nexus', 'modInfo', 'meta', 'value', 'details',
+    'custom', 'download', 'modReference', 'repo'];
+  const keys = ['modId', 'mod_id', 'fileId', 'file_id', 'nexusModId', 'nexusFileId',
+    'revisionId', 'revision_id', 'collectionId', 'collection_id'];
+  const seen = new Set(), pending = [[row, 0]];
+  while (pending.length) {
+    const [holder, depth] = pending.pop();
+    if (!holder || typeof holder !== 'object' || seen.has(holder)) continue;
+    if (Array.isArray(holder) || depth > 12 || seen.size >= 128) return false;
+    seen.add(holder);
+    if ([holder.source, holder.repository].some(value => typeof value === 'string' && /^nexus(?:mods)?$/i.test(value)))
+      return false;
+    for (const key of keys) {
+      const value = holder[key];
       if (value !== undefined && value !== null && !['', '0'].includes(String(value).trim())) return false;
     }
+    for (const key of containers) if (holder[key] && typeof holder[key] === 'object') pending.push([holder[key], depth + 1]);
   }
   return true;
 }

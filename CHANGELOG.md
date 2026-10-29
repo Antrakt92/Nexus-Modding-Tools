@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Prepare and verify new inactive native helpers with the maintained code kit,
+  rather than copying the legacy settlement observer into another operation.
+- Reuse physical hashes across hardlink aliases with checked file generations;
+  remove the supported template's duplicate `app.asar` hash and report proof counters.
+- Record separate guard/read/sleep timing and the last operation on settlement failure.
+- Reject nested custom/repository/collection Nexus identities in local import readiness.
+
 ## 0.1.0 — 2026-10-29
 
 First versioned source release. The earlier `recovery-sources-20261025` tag remains

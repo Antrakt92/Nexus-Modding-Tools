@@ -152,6 +152,22 @@ test('an adapter that crosses the deadline cannot return success', async () => {
   await assert.rejects(wait(f.options), { code: 'INSTALL_SETTLEMENT_TIMEOUT_RECONCILE' });
 });
 
+test('diagnostics separate guard/read/sleep costs and retain the operation that timed out', async () => {
+  const f = fixture(), read = f.options.read;
+  f.options.assertOperationalState = () => { f.state.clock += 200; };
+  f.options.read = () => { f.state.clock += 50; return read(); };
+  const result = await wait(f.options);
+  assert.deepEqual(result.timing.guard, { calls: 5, totalMs: 1000, maxMs: 200 });
+  assert.deepEqual(result.timing.read, { calls: 5, totalMs: 250, maxMs: 50 });
+  assert.equal(result.lastOperation, 'read');
+  const stalled = fixture();
+  stalled.options.assertOperationalState = () => { stalled.state.clock = 11000; };
+  await assert.rejects(wait(stalled.options), error => {
+    assert.equal(error.diagnostics.lastOperation, 'guard');
+    assert.equal(error.diagnostics.timing.guard.totalMs, 11000); return true;
+  });
+});
+
 test('a never-resolving reader has a wall-clock deadline', async () => {
   const f = fixture(); f.options.now = Date.now;
   f.options.timeoutMs = 40; f.options.quietMs = 1; f.options.pollMs = 1;
