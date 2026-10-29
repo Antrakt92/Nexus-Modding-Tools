@@ -34,10 +34,16 @@ export function validatePlan(input) {
   insist(Array.isArray(input.steps) && input.steps.length <= 100, 'INVALID_PLAN_STEPS');
   const ids = new Set();
   for (const step of input.steps) {
-    insist(keys(step, ['operation', 'requestId', 'modIds', 'enabled']) && step.operation === 'set_mods_enabled'
-      && requestId(step.requestId) && typeof step.enabled === 'boolean' && Array.isArray(step.modIds)
-      && step.modIds.length > 0 && step.modIds.length <= 100 && step.modIds.every(id)
-      && new Set(step.modIds).size === step.modIds.length, 'INVALID_PLAN_STEP');
+    if (step?.operation === 'download_nexus') {
+      insist(keys(step, ['operation', 'requestId', 'nexusModId', 'nexusFileId', 'size', 'sha256', 'reuseOnly'])
+        && requestId(step.requestId) && ['nexusModId', 'nexusFileId', 'size'].every(k => Number.isSafeInteger(step[k]) && step[k] > 0)
+        && typeof step.sha256 === 'string' && /^[a-f0-9]{64}$/.test(step.sha256) && typeof step.reuseOnly === 'boolean', 'INVALID_PLAN_STEP');
+    } else {
+      insist(keys(step, ['operation', 'requestId', 'modIds', 'enabled']) && step.operation === 'set_mods_enabled'
+        && requestId(step.requestId) && typeof step.enabled === 'boolean' && Array.isArray(step.modIds)
+        && step.modIds.length > 0 && step.modIds.length <= 100 && step.modIds.every(id)
+        && new Set(step.modIds).size === step.modIds.length, 'INVALID_PLAN_STEP');
+    }
     insist(!ids.has(step.requestId), 'DUPLICATE_REQUEST_ID'); ids.add(step.requestId);
   }
   if (input.deploy !== null) {
@@ -166,9 +172,12 @@ function verifiedAcknowledgement(value, operation, args) {
   insist(object(value) && value.protocol === PROTOCOL && value.operation === operation && value.requestId === args.requestId
     && value.operationCompleted === true && value.diskDeploymentVerified === false, 'WRITE_ACKNOWLEDGEMENT_UNCERTAIN');
   if (operation === 'deploy_mods') insist(value.deploymentPromiseResolved === true, 'WRITE_ACKNOWLEDGEMENT_UNCERTAIN');
+  else if (operation === 'download_nexus') insist(id(value.downloadId) && typeof value.reused === 'boolean'
+    && (!args.reuseOnly || value.reused) && value.autoInstall === false && value.archiveSha256Verified === true
+    && value.archiveCRCVerified === false && value.size === args.size, 'WRITE_ACKNOWLEDGEMENT_UNCERTAIN');
   else insist(value.enabledFlagsVerified === true && value.enabled === args.enabled && same(value.modIds, args.modIds), 'WRITE_ACKNOWLEDGEMENT_UNCERTAIN');
 }
-function verifiedReceipt(value, operation, args) {
+function verifiedReceipt(value, operation, args, acknowledgement) {
   insist(object(value) && value.protocol === PROTOCOL && value.terminalOperationVerified === true
     && value.adapterTerminalReceiptObserved === true && value.incompleteCompletionObserved === false
     && Array.isArray(value.receiptIssues) && value.receiptIssues.length === 0 && value.failure === null && value.interlock === null
@@ -177,6 +186,7 @@ function verifiedReceipt(value, operation, args) {
     && value.completion?.gameId === args.gameId && value.completion?.profileId === args.profileId
     && same(value.attempt?.parameters, args), 'TERMINAL_RECEIPT_UNCERTAIN');
   verifiedAcknowledgement(value.completion, operation, args);
+  insist(same(acknowledgement, Object.fromEntries(Object.keys(acknowledgement).map(key => [key, value.completion[key]]))), 'ACK_RECEIPT_MISMATCH');
 }
 function receiptSummary(value) {
   return {attemptObserved: object(value?.attempt), completionObserved: object(value?.completion), failureObserved: object(value?.failure),
@@ -184,35 +194,49 @@ function receiptSummary(value) {
     receiptIssues: Array.isArray(value?.receiptIssues) ? value.receiptIssues.filter(item => typeof item === 'string' && /^[A-Z0-9_]+$/.test(item)) : ['UNVERIFIABLE_RESPONSE']};
 }
 
-export async function runPlan(input, {apply = false, call = createToolCaller()} = {}) {
+export async function runPlan(input, {apply = false, call = createToolCaller(), signal} = {}) {
   const plan = validatePlan(input);
   insist(typeof apply === 'boolean', 'INVALID_APPLY_FLAG');
-  const queue = plan.steps.map(step => ({operation: step.operation,
-    args: {...plan.context, requestId: step.requestId, modIds: step.modIds, enabled: step.enabled}}));
+  insist(signal === undefined || signal instanceof AbortSignal, 'INVALID_PLAN_SIGNAL');
+  const queue = plan.steps.map(({operation, ...parameters}) => ({operation, args: {...plan.context, ...parameters}}));
   if (plan.deploy !== null) queue.push({operation: 'deploy_mods', args: {...plan.context, requestId: plan.deploy.requestId}});
   if (!apply) return {status: 'validated', applied: false, operationCount: queue.length, requestIds: queue.map(item => item.args.requestId),
-    diskDeploymentVerified: false, message: 'Offline validation only. Use --apply for the reviewed plan; no Vortex calls were made.'};
+    diskDeploymentVerified: false, message: 'Offline validation only. Apply the exact reviewed plan explicitly; no Vortex calls were made.'};
   const completed = []; let current;
+  const checkCancellation = () => insist(!signal?.aborted, 'PLAN_CANCELLED');
   try {
     // Check the entire queue before any effect: a used later ID must not cause a partial replay.
-    for (const item of queue) {
-      current = {...item, invoked: false};
+    checkCancellation();
+    const preflight = await readPool(queue.map(item => async () => {
+      checkCancellation();
       cleanUnusedReceipt(await call('reconcile_operation', {requestId: item.args.requestId}));
+    }), 4);
+    const failed = preflight.findIndex(result => result.error);
+    if (failed !== -1) {
+      current = {...queue[failed], invoked: false};
+      throw Error(preflight[failed].error);
     }
-    current = undefined;
     for (const item of queue) {
+      checkCancellation();
       current = {...item, invoked: false};
       cleanUnusedReceipt(await call('reconcile_operation', {requestId: item.args.requestId}));
+      checkCancellation();
       freshContext(await call('health', {}), plan.context);
+      checkCancellation();
       current.invoked = true;
       const acknowledgement = await call(item.operation, item.args);
       verifiedAcknowledgement(acknowledgement, item.operation, item.args);
-      verifiedReceipt(await call('reconcile_operation', {requestId: item.args.requestId}), item.operation, item.args);
-      completed.push({operation: item.operation, requestId: item.args.requestId, adapterReceiptVerified: true});
+      // An in-flight mutation is not abandoned on cancellation: establish its
+      // exact receipt first, then stop before invoking any later step.
+      verifiedReceipt(await call('reconcile_operation', {requestId: item.args.requestId}), item.operation, item.args, acknowledgement);
+      completed.push({operation: item.operation, requestId: item.args.requestId, adapterReceiptVerified: true,
+        ...(item.operation === 'download_nexus' ? {downloadId: acknowledgement.downloadId, reused: acknowledgement.reused,
+          size: acknowledgement.size, archiveSha256Verified: true, archiveCRCVerified: false} : {})});
       current = undefined;
+      checkCancellation();
     }
     return {status: 'completed', completed, diskDeploymentVerified: false,
-      verificationRequired: 'Independently verify deployment manifest, owners, hashes and hardlinks. Adapter receipts do not prove disk or gameplay acceptance.'};
+      verificationRequired: 'Independently verify archive CRC, preserved state, deployment manifest, owners, hashes and hardlinks. Adapter receipts do not prove installation, disk deployment or gameplay acceptance.'};
   } catch (error) {
     let reconciliation;
     if (current?.invoked) {

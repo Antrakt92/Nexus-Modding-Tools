@@ -21,7 +21,7 @@ node tools/modding/vortex-agent/session.mjs plan reviewed-plan.json
 ```
 
 The plan command is offline by default. Add `--apply` only for an authorized,
-reviewed plan. It uses stable request IDs, serial enable changes and one optional
+reviewed plan. It uses stable request IDs, serial download/enable changes and one optional
 final deployment, then checks acknowledgements and exact terminal receipts.
 See [the no-restart workflow](../../../docs/NO-RESTART-WORKFLOW.md).
 
@@ -69,6 +69,14 @@ returned observations to assess conflicts or collection state. It is not an
 atomic snapshot or disk proof. This client-side tool needs a bridge/client reload
 in existing MCP sessions, but no Vortex restart or extension upgrade. The bridge
 CLI can call it immediately. See [usage](../../../docs/NO-RESTART-WORKFLOW.md).
+
+`run_mod_plan` brings that reviewed workflow to MCP: offline validation by
+default, explicit `apply:true` for pinned Nexus download-only steps, batched
+enable/disable changes and at most one requested final deploy. Initial receipt
+checks overlap at most four at a time; mutations stay serial. Cancellation or
+disconnection stops later steps after an invoked write's receipt is reconciled.
+It does not install or replace mods. See the
+[plan guide](../../../docs/NO-RESTART-WORKFLOW.md#run-the-reviewed-plan-through-mcp).
 
 For collection preparation, use the bridge-local `find_collection_downloads`
 tool with the expected active `gameId` and up to 100 exact Nexus mod/file pairs.
