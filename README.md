@@ -148,12 +148,23 @@ Built on [Alan Tse's vortex-mcp](https://github.com/alandtse/vortex-mcp), the
 [official Nexus uploader](https://github.com/Nexus-Mods/upload-action).
 See [LICENSE](LICENSE) and [component attribution](docs/LICENSES.md).
 
-## My Cyberpunk 2077 mods
+## My Cyberpunk 2077 projects
 
-I also maintain these projects on Nexus Mods:
+### Past the Night collection
+
+[**Past the Night**](https://www.nexusmods.com/games/cyberpunk2077/collections/scqalj)
+is my Vanilla+ collection: a more reactive Night City, expanded quests and
+interactions, improved visuals and smoother everyday gameplay, with fixes and
+my maintained mods.
+
+### Mods on Nexus Mods
 
 | Mod | What it adds |
 | --- | --- |
 | [Clean Inventory — Search and Filters](https://www.nexusmods.com/cyberpunk2077/mods/34413) | Search, category filters and separate sorting preferences for inventory, stash and vendors |
 | [Nearby Auto Loot — Automatic Pickup](https://www.nexusmods.com/cyberpunk2077/mods/34650) | Configurable automatic pickup of nearby loot |
+| [Smart Vendor — Automatic Selling](https://www.nexusmods.com/cyberpunk2077/mods/34656) | Automatic selling of eligible junk, duplicate equipment and surplus supplies |
+| [Skip Intro and Auto Continue](https://www.nexusmods.com/cyberpunk2077/mods/34645) | Skip startup intros and automatically confirm Continue after loading a save |
+| [FSR Exit Guard — AMD Crash on Exit](https://www.nexusmods.com/cyberpunk2077/mods/35845) | A targeted workaround for an AMD FSR-related crash when quitting the game |
 | [Move Your Way](https://www.nexusmods.com/cyberpunk2077/mods/36249) | Movement settings for recovery, climbing, air dashes and extra jumps |
+| [Past the Night — Collection Patches](https://www.nexusmods.com/cyberpunk2077/mods/35196) | Fixes for the Past the Night collection |
