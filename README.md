@@ -2,9 +2,7 @@
 
 # Nexus Modding Tools
 
-**Guarded Nexus Mods & Vortex automation for Windows.**
-
-Inspect a running session. Review changes offline. Keep recovery evidence intact.
+**Nexus Mods and Vortex tools for Windows.**
 
 [![Release: 0.1.0](https://img.shields.io/badge/release-0.1.0-0F766E)](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/tag/v0.1.0) [![Platform: Windows](https://img.shields.io/badge/platform-Windows-0078D4)](docs/RESTORE.md) [![License: GPL-3.0-only](https://img.shields.io/badge/license-GPL--3.0--only-2563EB)](LICENSE)
 
@@ -14,7 +12,7 @@ Inspect a running session. Review changes offline. Keep recovery evidence intact
 
 ---
 
-## Three tools, one workflow
+## Tools
 
 | Tool | What it does | Guide |
 | --- | --- | --- |
@@ -27,7 +25,7 @@ operations do not need a temporary plugin, restart or client-driven window chang
 Writes check the active profile, paths and filesystem identities, and retain durable
 operation receipts. Uncertain effects block retries until reviewed reconciliation.
 
-## Work faster with a running session
+## Session workflows
 
 | Workflow | Entry point | Result |
 | --- | --- | --- |
@@ -78,7 +76,7 @@ changes serially and performs at most one requested final deploy.
 | Adapter build | [Pinned build requirements](docs/DEPENDENCY-AUDIT.md) |
 | Community CLI | Separately installed .NET 10 runtime for the pinned Windows x64 release |
 
-## Boundaries that matter
+## Supported operations and limits
 
 - **No automatic mod installation.** Native Vortex installation can silently
   replace an existing mod. The adapter therefore refuses generic installation;
@@ -88,7 +86,7 @@ changes serially and performs at most one requested final deploy.
 - **Local credentials stay local.** The source contains no keys, account session,
   Vortex database, game files or mod downloads. Each new Windows account initializes
   its own credentials; existing stores are not copied into recovery archives.
-- **Evidence has a scope.** Adapter receipts do not prove disk deployment or
+- **Verification limits.** Adapter receipts do not prove disk deployment or
   gameplay. Compare manifest owners, bytes and hardlinks separately; game behavior
   needs its own acceptance test.
 
@@ -106,22 +104,8 @@ changes serially and performs at most one requested final deploy.
 
 ## Development and verification
 
-`main` is the integration branch. Read [AGENTS.md](AGENTS.md) before changing
-tooling, and use short-lived branches for review. Remove a completed task branch
-only after its commits are merged and no worktree still uses it.
-
-Useful local checks, run from the repository root:
-
-```powershell
-python -B scripts/recovery.py verify
-python -B -m unittest discover -s tests -v
-node --test tools/modding/vortex-agent/session.test.mjs
-```
-
-The tool READMEs describe their broader suites and prerequisites. Source changes
-must also update the reviewed recovery inventory as described in
-[AGENTS.md](AGENTS.md). Run checks locally; do not infer live compatibility from
-a unit test or dispatch hosted workflows without authorization.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for local checks and source-inventory
+updates. The tool READMEs describe additional suites and prerequisites.
 
 ### Repository layout
 
@@ -153,9 +137,8 @@ See [LICENSE](LICENSE) and [component attribution](docs/LICENSES.md).
 ### Past the Night collection
 
 [**Past the Night**](https://www.nexusmods.com/games/cyberpunk2077/collections/scqalj)
-is my Vanilla+ collection: a more reactive Night City, expanded quests and
-interactions, improved visuals and smoother everyday gameplay, with fixes and
-my maintained mods.
+is a Cyberpunk 2077 collection with additional quests and interactions, visual
+mods, fixes and maintained collection patches.
 
 ### Mods on Nexus Mods
 

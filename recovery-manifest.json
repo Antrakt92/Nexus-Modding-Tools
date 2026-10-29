@@ -19,12 +19,16 @@
       "sha256_lf": "ec09caf395c005299cf6dcd163ed26e3f55c5c5e2956f783f611e1d1ca2c50ad"
     },
     {
+      "path": "CONTRIBUTING.md",
+      "sha256_lf": "5842134f0d7c27bbe1cfa09164a3bff2d72c00bb831367ce45fe7dca094175f6"
+    },
+    {
       "path": "LICENSE",
       "sha256_lf": "3c61a4b99007718626612c474991852b9428a3d4ed27a77e46b42fdfb80f896f"
     },
     {
       "path": "README.md",
-      "sha256_lf": "699f228ed0e80dc45c2f00d628573ebcbe3efef91be23841988048cecf70257e"
+      "sha256_lf": "28a3f7e18e9454d9e9b01c6c941119d74c6af3d151019de13cd4e2a6401a2511"
     },
     {
       "path": "VERSION",
