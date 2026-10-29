@@ -13,22 +13,28 @@ class InstallSettlementError extends Error {
 }
 const fail = (code, observation) => { throw new InstallSettlementError(code, observation); };
 const object = value => value && typeof value === 'object' && !Array.isArray(value);
-const id = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(value);
+const archiveId = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(value);
+// Native mod IDs derive from archive/install names, not the opaque download ID.
+// Preserve spaces/Unicode exactly; this observer never resolves an ID as a path.
+const nativeId = value => typeof value === 'string' && value.length > 0 && value.length <= 255
+  && value === value.trim() && !value.endsWith('.')
+  && !/[\x00-\x1f\x7f<>:"/\\|?*]/.test(value)
+  && !['.', '..', '__proto__', 'constructor', 'prototype'].includes(value);
 const fields = ['id', 'archiveId', 'installationPath', 'type'];
 
 async function waitForInstallSettlement(options = {}) {
   const { expected, assertOperationalState, read, record,
     now = Date.now, sleep = ms => new Promise(resolve => setTimeout(resolve, ms)),
     timeoutMs = 30000, quietMs = 3000, pollMs = 1000 } = options;
-  if (!object(expected) || !object(expected.record) || !id(expected.record.id)
+  if (!object(expected) || !object(expected.record) || !nativeId(expected.record.id)
       || Object.keys(expected).sort().join(',') !== 'bytes,disabledModIds,enabled,record'
       || Object.keys(expected.record).sort().join(',') !== 'archiveId,id,installationPath,type'
-      || !id(expected.record.archiveId)
+      || !archiveId(expected.record.archiveId)
       || typeof expected.record.installationPath !== 'string' || !expected.record.installationPath
       || typeof expected.record.type !== 'string'
       || typeof expected.enabled !== 'boolean'
       || !Number.isSafeInteger(expected.bytes) || expected.bytes < 0
-      || !Array.isArray(expected.disabledModIds) || expected.disabledModIds.some(value => !id(value))
+      || !Array.isArray(expected.disabledModIds) || expected.disabledModIds.some(value => !nativeId(value))
       || new Set(expected.disabledModIds).size !== expected.disabledModIds.length
       || expected.disabledModIds.includes(expected.record.id)
       || ![assertOperationalState, read, record, now, sleep].every(fn => typeof fn === 'function')

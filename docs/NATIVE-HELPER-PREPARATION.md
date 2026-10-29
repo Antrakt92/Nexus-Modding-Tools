@@ -4,6 +4,9 @@ Native installation is still outside the permanent MCP adapter. This offline
 preparer upgrades the known held, single-package Cyberpunk helper template; it
 does not add an install endpoint, approve replacement or activate a plugin.
 Other games/types/template shapes require their own reviewed preparation.
+For already tracked Nexus originals, follow the separate
+[batch helper review route](TRACKED-NEXUS-HELPER-REVIEW.md). Do not change this
+preparer's single-package/local-only admission merely to accept a Nexus batch.
 
 Earlier helpers continued to copy a legacy settlement observer after a fixed
 observer was available. New preparations must use the maintained code kit and

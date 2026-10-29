@@ -20,7 +20,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "4f882c3a1bfd3673166425f32d9dd44b576190e6321d3dc856bd1edfc1db080a"
+      "sha256_lf": "e4f3e07d21b89ca5cb2e8d01eee60ffefeff5a32a192ff9dd4d1e5098ffd258a"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -212,7 +212,7 @@
     },
     {
       "path": "docs/NATIVE-HELPER-PREPARATION.md",
-      "sha256_lf": "faae7a9e30a5a832921ad6df542484d03793ded43c0d8188806e1f39e536ec2f"
+      "sha256_lf": "debbc66b13e0fe41699587e0342818727d83b39ebec94fa5e60cb5fb41f9fa8d"
     },
     {
       "path": "docs/NO-RESTART-WORKFLOW.md",
@@ -221,6 +221,10 @@
     {
       "path": "docs/RESTORE.md",
       "sha256_lf": "0bfb85b25ce34e7631969df70e8b5f9462a21fbc8fe65a3183176d58d2a2cefe"
+    },
+    {
+      "path": "docs/TRACKED-NEXUS-HELPER-REVIEW.md",
+      "sha256_lf": "8c2d248321ee4197995dba6ed5257db00061a2467c6c6cbfa96f566eef45664c"
     },
     {
       "path": "recovery/accepted-adapter/README.md",
@@ -476,15 +480,15 @@
     },
     {
       "path": "tools/modding/vortex-agent/install-settlement.cjs",
-      "sha256_lf": "76b08a6378ecb8f8e108ec2e715fad4ea856ee7bcce59dd5d480db7db8d73d2a"
+      "sha256_lf": "9e623558395b59430a817d8fe5f769e10055e658c3171f07ecb01fd441ff1784"
     },
     {
       "path": "tools/modding/vortex-agent/install-settlement.md",
-      "sha256_lf": "123abb2ae7bed137881e97ea14af0ff4e3aefcb620b2d4a0c813f52c7a67f0eb"
+      "sha256_lf": "92edb90885bd2827e1059fea9770d79795c2a5889850f4345856ab931c761903"
     },
     {
       "path": "tools/modding/vortex-agent/install-settlement.test.cjs",
-      "sha256_lf": "1115a87ec6d73ec0b2ab871a8a7586dabb5bda95e83fda9fa269b9d4b1f8cb2c"
+      "sha256_lf": "c6189ae65f30f31bc2a6482ec794ec25c55e8e3ed528868086dcd02628e63096"
     },
     {
       "path": "tools/modding/vortex-agent/install.test.py",
@@ -548,7 +552,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/native-install-wait.test.cjs",
-      "sha256_lf": "685305a0f85b8d4a59ba6efdcb4cd85a5733c26fe1090b436f855f6a00934637"
+      "sha256_lf": "6b5c4075de0d3075dad391acb817a4a5f9bf68107ba51e1561ff6b53725b88dc"
     },
     {
       "path": "tools/modding/vortex-agent/package.test.mjs",

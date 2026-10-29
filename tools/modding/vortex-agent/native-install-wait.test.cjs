@@ -26,3 +26,14 @@ test('conflicting archive ID cannot be adopted from the observed record', async 
   const { opts } = options(); opts.expectedDownloadId = 'different';
   await assert.rejects(wait(opts), { code: 'INSTALL_SETTLEMENT_IDENTITY_CHANGED' });
 });
+
+test('compatibility entry preserves native names without loosening archive identity', async () => {
+  const { opts } = options();
+  const id = 'ArchiveXL 4198 1.28.4 2026-10-29T11-02Z aI50IAsDC';
+  opts.pkg.expectedModId = id;
+  opts.read = () => ({ record: { id, installationPath: id, archiveId: 'download_1',
+    type: '', state: 'installed', attributes: { modSize: 9 } }, flags: {} });
+  assert.equal((await wait(opts)).ready, true);
+  opts.expectedDownloadId = 'different';
+  await assert.rejects(wait(opts), { code: 'INSTALL_SETTLEMENT_IDENTITY_CHANGED' });
+});

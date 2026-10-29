@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Accept bounded native mod IDs containing spaces, punctuation and Unicode in
+  installation settlement. Keep download-ID validation separate and compare all
+  identities exactly; paths, control characters and unsafe object keys are rejected.
+- Document the separate review route for tracked Nexus batches. The automated
+  single-own-package preparer remains scoped; historical helpers are not replayed.
+
 ## 0.2.0 — 2026-10-29
 
 Reusable native-helper preparation, clearer installation diagnostics and an

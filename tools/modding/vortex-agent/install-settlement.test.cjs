@@ -35,6 +35,47 @@ test('unrelated record metadata and flag timestamps do not prolong settlement', 
   assert(!JSON.stringify(f.state.events).includes('never log this'));
 });
 
+test('native mod IDs retain spaces, punctuation and Unicode while archive IDs stay opaque', async () => {
+  const ids = ['ArchiveXL 4198 1.28.4 2026-10-29T11-02Z aI50IAsDC',
+    'Fast Travel (2.5) - native', 'Мод — été 1.0', 'x'.repeat(255)];
+  for (const id of ids) {
+    const f = fixture();
+    f.options.expected.record.id = id; f.options.expected.record.installationPath = id;
+    f.state.record.id = id; f.state.record.installationPath = id;
+    f.options.expected.disabledModIds = ['Previous version (1.0)'];
+    f.state.flags = { [id]: { enabled: false }, 'Previous version (1.0)': { enabled: false } };
+    assert.equal((await wait(f.options)).ready, true, id);
+  }
+});
+
+test('unsafe native keys and malformed archive IDs fail before adapters run', async () => {
+  const invalid = ['', ' ', '.', '..', '../mod', 'dir/mod', 'dir\\mod', 'C:mod',
+    'mod\nname', 'mod\0name', 'mod\tname', 'mod\x7fname', ' trailing ', 'trailing.',
+    'mod*', 'mod?', 'mod|', 'mod<', 'mod>', 'mod"', 'x'.repeat(256),
+    '__proto__', 'constructor', 'prototype'];
+  for (const id of invalid) {
+    for (const field of ['id', 'disabled']) {
+      const f = fixture();
+      if (field === 'id') f.options.expected.record.id = id;
+      else f.options.expected.disabledModIds = [id];
+      await assert.rejects(wait(f.options), { code: 'INVALID_INSTALL_SETTLEMENT_OPTIONS' });
+      assert.equal(f.state.guards, 0); assert.equal(f.state.reads, 0); assert.equal(f.state.events.length, 0);
+    }
+  }
+  const f = fixture(); f.options.expected.record.archiveId = 'download with spaces';
+  await assert.rejects(wait(f.options), { code: 'INVALID_INSTALL_SETTLEMENT_OPTIONS' });
+  assert.equal(f.state.guards, 0);
+});
+
+test('native IDs are compared exactly without trimming or case folding', async () => {
+  for (const changed of ['ArchiveXL native', 'archivexl Native', 'ArchiveXL Native ']) {
+    const f = fixture(); f.options.expected.record.id = 'ArchiveXL Native';
+    f.options.expected.record.installationPath = 'ArchiveXL Native';
+    f.state.record.id = changed; f.state.record.installationPath = 'ArchiveXL Native';
+    await assert.rejects(wait(f.options), { code: 'INSTALL_SETTLEMENT_IDENTITY_CHANGED' });
+  }
+});
+
 test('wrong size times out with an exact diagnostic, without accepting installed state alone', async () => {
   const f = fixture(); f.state.record.attributes.modSize = 8;
   await assert.rejects(wait(f.options), error => {
