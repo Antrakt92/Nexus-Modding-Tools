@@ -162,8 +162,10 @@ export function handler(call = remote) {
   let initialized = false;
   const plans = new Map();
   const handle = async request => {
-    if (!request || request.jsonrpc !== '2.0' || typeof request.method !== 'string') return { jsonrpc: '2.0', id: request?.id ?? null, error: { code: -32600, message: 'Invalid Request' } };
-    const hasId = Object.hasOwn(request, 'id');
+    const hasId = request !== null && typeof request === 'object' && Object.hasOwn(request, 'id');
+    const validId = hasId && (typeof request.id === 'string' || Number.isSafeInteger(request.id));
+    if (!request || request.jsonrpc !== '2.0' || typeof request.method !== 'string' || hasId && !validId)
+      return { jsonrpc: '2.0', id: validId ? request.id : null, error: { code: -32600, message: 'Invalid Request' } };
     if (!hasId) {
       if (request.method === 'notifications/cancelled') plans.get(request.params?.requestId)?.abort();
       return undefined;
@@ -183,8 +185,6 @@ export function handler(call = remote) {
       else if (['tools/list', 'tools/call'].includes(request.method)) {
         if (!initialized) throw new Error('Initialize the bridge first');
         if (request.method === 'tools/call' && request.params?.name === 'run_mod_plan') {
-          if (typeof request.id !== 'string' && !Number.isSafeInteger(request.id))
-            return {jsonrpc: '2.0', id: null, error: {code: -32600, message: 'Invalid plan request ID'}};
           if (plans.has(request.id)) throw Error('DUPLICATE_ACTIVE_PLAN_REQUEST');
           const controller = new AbortController(); plans.set(request.id, controller);
           try {result = await clientRemote(request.method, request.params, call, {signal: controller.signal});}
@@ -212,6 +212,7 @@ export async function main(argv = process.argv.slice(2)) {
   await runStdio(process.stdin, process.stdout, handler());
 }
 export async function runStdio(input, output, handle, maxPending = 100) {
+  if (!Number.isSafeInteger(maxPending) || maxPending < 1) throw new Error('Invalid MCP pending limit');
   let writing = Promise.resolve();
   const write = response => {
     const next = writing.then(() => new Promise((resolve, reject) => {
@@ -228,6 +229,7 @@ export async function runStdio(input, output, handle, maxPending = 100) {
   };
   // Concurrent requests preserve IDs; long writes must not block dialog reads.
   const pending = new Set();
+  let activeDispatches = 0;
   const cancelPlans = () => handle.cancelPendingPlans?.();
   output.on('close', cancelPlans); output.on('error', cancelPlans);
   try {
@@ -236,10 +238,26 @@ export async function runStdio(input, output, handle, maxPending = 100) {
       let request;
       try { if (line === null) throw new Error(); request = JSON.parse(line); }
       catch { await write({ jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error' } }); continue; }
-      const work = handle(request).then(response => response ? write(response) : undefined);
+      const notification = request?.jsonrpc === '2.0' && typeof request.method === 'string'
+        && !Object.hasOwn(request, 'id');
+      // A full active queue must still receive cancellation. Do not grow a
+      // second ordinary-request queue: overload closes fail-closed, cancelling
+      // later plan steps while finally waits for already invoked settlement.
+      if (!notification && pending.size >= maxPending && activeDispatches > 0)
+        throw new Error('MCP request capacity exceeded');
+      activeDispatches++;
+      const dispatch = Promise.resolve(handle(request)).then(
+        response => {activeDispatches--; return response;},
+        error => {activeDispatches--; throw error;});
+      const work = dispatch.then(response => response ? write(response) : undefined);
       pending.add(work);
       work.then(() => pending.delete(work), () => {});
-      if (pending.size >= maxPending) await Promise.race(pending);
+      if (pending.size >= maxPending) {
+        // Let already-resolved handlers leave activeDispatches before deciding
+        // whether this is native work or merely stdout backpressure.
+        await Promise.resolve();
+        if (pending.size >= maxPending && activeDispatches === 0) await Promise.race(pending);
+      }
     }
   } finally {
     cancelPlans();

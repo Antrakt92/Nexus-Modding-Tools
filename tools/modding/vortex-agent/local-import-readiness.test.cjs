@@ -64,6 +64,47 @@ test('a callback settling during the final guard precedes the ready receipt', as
     < f.state.events.findIndex(event => event.phase === 'import_ready'));
 });
 
+test('target state and identity changed during the final guard cannot produce readiness', async () => {
+  for (const changed of ['failed', 'removed', 'path', 'nexus', 'additional']) {
+    const f = fixture();
+    f.options.assertOperationalState = async () => {
+      if (++f.state.guards !== 5) return;
+      const target = f.state.rows[1];
+      if (changed === 'failed') target.state = 'failed';
+      if (changed === 'removed') f.state.rows.pop();
+      if (changed === 'path') target.localPath = 'Other.zip';
+      if (changed === 'nexus') target.modInfo = { modId: 1 };
+      if (changed === 'additional') f.state.rows.push(f.ready('other'));
+    };
+    await assert.rejects(importLocalArchiveReady(f.options), error => {
+      assert(['IMPORTED_DOWNLOAD_CHANGED_BEFORE_READY', 'IMPORT_PATH_CHANGED',
+        'IMPORT_NEXUS_IDENTITY_APPEARED'].includes(error.code), `${changed}: ${error.code}`);
+      return true;
+    });
+    assert(!f.state.events.some(event => event.phase === 'import_ready'), changed);
+    assert.equal(f.state.imports, 1);
+  }
+});
+
+test('caller cannot retarget the archive expectation while file proof awaits', async () => {
+  const f = fixture();
+  f.options.getFileProof = async path => {
+    f.options.expected.sha256 = 'b'.repeat(64);
+    return { path, regularFile: true, reparse: false, bytes: 123, sha256: 'b'.repeat(64) };
+  };
+  await assert.rejects(importLocalArchiveReady(f.options), { code: 'IMPORT_ARCHIVE_PROOF_MISMATCH' });
+});
+
+test('a mutable read projection cannot change the tracked ID during file proof', async () => {
+  const f = fixture();
+  f.options.readDownloads = () => f.state.rows;
+  f.options.getFileProof = async path => {
+    f.state.rows[1].id = 'other';
+    return { path, regularFile: true, reparse: false, bytes: 123, sha256: SHA };
+  };
+  await assert.rejects(importLocalArchiveReady(f.options), { code: 'IMPORTED_DOWNLOAD_CHANGED_DURING_PROOF' });
+});
+
 test('finished exact file becomes ready before delayed metadata callback; callback still observed', async () => {
   const f = fixture();
   const result = await importLocalArchiveReady(f.options);

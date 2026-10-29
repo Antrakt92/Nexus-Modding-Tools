@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 from pathlib import Path, PurePosixPath
+import re
 import stat
 import subprocess
 import urllib.request
@@ -49,9 +50,21 @@ def absolute(value):
 
 
 def verify(root=ROOT):
-    manifest = json.loads((root / 'recovery-manifest.json').read_text(encoding='utf-8'))
+    manifest_path = root / 'recovery-manifest.json'
+    no_links(manifest_path)
+    manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+    if (not isinstance(manifest, dict) or set(manifest) != {'schema', 'digest', 'files'}
+            or type(manifest['schema']) is not int or manifest['schema'] != 1
+            or manifest['digest'] != 'SHA-256 after CRLF-to-LF normalization'
+            or not isinstance(manifest['files'], list) or not manifest['files']):
+        raise ValueError('Invalid or unsupported recovery manifest')
     seen = set()
     for row in manifest['files']:
+        if (not isinstance(row, dict) or set(row) != {'path', 'sha256_lf'}
+                or not isinstance(row['path'], str)
+                or not isinstance(row['sha256_lf'], str)
+                or not re.fullmatch(r'[a-f0-9]{64}', row['sha256_lf'])):
+            raise ValueError('Invalid recovery manifest file entry')
         rel = relative(row['path']).as_posix()
         if rel in seen:
             raise ValueError('Duplicate recovery input')

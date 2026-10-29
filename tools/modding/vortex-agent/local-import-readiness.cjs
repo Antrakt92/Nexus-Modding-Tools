@@ -52,10 +52,12 @@ function validateExpected(expected) {
  * completion, and a late callback failure must remain visible to the caller.
  */
 async function importLocalArchiveReady(options) {
-  const { expected, baselineDownloadIds, readDownloads, importOnce, getFileProof,
+  const { expected: expectation, baselineDownloadIds, readDownloads, importOnce, getFileProof,
     assertOperationalState, record, timeoutMs = 30000, pollIntervalMs = 100,
     now = Date.now, sleep = ms => new Promise(resolve => setTimeout(resolve, ms)) } = options || {};
-  validateExpected(expected);
+  validateExpected(expectation);
+  const expected = Object.freeze(Object.fromEntries(
+    ['gameId', 'fileName', 'downloadRoot', 'bytes', 'sha256'].map(key => [key, expectation[key]])));
   if (!Array.isArray(baselineDownloadIds) || baselineDownloadIds.some(id => !validId(id))
       || new Set(baselineDownloadIds).size !== baselineDownloadIds.length
       || ![readDownloads, importOnce, getFileProof, assertOperationalState, record, now, sleep]
@@ -115,6 +117,12 @@ async function importLocalArchiveReady(options) {
         || path.basename(row.localPath) !== row.localPath) fail('IMPORT_PATH_CHANGED');
     if (!localIdentity(row)) fail('IMPORT_NEXUS_IDENTITY_APPEARED');
   }
+  async function checkImported(downloadId, code) {
+    const checked = await rows();
+    const added = checked.filter(row => !baseline.has(row.id));
+    if (added.length !== 1 || added[0].id !== downloadId || added[0].state !== 'finished') fail(code);
+    scope(added[0]);
+  }
   const target = path.join(expected.downloadRoot, expected.fileName);
   async function proofFor(row) {
     scope(row);
@@ -170,25 +178,23 @@ async function importLocalArchiveReady(options) {
         if (!['init', 'started', 'finalizing', 'finished'].includes(row.state))
           fail('IMPORT_DOWNLOAD_STATE_UNKNOWN');
         if (row.state === 'finished') {
+          const downloadId = row.id;
           const proof = await proofFor(row);
           await guard();
           // Hashing can await I/O. Re-read identity after that boundary.
-          const checked = await rows();
-          const newRows = checked.filter(value => !baseline.has(value.id));
-          if (newRows.length !== 1 || newRows[0].id !== row.id || newRows[0].state !== 'finished')
-            fail('IMPORTED_DOWNLOAD_CHANGED_DURING_PROOF');
-          scope(newRows[0]);
+          await checkImported(downloadId, 'IMPORTED_DOWNLOAD_CHANGED_DURING_PROOF');
           if (['invalid', 'rejected'].includes(callbackState.status)) fail(callbackState.code);
-          if (callbackState.status === 'resolved' && callbackState.ids[0] !== row.id)
+          if (callbackState.status === 'resolved' && callbackState.ids[0] !== downloadId)
             fail('IMPORT_CALLBACK_RECORD_MISMATCH');
-          readyId = row.id;
+          readyId = downloadId;
           await guard();
+          await checkImported(downloadId, 'IMPORTED_DOWNLOAD_CHANGED_BEFORE_READY');
           if (['invalid', 'rejected'].includes(callbackState.status)) fail(callbackState.code);
           const readyBeforeCallback = callbackState.status === 'pending';
-          emit({ phase: 'import_ready', downloadId: row.id, readyBeforeCallback,
+          emit({ phase: 'import_ready', downloadId, readyBeforeCallback,
             archiveSHA256: proof.sha256, archiveBytes: proof.bytes });
           if (receiptFailed) fail('IMPORT_RECEIPT_FAILED');
-          return { downloadId: row.id, proof, readyBeforeCallback, callbackObservation };
+          return { downloadId, proof, readyBeforeCallback, callbackObservation };
         }
       }
       if (['invalid', 'rejected'].includes(callbackState.status)) fail(callbackState.code);

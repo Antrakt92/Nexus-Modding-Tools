@@ -94,23 +94,51 @@ function assertContext(api, selectors, args, stop = stopped) {
   stop(api.getState(), args.gameId);
   return live;
 }
-async function digest(file) {
-  const { createReadStream } = require('node:fs');
+async function digest(handle) {
   const hash = crypto.createHash('sha256');
-  for await (const chunk of createReadStream(file)) hash.update(chunk);
+  for await (const chunk of handle.createReadStream({ autoClose: false, start: 0 })) hash.update(chunk);
   return hash.digest('hex');
 }
+function fileStamp(stat) { return `${stat.dev}:${stat.ino}:${stat.size}:${stat.mtimeNs}:${stat.ctimeNs}`; }
 async function archive(api, args, id, selectors = {}, catalog) {
-  const record = api.getState().persistent?.downloads?.files?.[id];
-  const resolved = downloads.resolveDownload(record, api.getState(), selectors, catalog);
-  insist(record?.state === 'finished' && !resolved.ambiguous && resolved.gameId === args.gameId, 'DOWNLOAD_NOT_SINGLE_GAME');
-  insist(typeof record.localPath === 'string', 'DOWNLOAD_PATH_MISSING');
-  const file = path.resolve(args.downloadPath, record.localPath);
+  const projection = () => {
+    const state = api.getState(), record = state.persistent?.downloads?.files?.[id];
+    const resolved = downloads.resolveDownload(record, state, selectors, catalog);
+    return { state: record?.state, localPath: record?.localPath, ...resolved };
+  };
+  const pinned = projection();
+  insist(pinned.state === 'finished' && !pinned.ambiguous && pinned.gameId === args.gameId, 'DOWNLOAD_NOT_SINGLE_GAME');
+  insist(typeof pinned.localPath === 'string', 'DOWNLOAD_PATH_MISSING');
+  const recordPin = JSON.stringify(pinned);
+  const verifyRecord = () => insist(JSON.stringify(projection()) === recordPin, 'DOWNLOAD_RECORD_CHANGED');
+  const file = path.resolve(args.downloadPath, pinned.localPath);
   const real = await fs.realpath(file), root = await fs.realpath(args.downloadPath);
-  insist(path.dirname(normalized(real)) === normalized(root), 'DOWNLOAD_PATH_ESCAPE');
-  const stat = await fs.stat(real);
-  insist(stat.isFile() && stat.size === args.size && await digest(real) === args.sha256, 'PACKAGE_PIN_MISMATCH');
-  return record;
+  insist(path.dirname(normalized(real)) === normalized(root)
+    && normalized(file) === normalized(real), 'DOWNLOAD_PATH_ESCAPE');
+  verifyRecord();
+  const handle = await fs.open(real, 'r');
+  try {
+    const before = await handle.stat({ bigint: true });
+    insist(before.isFile() && before.size === BigInt(args.size), 'PACKAGE_PIN_MISMATCH');
+    const stamp = fileStamp(before);
+    // Pin the descriptor, not a name reopened after stat. Mutation of the tracked
+    // record or of the path/file while hashing invalidates this proof.
+    const sha256 = await digest(handle);
+    verifyRecord();
+    insist(fileStamp(await handle.stat({ bigint: true })) === stamp, 'DOWNLOAD_ARCHIVE_CHANGED');
+    const verify = () => {
+      verifyRecord();
+      try {
+        insist(normalized(disk.realpathSync(file)) === normalized(real)
+          && normalized(disk.realpathSync(args.downloadPath)) === normalized(root)
+          && !disk.lstatSync(file).isSymbolicLink()
+          && fileStamp(disk.statSync(file, { bigint: true })) === stamp, 'DOWNLOAD_ARCHIVE_CHANGED');
+      } catch { throw Error('DOWNLOAD_ARCHIVE_CHANGED'); }
+    };
+    verify();
+    insist(sha256 === args.sha256, 'PACKAGE_PIN_MISMATCH');
+    return verify;
+  } finally { await handle.close(); }
 }
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function durable(file, value) {
@@ -118,11 +146,14 @@ async function durable(file, value) {
   try { await handle.writeFile(JSON.stringify(value)); await handle.sync(); }
   finally { await handle.close(); }
 }
-async function commitCompletion(file, value) {
+async function commitCompletion(file, value, verify) {
   // A final name is never visible before the bytes are fsynced. link() is an
   // atomic no-overwrite publication (rename() could overwrite an old request).
   const pending = file + '.pending-' + crypto.randomUUID();
   await durable(pending, value);
+  // Revalidate an asynchronous archive proof after receipt fsync, immediately
+  // before publishing its final name. Other operations retain their old route.
+  if (verify) verify();
   await fs.link(pending, file);
   await fs.unlink(pending);
 }
@@ -179,15 +210,18 @@ function createOperations(api, actions, selectors, options = {}) {
         return fn();
       };
       try {
-        const result = await run(effect);
+        let verifyCompletion;
+        const result = await run(effect, verify => { verifyCompletion = verify; });
         check(args);
+        if (verifyCompletion) verifyCompletion();
         const status = { protocol: PROTOCOL, requestId: args.requestId, operation: name,
           operationCompleted: true, diskDeploymentVerified: false,
           verificationRequired: receipts.VERIFICATION, ...result };
         const publicStatus = sanitize(status, 'operation_status');
         const completion = sanitize({ ...status, receiptVersion: receipts.VERSION, gameId: args.gameId, profileId: args.profileId, at: new Date().toISOString() }, 'receipt');
         insist(receipts.validCompletion(completion, receipt), 'INVALID_COMPLETION_RECEIPT');
-        await commitCompletion(path.join(dir, args.requestId + '.completion.json'), completion);
+        await commitCompletion(path.join(dir, args.requestId + '.completion.json'), completion,
+          verifyCompletion ? () => { check(args); verifyCompletion(); } : undefined);
         if (armed) await fs.unlink(path.join(dir, 'unresolved.json'));
         return publicStatus;
       } catch (error) {
@@ -235,7 +269,7 @@ function createOperations(api, actions, selectors, options = {}) {
       unchangedFlags(args, before);
       return { deploymentPromiseResolved: true };
     }),
-    download_nexus: args => mutate('download_nexus', args, async effect => {
+    download_nexus: args => mutate('download_nexus', args, async (effect, beforeCompletion) => {
       const before = flags(args);
       const installedBefore = JSON.stringify(Object.entries(api.getState().persistent?.mods?.[args.gameId] || {})
         .map(([id, mod]) => [id, mod.state, mod.archiveId]).sort());
@@ -267,7 +301,9 @@ function createOperations(api, actions, selectors, options = {}) {
         if (item?.state === 'finished') break;
         await sleep(options.pollIntervalMs ?? 500);
       }
-      await archive(api, args, id, selectors, catalog); check(args);
+      const verifyArchive = await archive(api, args, id, selectors, catalog); check(args);
+      verifyArchive();
+      beforeCompletion(verifyArchive);
       insist(matchesNow()[0]?.[0] === id, 'NEXUS_IDS_MISMATCH');
       unchangedFlags(args, before);
       insist(installedBefore === JSON.stringify(Object.entries(api.getState().persistent?.mods?.[args.gameId] || {})

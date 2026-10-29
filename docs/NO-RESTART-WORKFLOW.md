@@ -197,6 +197,17 @@ cancellation cannot stop another request. A client timeout that sends no
 cancellation and leaves the connection open is not proof of cancellation;
 reconcile the original request IDs before any recovery.
 
+The bridge limits pending requests to 100 by default. Cancellation/control
+notifications remain readable at capacity while handlers are active. An extra
+ordinary request beyond that capacity closes the channel with
+`MCP request capacity exceeded`, cancels later plan steps and waits for invoked
+settlement; it does not dispatch the excess request or create an unbounded queue.
+When only stdout is blocked, normal output backpressure remains in effect.
+
+Coordinate shared-source maintenance with any other chat's native helper before
+editing files it pins. A `SOURCE_CHANGED` stop requires reconciliation and review
+of the new pins; do not replay an import or suppress the guard.
+
 ## Boundaries
 
 The client cannot prevent Vortex itself from presenting a legitimate native

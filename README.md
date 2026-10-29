@@ -82,7 +82,7 @@ changes serially and performs at most one requested final deploy.
 | Choose paths, credential locations or client settings | [Configuration](docs/CONFIGURATION.md) |
 | Inspect Vortex or apply a reviewed plan without restarting it | [Running-session workflow](docs/NO-RESTART-WORKFLOW.md) |
 | Choose the right skill, tool and verification boundary | [Agent workflow](docs/AGENT-WORKFLOW.md) |
-| Review tested behavior and known limits | [Full integration audit](docs/FULL-AUDIT-20261025.md) |
+| Review tested behavior and known limits | [Latest full tooling audit](docs/FULL-AUDIT-20261029.md), [earlier integration evidence](docs/FULL-AUDIT-20261025.md) |
 | Check dependency pins and point-in-time audit evidence | [Dependency audit](docs/DEPENDENCY-AUDIT.md) |
 | Understand licenses and upstream attribution | [Licenses and provenance](docs/LICENSES.md) |
 
