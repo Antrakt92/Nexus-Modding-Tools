@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- New prepared helpers verify staged files and physical bytes on every settlement
+  sample instead of waiting for asynchronous native `modSize` metadata. Keep
+  identity/flags/state and quiet-window gates; existing attempts remain immutable.
 - Preserve empty native versions as unknown in inventory reads, rather than
   failing the complete mod list. Keep identifier, URI and credential checks.
 - Add offline source-pinned preparation and copy-map verification for batches of

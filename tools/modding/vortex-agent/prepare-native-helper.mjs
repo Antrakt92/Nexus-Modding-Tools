@@ -26,7 +26,7 @@ function contains(root, candidate) {
   const rel = path.relative(root, candidate);
   return rel === '' || !path.isAbsolute(rel) && rel !== '..' && !rel.startsWith('..' + path.sep);
 }
-const files = ['install-settlement.cjs', 'native-install-wait.cjs', 'physical-proof.cjs', 'local-import-readiness.cjs'];
+const files = ['install-settlement.cjs', 'native-install-wait.cjs', 'physical-proof.cjs', 'local-import-readiness.cjs', 'payload-size-proof.cjs'];
 const alias = Buffer.from("'use strict';\nmodule.exports = require('./native-install-wait.cjs');\n");
 
 export function prepareHelper({ source, output, sourceSha256, apply = false }) {
@@ -63,7 +63,9 @@ export function prepareHelper({ source, output, sourceSha256, apply = false }) {
   let index = input.toString('utf8');
   // Deliberately support the known reviewed template, not arbitrary task code.
   index = replaceOnce(index, "now:Date.now,pkg,expectedSize:size,pollMs:1000",
-    "now:Date.now,pkg,expectedSize:size,expectedDownloadId:id,expectedType:'',record:event=>record(pkg.key+'-settlement-'+(++sequence),event),pollMs:1000");
+    "now:Date.now,pkg,expectedSize:size,sizeSource:'verified-payload',expectedDownloadId:id,expectedType:'',record:event=>record(pkg.key+'-settlement-'+(++sequence),event),pollMs:1000");
+  index = replaceOnce(index, 'return{record:s.persistent.mods[c.health.gameId][pkg.expectedModId],flags:',
+    "return{verifiedPayloadBytes:require('./payload-size-proof.cjs').verifiedPayloadBytes(tree(root),pkg.payload),record:s.persistent.mods[c.health.gameId][pkg.expectedModId],flags:");
   const physical = / function physical\(p\)\{[^\r\n]+\}/g;
   const matches = [...index.matchAll(physical)];
   if (matches.length !== 1 || !matches[0][0].includes('prior=cache.get(p)') || !index.includes('sequence=0'))

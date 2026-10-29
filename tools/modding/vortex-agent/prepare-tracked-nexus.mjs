@@ -10,7 +10,7 @@ const catalog = JSON.parse(fs.readFileSync(path.join(here, 'tracked-nexus-templa
 const scratch = path.resolve(here, '../../../local-state');
 const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const need = (v, code) => { if (!v) throw Error(code); };
-const ownerNames = ['install-settlement.cjs', 'tracked-nexus-policy.cjs', 'physical-proof.cjs'];
+const ownerNames = ['install-settlement.cjs', 'tracked-nexus-policy.cjs', 'physical-proof.cjs', 'payload-size-proof.cjs'];
 // This private-overlay admission helper is not reachable from the Nexus engine.
 const referenceModules = Object.keys(catalog.modules).filter(n => n !== 'deferred-policy.cjs');
 const scopeAlias = Buffer.from("'use strict';\nmodule.exports=require('./tracked-nexus-policy.cjs').createScopePolicy(require('./scope-pins.json'));\n");
@@ -55,9 +55,11 @@ export function adaptTrackedIndex(input) {
   need([...text.matchAll(physical)].length === 1 && text.includes('physicalCache.get(file)'), 'UNSUPPORTED_TRACKED_TEMPLATE');
   text = text.replace(physical, "const physical=require('./physical-proof.cjs').createPhysicalReader({fs,hash,cache:physicalCache});");
   text = once(text, 'now:()=>Date.now(),pkg,expectedSize,timeoutMs:30000,quietMs:3000',
-    "now:()=>Date.now(),pkg,expectedSize,expectedDownloadId:downloadId,expectedType:pkg.expectedType,record:event=>save(pkg.key+'-settlement-'+(++settlementSequence),event),timeoutMs:30000,quietMs:3000");
+    "now:()=>Date.now(),pkg,expectedSize,sizeSource:'verified-payload',expectedDownloadId:downloadId,expectedType:pkg.expectedType,record:event=>save(pkg.key+'-settlement-'+(++settlementSequence),event),timeoutMs:30000,quietMs:3000");
   text = once(text, "return {record:current,flags:state.persistent.profiles[baseline.health.profileId].modState||{}};",
-    "return {record:{...current,id},flags:state.persistent.profiles[baseline.health.profileId].modState||{}};");
+    "return {verifiedPayloadBytes:require('./payload-size-proof.cjs').verifiedPayloadBytes(tree(stageRoot),pkg.payload),record:{...current,id},flags:state.persistent.profiles[baseline.health.profileId].modState||{}};");
+  text = once(text, 'expectedSize=folderBytes(stageRoot)',
+    "expectedSize=require('./payload-size-proof.cjs').verifiedPayloadBytes(files,pkg.payload)");
   text = once(text, "m?.state==='installed'&&m.archiveId===downloadId&&m.installationPath===pkg.expectedModId",
     "m?.state==='installed'&&(m.id===undefined||m.id===pkg.expectedModId)&&m.archiveId===downloadId&&m.installationPath===pkg.expectedModId&&m.type===pkg.expectedType");
   text = text.replace('exact three final-cutoff official tracked updates', 'exact reviewed bounded official tracked updates')

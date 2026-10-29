@@ -87,6 +87,46 @@ test('wrong size times out with an exact diagnostic, without accepting installed
   assert.equal(f.state.events.at(-1).noReplay, true);
 });
 
+test('explicit verified-payload mode does not wait for unrelated asynchronous size metadata', async () => {
+  for (const metadata of [undefined, 0, 8, 100]) {
+    const f = fixture(); f.options.sizeSource = 'verified-payload';
+    f.state.record.attributes.modSize = metadata;
+    const read = f.options.read;
+    f.options.read = () => ({ ...read(), verifiedPayloadBytes: 9 });
+    const result = await wait(f.options);
+    assert.equal(result.ready, true); assert.equal(result.sizeSource, 'verified-payload');
+    assert.equal(result.metadataSizeReady, false);
+  }
+});
+
+test('payload mode requires exact fresh proof and still checks state, identity and flags', async () => {
+  for (const proof of [undefined, null, '9', 8, -1, NaN]) {
+    const f = fixture(); f.options.sizeSource = 'verified-payload';
+    const read = f.options.read; f.options.read = () => ({ ...read(), verifiedPayloadBytes: proof });
+    await assert.rejects(wait(f.options), error => error.code === 'INSTALL_SETTLEMENT_TIMEOUT_RECONCILE'
+      && error.observation.waiting.includes('payload_bytes'));
+  }
+  const f = fixture(); f.options.sizeSource = 'verified-payload';
+  const read = f.options.read;
+  f.options.read = () => { const s = read(); return { ...s, verifiedPayloadBytes: f.state.clock === 2000 ? 8 : 9 }; };
+  assert.equal((await wait(f.options)).elapsedMs, 6000);
+  f.options.sizeSource = 'skip';
+  await assert.rejects(wait(f.options), { code: 'INVALID_INSTALL_SETTLEMENT_OPTIONS' });
+  for (const kind of ['identity', 'flags', 'state']) {
+    const changed = fixture(); changed.options.sizeSource = 'verified-payload';
+    const next = changed.options.read;
+    changed.options.read = () => {
+      const s = next();
+      if (kind === 'identity') s.record.archiveId = 'other';
+      if (kind === 'flags') s.flags.own.enabled = true;
+      if (kind === 'state') s.record.state = 'installing';
+      return { ...s, verifiedPayloadBytes: 9 };
+    };
+    await assert.rejects(wait(changed.options), { code: kind === 'identity'
+      ? 'INSTALL_SETTLEMENT_IDENTITY_CHANGED' : 'INSTALL_SETTLEMENT_TIMEOUT_RECONCILE' });
+  }
+});
+
 test('each required state or flag transition restarts the quiet span', async () => {
   for (const kind of ['state', 'size', 'own', 'old', 'missing']) {
     const f = fixture(), read = f.options.read;

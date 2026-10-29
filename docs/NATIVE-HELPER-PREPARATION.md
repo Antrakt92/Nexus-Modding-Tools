@@ -72,6 +72,14 @@ metadata/replacement admission, exclusive native install hooks and disk checks.
 - `install-settlement.cjs` ignores unrelated metadata churn and reports waiting
   predicates, sampled quiet time and separate guard/read/sleep timing. A failed
   adapter deadline retains its last operation and counters, even before a sample.
+- Newly prepared helpers use explicit `verified-payload` size observation:
+  every sample validates the fresh staged file set and SHA-256 map before
+  summing its physical bytes with `payload-size-proof.cjs`. Native `modSize`
+  is reported separately and does not block that mode: Vortex calculates it
+  asynchronously after installation and can swallow calculation errors.
+  Identity, installed state, flags, quiet-window and protected-state checks remain.
+  The observer's default metadata mode remains strict for existing callers;
+  never change an attempted helper or reinterpret its failed receipt as success.
 - `physical-proof.cjs` shares a hash across hardlink aliases with the same
   dev/ino/size/mtime/ctime/nlink generation, while independently checking every
   leaf/path observation. Metadata is checked after hashing before caching.
