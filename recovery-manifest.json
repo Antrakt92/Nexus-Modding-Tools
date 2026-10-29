@@ -180,7 +180,7 @@
     },
     {
       "path": "docs/AUDIT-20261029.md",
-      "sha256_lf": "94e14cd526533a2126ccaaafa8f24cf0ba8ed68b6a77c37b9f35bd809eab4131"
+      "sha256_lf": "8a39246322f51f5a24824a63a5fc65f7cdb64ba352b4594e5a2e272243422cc7"
     },
     {
       "path": "docs/COLLECTION-DOWNLOADS.md",
@@ -420,7 +420,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/README.md",
-      "sha256_lf": "e1a7667d75d6c177e6e7feea25734abfe29fe32b36c8f23ee8ddc9d091dc80fa"
+      "sha256_lf": "a403a07273bd57de3a7f3aeb7f4b8d4c727194526ce7a161233abf8262b7e7ce"
     },
     {
       "path": "tools/modding/vortex-agent/audit-fixes.test.mjs",

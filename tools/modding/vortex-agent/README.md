@@ -162,4 +162,5 @@ Current dependency pins, audit results and build limitations are recorded in
 an old audit count as a current security verdict.
 The [29 October follow-up](../../../docs/AUDIT-20261029.md) records newer HTTP
 dependency pins, stricter read validation, the update review and the remaining
-live inventory-read failure. Its isolated build is separate from host activation.
+inventory-read investigation and the subsequent authorized live upgrade and
+preservation checks. An isolated build alone remains separate from host activation.
