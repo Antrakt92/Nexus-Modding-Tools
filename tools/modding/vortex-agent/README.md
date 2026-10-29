@@ -105,6 +105,11 @@ The [native-install design](LOCAL-PACKAGE-INSTALL-DESIGN.md) explains why a fres
 archive name and `allowAutoEnable:false` do not prove non-replacement. A queue
 around the same native install event would not repair that boundary.
 
+For reviewed task-owned one-shots, the [installation settlement observer](install-settlement.md)
+provides pinned record/flag checks and specific waiting diagnostics without
+resetting its quiet window for unrelated metadata. It must be copied and pinned
+in the next helper; existing frozen helpers and the live adapter are unchanged.
+
 ## Receipts and uncertainty
 
 Operations serialize through a filesystem lock. Attempts, failures and committed

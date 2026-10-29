@@ -44,6 +44,12 @@ import. A failed/restarted helper must reconcile existing attempt receipts befor
 calling this function; per-invocation single-import behavior is not a durable
 cross-process replay barrier.
 
+Adapter deadlines are rechecked after completion: a long synchronous guard
+cannot beat the timer and report late success. The ready receipt follows the
+final guard and rejects callback failures already observed during that guard.
+Native installation afterward has a separate, optional
+[settlement observer](install-settlement.md); neither helper installs by itself.
+
 Run offline regressions with:
 
 ```powershell

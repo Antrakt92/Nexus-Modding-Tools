@@ -65,13 +65,17 @@ async function importLocalArchiveReady(options) {
     fail('INVALID_IMPORT_OPTIONS');
   const baseline = new Set(baselineDownloadIds);
   const deadline = now() + timeoutMs;
-  const bounded = async promise => {
+  const bounded = async (promise, checkCompletion = true) => {
     let timer;
     try {
-      return await Promise.race([promise, new Promise((_, reject) => {
+      const result = await Promise.race([promise, new Promise((_, reject) => {
         timer = setTimeout(() => reject(new ImportReadinessError('IMPORT_ADAPTER_TIMEOUT_RECONCILE')),
           Math.max(1, deadline - now()));
       })]);
+      // A synchronous/CPU-bound adapter can finish after the deadline before
+      // the event loop runs its timer. Never turn that race into readiness.
+      if (checkCompletion && now() >= deadline) fail('IMPORT_ADAPTER_TIMEOUT_RECONCILE');
+      return result;
     } finally { clearTimeout(timer); }
   };
   let receiptFailed = false;
@@ -177,17 +181,20 @@ async function importLocalArchiveReady(options) {
           if (['invalid', 'rejected'].includes(callbackState.status)) fail(callbackState.code);
           if (callbackState.status === 'resolved' && callbackState.ids[0] !== row.id)
             fail('IMPORT_CALLBACK_RECORD_MISMATCH');
-          const readyBeforeCallback = callbackState.status === 'pending';
           readyId = row.id;
+          await guard();
+          if (['invalid', 'rejected'].includes(callbackState.status)) fail(callbackState.code);
+          const readyBeforeCallback = callbackState.status === 'pending';
           emit({ phase: 'import_ready', downloadId: row.id, readyBeforeCallback,
             archiveSHA256: proof.sha256, archiveBytes: proof.bytes });
-          await guard();
+          if (receiptFailed) fail('IMPORT_RECEIPT_FAILED');
           return { downloadId: row.id, proof, readyBeforeCallback, callbackObservation };
         }
       }
       if (['invalid', 'rejected'].includes(callbackState.status)) fail(callbackState.code);
       if (now() >= deadline) fail('IMPORT_READINESS_TIMEOUT_RECONCILE');
-      await bounded(sleep(Math.min(pollIntervalMs, Math.max(1, deadline - now()))));
+      // Sleeping to the boundary is normal; the next guard owns poll expiry.
+      await bounded(sleep(Math.min(pollIntervalMs, Math.max(1, deadline - now()))), false);
     }
   } catch (error) {
     const code = error instanceof ImportReadinessError ? error.code : 'IMPORT_READINESS_FAILED';

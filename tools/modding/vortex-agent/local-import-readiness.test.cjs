@@ -28,6 +28,42 @@ function fixture() {
   return { state, options, callback, ready };
 }
 
+test('a final operational guard crossing the deadline cannot report import readiness', async () => {
+  const f = fixture();
+  f.options.assertOperationalState = () => {
+    if (++f.state.guards === 5) f.state.clock = 31;
+  };
+  await assert.rejects(importLocalArchiveReady(f.options), { code: 'IMPORT_ADAPTER_TIMEOUT_RECONCILE' });
+  assert.equal(f.state.imports, 1);
+  assert.equal(f.state.events.at(-1).noReplay, true);
+  assert(!f.state.events.some(event => event.phase === 'import_ready'));
+});
+
+test('callback rejection during the final asynchronous guard prevents a ready receipt', async () => {
+  const f = fixture();
+  f.options.assertOperationalState = async () => {
+    if (++f.state.guards === 5) {
+      f.callback.reject(Error('private callback failure'));
+      await Promise.resolve();
+    }
+  };
+  await assert.rejects(importLocalArchiveReady(f.options), { code: 'IMPORT_CALLBACK_FAILED' });
+  assert(!f.state.events.some(event => event.phase === 'import_ready'));
+});
+
+test('a callback settling during the final guard precedes the ready receipt', async () => {
+  const f = fixture();
+  f.options.assertOperationalState = async () => {
+    if (++f.state.guards === 5) {
+      f.callback.resolve(['new_1']);
+      await Promise.resolve();
+    }
+  };
+  assert.equal((await importLocalArchiveReady(f.options)).readyBeforeCallback, false);
+  assert(f.state.events.findIndex(event => event.phase === 'import_callback')
+    < f.state.events.findIndex(event => event.phase === 'import_ready'));
+});
+
 test('finished exact file becomes ready before delayed metadata callback; callback still observed', async () => {
   const f = fixture();
   const result = await importLocalArchiveReady(f.options);
