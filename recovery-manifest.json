@@ -176,7 +176,7 @@
     },
     {
       "path": "docs/NO-RESTART-WORKFLOW.md",
-      "sha256_lf": "ea0ed13e3b4eff15c65fbc26de0392b0ce3e8a897c21dded05f9fae29f5a9787"
+      "sha256_lf": "2ad773ad4e07f400505cff50896d9635b664c53070e13a80890e32ce8ad9eac1"
     },
     {
       "path": "docs/RESTORE.md",
@@ -376,7 +376,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/README.md",
-      "sha256_lf": "f7f4019231412828bc1b0e6e844e5c14e1a76ba9d8fec6b5ac46a5bcd9fcfc68"
+      "sha256_lf": "55a0b5045c9487ee3a3b102dc0fb90afe56131a1f87e952c1cd218c06f170dda"
     },
     {
       "path": "tools/modding/vortex-agent/audit-fixes.test.mjs",
@@ -384,7 +384,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/bridge.mjs",
-      "sha256_lf": "8bd8caf57f6dae8456b04255fe313dded76b9534d0f562103419b764ca52e1be"
+      "sha256_lf": "478147e654fd862ffb3f201edd078f11b032f5d2809bca964fb0bf330e70f7cf"
     },
     {
       "path": "tools/modding/vortex-agent/build.mjs",
@@ -409,6 +409,10 @@
     {
       "path": "tools/modding/vortex-agent/http-ingress.cjs",
       "sha256_lf": "74d973c6a7416e6592122000c5966c03a5b35bf0bf8c3e51d04e844e9e4b36ff"
+    },
+    {
+      "path": "tools/modding/vortex-agent/inspection-client.test.mjs",
+      "sha256_lf": "ecb0a4f7dd9ff615bca424b18f4714fb2622bc1a1be87fb43709cdaef730bfeb"
     },
     {
       "path": "tools/modding/vortex-agent/inspection.cjs",
@@ -500,7 +504,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/session.mjs",
-      "sha256_lf": "be341420d6c36f1a60838232e56e0ce99bcee16d213050a3450fec9ea8284cb9"
+      "sha256_lf": "6c7c4d9da2517fb955a52ab8e809542d32e0250669fcde73bb49d7eb4d845844"
     },
     {
       "path": "tools/modding/vortex-agent/session.test.mjs",

@@ -59,6 +59,17 @@ health observations, dialogs and external changes. They do not expose raw
 Vortex state or account/config exports. Collection health returns observed
 numbers/booleans; it does not infer installation completion or force recalculation.
 
+The bridge also exposes `inspect_session` with optional `{ "diagnostics": true }`.
+It composes existing curated reads with at most four in flight, checks context
+before and after, and reports per-read errors and inventory caps. Diagnostics add
+native unresolved conflicts and collection observations without a staging scan.
+A partial snapshot is an MCP error with retained successful results, never a
+healthy empty inventory. `status: "ok"` means the reads completed; inspect the
+returned observations to assess conflicts or collection state. It is not an
+atomic snapshot or disk proof. This client-side tool needs a bridge/client reload
+in existing MCP sessions, but no Vortex restart or extension upgrade. The bridge
+CLI can call it immediately. See [usage](../../../docs/NO-RESTART-WORKFLOW.md).
+
 Supported writes are deliberately separate:
 
 | Operation | Contract |
@@ -106,6 +117,7 @@ Local modeled tests:
 
 ```powershell
 node --test tools/modding/vortex-agent/tests.mjs tools/modding/vortex-agent/review.test.mjs tools/modding/vortex-agent/rereview.test.mjs tools/modding/vortex-agent/audit-fixes.test.mjs tools/modding/vortex-agent/native-conflicts.test.mjs tools/modding/vortex-agent/process-guard.test.mjs tools/modding/vortex-agent/session.test.mjs tools/modding/vortex-agent/stdio.test.mjs tools/modding/vortex-agent/response-cleanup.test.mjs
+node --test tools/modding/vortex-agent/inspection-client.test.mjs
 python -B tools/modding/vortex-agent/install.test.py
 ```
 

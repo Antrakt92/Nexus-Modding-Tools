@@ -89,6 +89,34 @@ export async function remote(method, params = {}, fetcher = fetch, tokenProvider
   }
   return message.result;
 }
+const INSPECT_TOOL = {
+  name: 'inspect_session',
+  description: 'Read the active Vortex context, mods, downloads, dialogs and external changes in one bounded call. Optional diagnostics add native conflicts and collection observations. Partial results expose errors and limits; this is not deployment or gameplay proof.',
+  inputSchema: {type: 'object', properties: {diagnostics: {type: 'boolean', default: false}}, additionalProperties: false},
+  annotations: {readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false},
+};
+
+// Compose existing curated reads in the client; no host upgrade or native API is needed.
+export async function clientRemote(method, params = {}, transport = remote) {
+  if (method === 'tools/list') {
+    const result = await transport(method, params);
+    if (!Array.isArray(result?.tools)) throw new Error('Invalid Vortex tool inventory');
+    return {...result, tools: [...result.tools.filter(tool => !['install_download', 'inspect_session'].includes(tool.name)), structuredClone(INSPECT_TOOL)]};
+  }
+  if (method === 'tools/call' && params.name === 'inspect_session') {
+    const args = params.arguments === undefined ? {} : params.arguments;
+    if (!args || typeof args !== 'object' || Array.isArray(args)
+      || Object.keys(args).some(key => key !== 'diagnostics')
+      || args.diagnostics !== undefined && typeof args.diagnostics !== 'boolean')
+      return {isError: true, content: [{type: 'text', text: '{"error":"INVALID_INSPECTION_OPTIONS"}'}]};
+    // Dynamic import avoids initializing session.mjs through its bridge import.
+    const {inspectSession, createToolCaller} = await import('./session.mjs');
+    const result = await inspectSession({call: createToolCaller(transport), diagnostics: args.diagnostics ?? false});
+    return {content: [{type: 'text', text: JSON.stringify(result)}], structuredContent: result, ...(result.status === 'partial' ? {isError: true} : {})};
+  }
+  return transport(method, params);
+}
+
 export function handler(call = remote) {
   let initialized = false;
   return async request => {
@@ -109,7 +137,7 @@ export function handler(call = remote) {
       } else if (request.method === 'ping') result = {};
       else if (['tools/list', 'tools/call'].includes(request.method)) {
         if (!initialized) throw new Error('Initialize the bridge first');
-        result = await call(request.method, request.params || {});
+        result = await clientRemote(request.method, request.params || {}, call);
       } else return { jsonrpc: '2.0', id: request.id, error: { code: -32601, message: 'Method not found' } };
       return { jsonrpc: '2.0', id: request.id, result };
     } catch (error) { return { jsonrpc: '2.0', id: request.id, error: { code: -32000, message: error.message } }; }
@@ -122,7 +150,7 @@ export async function main(argv = process.argv.slice(2)) {
     const health = await remote('tools/call', { name: 'health', arguments: {} });
     const info = parse(health.content?.[0]?.text || '{}');
     if (health.isError || info.protocol !== 'vortex-agent/1') throw new Error('Wrong server on port 3701');
-    const result = argv[0] === '--health' ? health : await remote('tools/call', { name: argv[1], arguments: parse(argv[2] || '{}') });
+    const result = argv[0] === '--health' ? health : await clientRemote('tools/call', { name: argv[1], arguments: parse(argv[2] || '{}') });
     process.stdout.write(JSON.stringify(result) + '\n');
     if (result.isError) process.exitCode = 1;
     return;
