@@ -4,7 +4,7 @@
 
 **Nexus Mods and Vortex tools for Windows.**
 
-[![Release: 0.1.0](https://img.shields.io/badge/release-0.1.0-0F766E)](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/tag/v0.1.0) [![Platform: Windows](https://img.shields.io/badge/platform-Windows-0078D4)](docs/RESTORE.md) [![License: GPL-3.0-only](https://img.shields.io/badge/license-GPL--3.0--only-2563EB)](LICENSE)
+[![Release: 0.2.0](https://img.shields.io/badge/release-0.2.0-0F766E)](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/tag/v0.2.0) [![Platform: Windows](https://img.shields.io/badge/platform-Windows-0078D4)](docs/RESTORE.md) [![License: GPL-3.0-only](https://img.shields.io/badge/license-GPL--3.0--only-2563EB)](LICENSE)
 
 [Get started](docs/RESTORE.md) · [What's new](CHANGELOG.md) · [Configuration](docs/CONFIGURATION.md) · [Verification](docs/FULL-AUDIT-20261029.md)
 
@@ -40,11 +40,11 @@ steps after any invoked operation settles. See the
 [session guide](docs/NO-RESTART-WORKFLOW.md) and
 [collection download guide](docs/COLLECTION-DOWNLOADS.md).
 
-Version **0.1.0** identifies this source release. The embedded adapter's **1.0.4**
+Version **0.2.0** identifies this source release. The embedded adapter's **1.0.4**
 label is separate. Existing clients need their MCP connection refreshed to load
 new bridge code; native adapter changes require the reviewed upgrade procedure.
 
-`main` also contains unreleased work since 0.1.0, including the
+Release 0.2.0 adds the
 [native helper preparation workflow](docs/NATIVE-HELPER-PREPARATION.md).
 Preparation does not activate a plugin or grant installation approval. See the
 [changelog](CHANGELOG.md) and [maintenance and release review](docs/MAINTENANCE.md)
