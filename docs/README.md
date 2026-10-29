@@ -14,12 +14,12 @@
 - [Vortex adapter](../tools/modding/vortex-agent/README.md).
 - [Community Nexus CLI](../tools/modding/nexus-cli/README.md).
 - [Publication runner](../tools/modding/nexus-publish/README.md).
-- [Native helper preparation](NATIVE-HELPER-PREPARATION.md) and [tracked Nexus batches](TRACKED-NEXUS-HELPER-REVIEW.md): expert, template-scoped preparation with separate fresh admission.
+- [Native helper preparation](NATIVE-HELPER-PREPARATION.md) and [tracked Nexus batches](TRACKED-NEXUS-HELPER-REVIEW.md): prepare installation scripts for the supported templates, then check their source, packages and current Vortex state.
 - [Agent workflow](AGENT-WORKFLOW.md), [licenses](LICENSES.md) and [maintenance](MAINTENANCE.md).
 
 ## Verification records
 
-These are dated evidence, not claims that every installation or game is covered.
+Each report lists what was checked and what still needs testing.
 
 - [29 October full source audit](FULL-AUDIT-20261029.md).
 - [29 October follow-up and live upgrade](AUDIT-20261029.md).

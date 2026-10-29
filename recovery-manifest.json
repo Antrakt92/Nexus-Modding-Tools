@@ -20,7 +20,7 @@
     },
     {
       "path": ".github/SECURITY.md",
-      "sha256_lf": "4cd88ff44181e69d6c0741a673e63b8c62fd58da0b437d35489cc7248ecab3de"
+      "sha256_lf": "29ad9b54b4ebe31d242bf79de46d4572815bc4363912739da6c81653d1aa2076"
     },
     {
       "path": ".github/dependabot.yml",
@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "fa0c9f681b4ad13b27aa4dbd88bfc642009355ff95a3b6464230be78908850d9"
+      "sha256_lf": "70edb913a5c3dcde8ae1b66707624951c94a5877d9429ea7522abc1f60237795"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -52,19 +52,15 @@
     },
     {
       "path": "README.md",
-      "sha256_lf": "d1055fc310b51ab72b9c42f61f30772f9dcae7fd0034a16b6f75e8d393a01b92"
+      "sha256_lf": "7790895d177e6fc42884cf60b50ca3b437ca1af5e722dfd44a312429c67a2486"
     },
     {
       "path": "SUPPORT.md",
-      "sha256_lf": "57e4c472e89f611cc3e0f533c366d60efab9cae1852f032306eaf0b307311d84"
+      "sha256_lf": "fc9d0e0b94e3b2af27e9ceaa33766ee0df74e14594b08e405cf39468ca215f6b"
     },
     {
       "path": "VERSION",
       "sha256_lf": "d915cc95d6ca8f47ae297713ed46d4e5c5d99ddd29fc3c61e263bdf305f2b5b0"
-    },
-    {
-      "path": "assets/banner.svg",
-      "sha256_lf": "db3607ce0efe3c4b3c4d5ee2976e6530bf642bc75a866ae653bcf56ba66da4c4"
     },
     {
       "path": "dependencies/vortex-mcp/.gitattributes",
@@ -232,7 +228,7 @@
     },
     {
       "path": "docs/GETTING-STARTED.md",
-      "sha256_lf": "881a3eddaca9945640a712b0e3fd63bc129784778ea9f84fc5a7f5e5c620b311"
+      "sha256_lf": "bacfdfc9042f0647408699197e90cf934b5855e7be473f208f1e97b91c69505c"
     },
     {
       "path": "docs/LICENSES.md",
@@ -252,7 +248,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256_lf": "fd26e1b1a734f5bc36cfc3dc43e78bbedf45e752a125fbc1c6882d7a50178da6"
+      "sha256_lf": "6b295fa128f940a35bc201d10213acefacc189d981960c885ae2fbf42030d49d"
     },
     {
       "path": "docs/RESTORE.md",

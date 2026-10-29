@@ -2,54 +2,51 @@
 
 ## Unreleased
 
+- Remove the README banner and simplify setup, support and release wording.
+
 ## 0.3.0 — 2026-10-29
 
-Tracked Nexus helper preparation, more reliable installation observation and a
-clearer first-run experience. Includes the complete range since
-[0.2.0](https://github.com/Antrakt92/Nexus-Modding-Tools/compare/v0.2.0...v0.3.0).
-The embedded adapter label remains 1.0.4; builds are identified by bundle hashes.
+This release adds tools for preparing installation scripts from tracked Nexus
+downloads and fixes full mod-list reads when a mod has an empty version.
+Changes since [0.2.0](https://github.com/Antrakt92/Nexus-Modding-Tools/compare/v0.2.0...v0.3.0).
 
 ### Added
 
-- Source-pinned offline preparation for 1–4 tracked Nexus originals, with a
-  separate one-item published-own route, exact scope and complete copy-map checks.
-- Separate fresh read-capture preparation for the supported source family.
-  Kits remain held until source/package/native/context review and root approval.
-- First-install and troubleshooting guide, documentation index, support routes,
-  bug/feature forms, PR template and private vulnerability reporting guidance.
-- Original project banner and clearer README examples, compatibility and
-  source-only distribution information. All seven Nexus projects remain linked.
+- Prepare installation scripts for batches of up to four tracked Nexus mods.
+  A published mod you maintain uses a separate one-mod batch.
+- Prepare a read-only helper to collect the Vortex data needed by those scripts.
+  Both tools support specific templates; the generated scripts need source,
+  package and current-state checks before they can run.
+- Setup and troubleshooting instructions, a documentation index, bug and feature
+  request forms, a PR template and private vulnerability reporting.
 
-### Improved and fixed
+### Fixed and changed
 
-- Full inventory reads preserve empty native versions instead of failing the
-  complete response. Identifier, URI and credential checks remain strict.
-- Installation settlement accepts bounded native mod names with spaces,
-  punctuation and Unicode while keeping opaque download IDs separate.
-- New prepared helpers validate exact staged file sets, SHA-256 values and
-  physical bytes on each settlement sample instead of waiting for asynchronous
-  `modSize` metadata. Identity, state, flags and quiet-window checks remain.
-- Unchanged pinned source generations reuse physical hashes, including the large
-  Vortex `app.asar`. Existing effect guards and invalidation boundaries remain;
-  the identical ten-check regression performs one hash instead of ten and still
-  detects a same-size mutation. Full installation speedup has not been measured.
-- Nexus kits include their scope data, preserve fresh Move Your Way preferences
-  instead of forcing old two/two settings, and omit the unused overlay policy.
-- Correct `VERSION` to match the release. The immutable 0.2.0 snapshot accidentally
-  retained 0.1.0; a regression now checks the current version against the newest
-  dated changelog entry. Old tags and assets are unchanged.
+- Read the full mod list even when a mod's version is empty.
+- Accept native mod IDs containing spaces, punctuation and Unicode. Download IDs
+  keep their separate validation rules.
+- Check installed files and their SHA-256 hashes while waiting for installation
+  to finish. A delayed Vortex `modSize` value no longer causes a false timeout
+  in newly prepared helpers.
+- Reuse hashes for unchanged source files, including Vortex's `app.asar`.
+  A changed file still stops the helper. The test covering ten repeated checks
+  now performs one hash instead of ten; overall install time has not been measured.
+- Preserve the captured Move Your Way settings rather than requiring the old
+  two/two values. Remove an unused policy module from Nexus helper kits.
+- Set `VERSION` to 0.3.0. Release 0.2.0 accidentally contained 0.1.0 in that file;
+  a new test checks that the version and dated changelog entry agree.
 
-### Verification and distribution
+### Testing and setup
 
-- Local checks: 271 maintained source/package/wire tests, 17 recovery/metadata
-  tests and 28 synthetic installer tests. Real pinned-template integration is
-  included in the maintainer run; its private reference fixtures are not shipped.
-- The inventory fix was accepted in an ordinary Vortex session: 433 mod records
-  read successfully, including two empty versions. Independent upgrade checks
-  preserved 6,939 files, 1,397 hardlink pairs, 68 preferences and 1,482 receipts.
-- This release ships source and checksums, not a preconfigured Vortex plugin.
-  Setup still requires a manual build. Native installation remains unsupported
-  by the resident MCP; helper preparation does not grant activation or replay.
+- 271 MCP tests, 17 recovery/version tests and 28 installer tests passed.
+  The maintainer's integration run also used local template fixtures that are
+  not included in the download.
+- After upgrading the Vortex extension, all 433 mod records could be read.
+  File, hardlink, preference and operation-record comparisons passed.
+  See [the test report](https://github.com/Antrakt92/Nexus-Modding-Tools/blob/v0.3.0/docs/AUDIT-20261029.md#subsequent-live-upgrade-and-acceptance--2026-10-29).
+- Build the extension from source using [Get started](https://github.com/Antrakt92/Nexus-Modding-Tools/blob/main/docs/GETTING-STARTED.md).
+  The MCP itself does not install mod archives. Existing installation scripts
+  and operation records must be checked before retrying a failed operation.
 
 ## 0.2.0 — 2026-10-29
 
