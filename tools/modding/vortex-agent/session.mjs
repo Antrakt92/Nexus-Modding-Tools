@@ -62,8 +62,17 @@ export function createToolCaller(transport = remote) {
       } catch { /* Never echo unstructured upstream errors or private transport text. */ }
       throw new Error(code);
     }
-    if (object(response.structuredContent)) return response.structuredContent;
     const texts = response.content?.filter(item => item?.type === 'text');
+    if (Object.hasOwn(response, 'structuredContent')) {
+      insist(object(response.structuredContent), 'INVALID_TOOL_RESPONSE');
+      if (texts?.length) {
+        insist(texts.length === 1 && typeof texts[0].text === 'string', 'INVALID_TOOL_RESPONSE');
+        let fallback;
+        try { fallback = JSON.parse(texts[0].text); } catch { throw new Error('INVALID_TOOL_RESPONSE'); }
+        insist(same(response.structuredContent, fallback), 'CONTRADICTORY_TOOL_RESPONSE');
+      }
+      return response.structuredContent;
+    }
     insist(Array.isArray(texts) && texts.length === 1 && typeof texts[0].text === 'string', 'INVALID_TOOL_RESPONSE');
     try { return JSON.parse(texts[0].text); } catch { throw new Error('INVALID_TOOL_RESPONSE'); }
   };
@@ -92,6 +101,18 @@ async function readPool(tasks, concurrency) {
   return result;
 }
 
+function validCollectionHealth(value) {
+  const count = n => n === null || Number.isSafeInteger(n) && n >= 0;
+  const flag = v => v === null || typeof v === 'boolean';
+  if (!object(value) || !object(value.nativeConflicts) || !object(value.collectionSession)) return false;
+  const native = value.nativeConflicts, session = value.collectionSession;
+  return count(native.count) && flag(native.hasUnsolvedConflicts)
+    && ['available', 'consistent', 'conflictsCalculated'].every(k => typeof native[k] === 'boolean')
+    && typeof session.available === 'boolean' && flag(session.present) && flag(session.stalled)
+    && object(session.counters) && ['totalRequired', 'totalOptional', 'downloadedCount', 'installedCount', 'failedCount', 'ignoredCount'].every(k => count(session.counters[k]))
+    && value.recalculationVerified === false && value.diskDeploymentVerified === false;
+}
+
 export async function inspectSession({call = createToolCaller(), concurrency = 4, diagnostics = false} = {}) {
   insist(typeof diagnostics === 'boolean', 'INVALID_INSPECTION_OPTIONS');
   const results = {}, errors = [];
@@ -106,8 +127,7 @@ export async function inspectSession({call = createToolCaller(), concurrency = 4
   const reads = await readPool(names.map(name => async () => {
     const value = await call(name, ['list_mods', 'list_downloads'].includes(name) ? {...game, limit: 500} : {});
     if (name === 'read_collection_health') {
-      insist(object(value) && object(value.nativeConflicts) && object(value.collectionSession)
-        && value.recalculationVerified === false && value.diskDeploymentVerified === false, 'INVALID_COLLECTION_HEALTH_RESPONSE');
+      insist(validCollectionHealth(value), 'INVALID_COLLECTION_HEALTH_RESPONSE');
     } else insist(Array.isArray(value), 'INVALID_INVENTORY_RESPONSE');
     return value;
   }), concurrency);

@@ -175,6 +175,17 @@ test('one caller reuses the same transport and rejects MCP errors/malformed resp
   await assert.rejects(createToolCaller(async () => ({isError: true, content: [{type: 'text', text: '{"error":"GAME_RUNNING"}'}]}))('set_mods_enabled'), /GAME_RUNNING/);
 });
 
+test('contradictory structured and text tool results are refused before being trusted', async () => {
+  const response = {structuredContent: {operationCompleted: true}, content: [{type: 'text', text: '{"operationCompleted":false}'}]};
+  await assert.rejects(createToolCaller(async () => response)('set_mods_enabled'), /CONTRADICTORY_TOOL_RESPONSE/);
+  for (const structuredContent of [null, [], 'invalid']) {
+    await assert.rejects(createToolCaller(async () => ({structuredContent, content: [{type: 'text', text: '{}'}]}))('health'), /INVALID_TOOL_RESPONSE/);
+  }
+  const structuredContent = {a: 1, b: 2};
+  assert.deepEqual(await createToolCaller(async () => ({structuredContent, content: [{type: 'text', text: '{"b":2,"a":1}'}]}))('health'), structuredContent);
+  assert.deepEqual(await createToolCaller(async () => ({structuredContent, content: []}))('health'), structuredContent);
+});
+
 test('CLI never applies without explicit --apply, has no restart/install/dispatch command', async () => {
   const s = server(); const outputs = [];
   const code = await main(['plan', 'reviewed.json'], {read: async () => plan(), call: s.call, output: value => outputs.push(value)});

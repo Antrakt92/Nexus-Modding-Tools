@@ -176,7 +176,7 @@
     },
     {
       "path": "docs/NO-RESTART-WORKFLOW.md",
-      "sha256_lf": "2ad773ad4e07f400505cff50896d9635b664c53070e13a80890e32ce8ad9eac1"
+      "sha256_lf": "3cb28648d9f356b492f1f176ef67a2485be23a91ff04c1da3c3db143266b7e8c"
     },
     {
       "path": "docs/RESTORE.md",
@@ -412,7 +412,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/inspection-client.test.mjs",
-      "sha256_lf": "ecb0a4f7dd9ff615bca424b18f4714fb2622bc1a1be87fb43709cdaef730bfeb"
+      "sha256_lf": "0e997cb362d580d5800c9cce73bbebc11ef3446f12f469ebc2440dbe9845ec43"
     },
     {
       "path": "tools/modding/vortex-agent/inspection.cjs",
@@ -504,11 +504,11 @@
     },
     {
       "path": "tools/modding/vortex-agent/session.mjs",
-      "sha256_lf": "6c7c4d9da2517fb955a52ab8e809542d32e0250669fcde73bb49d7eb4d845844"
+      "sha256_lf": "67d1d51a059a86b4db76879caaa3ab335d1e3decf8eb531ca68d011628556d98"
     },
     {
       "path": "tools/modding/vortex-agent/session.test.mjs",
-      "sha256_lf": "4bd4a557494ef28e43a4c11c0da8ec884a5f8f062e369b41e6ec6a3afb0dafb5"
+      "sha256_lf": "b1197c2ffc28d928bb8461fc663a59ff38eb5d104352a3f213e091cab8acff95"
     },
     {
       "path": "tools/modding/vortex-agent/stdio.test.mjs",

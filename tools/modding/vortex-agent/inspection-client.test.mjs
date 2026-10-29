@@ -6,8 +6,7 @@ import {inspectSession, main} from './session.mjs';
 const health = () => ({protocol: 'vortex-agent/1', gameId: 'cyberpunk2077', profileId: 'profile',
   gamePath: 'F:/Game', stagingPath: 'F:/Staging', downloadPath: 'D:/Downloads',
   filesystemIds: {gamePath: '1:2', stagingPath: '1:3', downloadPath: '2:4'}});
-const collection = () => ({nativeConflicts: {available: false, count: null},
-  collectionSession: {available: false, present: null}, recalculationVerified: false, diskDeploymentVerified: false});
+const collection = completeCollection;
 const content = value => ({content: [{type: 'text', text: JSON.stringify(value)}]});
 
 test('bridge advertises exactly one local read tool and keeps unsupported installation hidden', async () => {
@@ -93,3 +92,23 @@ test('diagnostic CLI opts in, returns nonzero for partial and rejects unrelated 
   assert.equal(await main(['inspect', '--apply'], {call: async () => assert.fail('called'), output: () => {}}), 1);
   await assert.rejects(inspectSession({diagnostics: 'yes', call: async () => assert.fail('called')}), /INVALID_INSPECTION_OPTIONS/);
 });
+
+test('diagnostic schema rejects missing, mistyped and negative observations', async () => {
+  for (const mutate of [v => {delete v.nativeConflicts.count;}, v => {v.nativeConflicts.count = -1;},
+    v => {v.nativeConflicts.hasUnsolvedConflicts = 'false';}, v => {delete v.collectionSession.counters;},
+    v => {v.collectionSession.present = 0;}, v => {v.collectionSession.counters.failedCount = -1;}]) {
+    const value = completeCollection(); mutate(value);
+    const result = await inspectSession({diagnostics: true, call: async name =>
+      name === 'health' ? health() : name === 'read_collection_health' ? value : []});
+    assert.equal(result.status, 'partial');
+    assert.deepEqual(result.errors, [{tool: 'read_collection_health', code: 'INVALID_COLLECTION_HEALTH_RESPONSE'}]);
+    assert.equal(result.results.read_collection_health, undefined);
+  }
+});
+
+function completeCollection() {
+  return {nativeConflicts: {count: null, hasUnsolvedConflicts: null, available: false, consistent: false, conflictsCalculated: false},
+    collectionSession: {available: false, present: null, stalled: null,
+      counters: {totalRequired: null, totalOptional: null, downloadedCount: null, installedCount: null, failedCount: null, ignoredCount: null}},
+    recalculationVerified: false, diskDeploymentVerified: false};
+}
