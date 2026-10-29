@@ -32,6 +32,7 @@ operation receipts. Uncertain effects block retries until reviewed reconciliatio
 | Inspect the active session | MCP `inspect_session` or CLI `session.mjs inspect` | Combined curated reads, optional collection/conflict diagnostics and explicit partial results |
 | Reuse collection downloads | MCP `find_collection_downloads` | Match up to 100 exact Nexus mod/file pairs against tracked archives |
 | Apply a reviewed plan | MCP `run_mod_plan` or CLI `session.mjs plan` | Offline validation, pinned download-only steps, batched enable/disable changes and one optional final deploy |
+| Prepare a native install helper | Offline `prepare-native-helper.mjs` | Held code kit for the supported single-package Cyberpunk template, maintained observers and complete module/copy-map verification |
 
 Independent reads overlap; managed changes stay serial. Plans retain stable
 request IDs and reconcile receipts before continuing. Cancellation stops later
@@ -42,6 +43,12 @@ steps after any invoked operation settles. See the
 Version **0.1.0** identifies this source release. The embedded adapter's **1.0.4**
 label is separate. Existing clients need their MCP connection refreshed to load
 new bridge code; native adapter changes require the reviewed upgrade procedure.
+
+`main` also contains unreleased work since 0.1.0, including the
+[native helper preparation workflow](docs/NATIVE-HELPER-PREPARATION.md).
+Preparation does not activate a plugin or grant installation approval. See the
+[changelog](CHANGELOG.md) and [maintenance and release review](docs/MAINTENANCE.md)
+for the release range, deferred updates and remaining verification.
 
 ## Start here
 
@@ -100,6 +107,7 @@ changes serially and performs at most one requested final deploy.
 | Choose the right skill, tool and verification boundary | [Agent workflow](docs/AGENT-WORKFLOW.md) |
 | Review tested behavior and known limits | [Latest full tooling audit](docs/FULL-AUDIT-20261029.md), [earlier integration evidence](docs/FULL-AUDIT-20261025.md) |
 | Check dependency pins and point-in-time audit evidence | [Dependency audit](docs/DEPENDENCY-AUDIT.md) |
+| Review branch policy, deferred upgrades and the next release | [Maintenance](docs/MAINTENANCE.md) |
 | Understand licenses and upstream attribution | [Licenses and provenance](docs/LICENSES.md) |
 
 ## Development and verification

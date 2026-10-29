@@ -8,7 +8,7 @@
     },
     {
       "path": ".github/dependabot.yml",
-      "sha256_lf": "fb1f1b790a0587af5775688a8f13f17d519851af8ca7b21c2a75e5636f9c01ac"
+      "sha256_lf": "bcedd03571e597359ec4c56b2bd1e87cd1f834c6abbc07540bbe7722a339c3a4"
     },
     {
       "path": ".gitignore",
@@ -20,11 +20,11 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "c7519619feca101982d9b2af57e51231fd6c7393b7abbf08443feea2974516e9"
+      "sha256_lf": "5a1328fa81f6a353bc4a533f95b6f9b0968cf3da49d5e2c0e5a213d9353c9932"
     },
     {
       "path": "CONTRIBUTING.md",
-      "sha256_lf": "5842134f0d7c27bbe1cfa09164a3bff2d72c00bb831367ce45fe7dca094175f6"
+      "sha256_lf": "8ceb4c0002f1cd95ac2fcdd894e9d96b73cb33b1e7e688420c1e9384f7401239"
     },
     {
       "path": "LICENSE",
@@ -32,7 +32,7 @@
     },
     {
       "path": "README.md",
-      "sha256_lf": "28a3f7e18e9454d9e9b01c6c941119d74c6af3d151019de13cd4e2a6401a2511"
+      "sha256_lf": "39329cb68d70f70422222216130427fc9bf18cd6795dbf86f485433125de2c1f"
     },
     {
       "path": "VERSION",
@@ -201,6 +201,10 @@
     {
       "path": "docs/LICENSES.md",
       "sha256_lf": "724088f6e9abb3f7e3ae4fb60ed664dbd44870cb20906cfc519a7d3372540fb6"
+    },
+    {
+      "path": "docs/MAINTENANCE.md",
+      "sha256_lf": "2e643fc81c9fb8ae7f9de5ebfbe18e5b4c71bb579b0165ab67c95c98c35fd062"
     },
     {
       "path": "docs/NATIVE-HELPER-PREPARATION.md",
