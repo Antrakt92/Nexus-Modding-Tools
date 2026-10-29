@@ -138,3 +138,6 @@ Use the exact package SHA/provenance and fresh health, not version labels alone.
 Current dependency pins, audit results and build limitations are recorded in
 [the dependency audit](../../../docs/DEPENDENCY-AUDIT.md). Do not carry forward
 an old audit count as a current security verdict.
+The [29 October follow-up](../../../docs/AUDIT-20261029.md) records newer HTTP
+dependency pins, stricter read validation, the update review and the remaining
+live inventory-read failure. Its isolated build is separate from host activation.

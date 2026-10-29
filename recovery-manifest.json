@@ -68,7 +68,7 @@
     },
     {
       "path": "dependencies/vortex-mcp/LOCAL-CHANGES.md",
-      "sha256_lf": "3380b257944b308121439d493da6730378fecea7380124c7092f945f364782cd"
+      "sha256_lf": "bc553aaf7404ea6db59993ed6f0a11281e7519d5a32251f74a7a80b5797dd56a"
     },
     {
       "path": "dependencies/vortex-mcp/NEXUS_DESCRIPTION.bbcode",
@@ -84,11 +84,11 @@
     },
     {
       "path": "dependencies/vortex-mcp/THIRD-PARTY-NOTICES.md",
-      "sha256_lf": "94b1e071f7ed602587abaf6e7eea7327f53f70a121d1755ff99ebd8714ca5318"
+      "sha256_lf": "e2fc6ae76a7664a5c454451a07d82a87f5493e8d1aa7c0d1c779b58446407dfc"
     },
     {
       "path": "dependencies/vortex-mcp/UPSTREAM-PROVENANCE.json",
-      "sha256_lf": "77944557a9d7983e13ba39505fb410e259ff64f55197f9b7b4b5289f2ea088bf"
+      "sha256_lf": "bdee44d58d389a9770e3d71278651208f3b0e2a756147b9db358eb7ad25d0cf2"
     },
     {
       "path": "dependencies/vortex-mcp/info.json",
@@ -96,11 +96,11 @@
     },
     {
       "path": "dependencies/vortex-mcp/package.json",
-      "sha256_lf": "cc2fc3ec0cb36fc30e62563479c74fa17189f756b59f025318eebd59084c0743"
+      "sha256_lf": "2469ca88eb4eecc07b66d7e690d0bd9092366f8aab834e940db4ac064f1f9a23"
     },
     {
       "path": "dependencies/vortex-mcp/pnpm-lock.yaml",
-      "sha256_lf": "a8159b08f406132ac3d8828eae52b1045489061e7aa3ad1565293bc7122416d9"
+      "sha256_lf": "1152d03b9959fe1206d4c2b021268b6bd5cb41d182ae55cb1b95d765a5f4d975"
     },
     {
       "path": "dependencies/vortex-mcp/scripts/generate-readme-tools-table.mjs",
@@ -157,6 +157,10 @@
     {
       "path": "docs/AUDIT-20261025.md",
       "sha256_lf": "f0f6d19378ad9abb38989a7fff6db4352f4ea93a41de570d626995417ffb67a2"
+    },
+    {
+      "path": "docs/AUDIT-20261029.md",
+      "sha256_lf": "94e14cd526533a2126ccaaafa8f24cf0ba8ed68b6a77c37b9f35bd809eab4131"
     },
     {
       "path": "docs/CONFIGURATION.md",
@@ -376,7 +380,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/README.md",
-      "sha256_lf": "55a0b5045c9487ee3a3b102dc0fb90afe56131a1f87e952c1cd218c06f170dda"
+      "sha256_lf": "67abfacb9779d85c8c377a641defa0d341962bca4ef5ae280c863f025e947871"
     },
     {
       "path": "tools/modding/vortex-agent/audit-fixes.test.mjs",
