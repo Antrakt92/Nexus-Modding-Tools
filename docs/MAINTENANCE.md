@@ -64,9 +64,22 @@ the final merged source inventory, rerun affected checks if content changed,
 build an archive from the selected immutable commit and verify the uploaded
 archive/checksums independently. Review licenses and source-lock inclusion.
 
-A source release can deliver the new offline workflow without activating it in
-Vortex. Real-install duration has not been measured with this kit, full native
-guard/poller costs remain, and the known full-inventory read limitation is still
-recorded in the audit. Do not advertise a proven installation speedup or a fixed
-live inventory read. No new native install, restart or game launch is a release
-side effect.
+A source release delivers offline workflows without activating them in Vortex.
+Full installation duration has not been measured with the new kits; guard/poller
+costs remain. The earlier inventory failure was subsequently fixed and accepted
+in the ordinary host; see [live evidence](AUDIT-20261029.md#subsequent-live-upgrade-and-acceptance--2026-10-29).
+Publication itself does not install an extension, restart Vortex or launch a game.
+
+## Changes since 0.2.0
+
+The complete range starts at immutable tag `v0.2.0`. New source-pinned tracked
+Nexus batch and read-capture preparation is an additive capability, so the next
+source release is **0.3.0**, rather than a patch chosen from the final bug fix.
+It also includes native-ID validation, physical-payload settlement, unchanged
+source-generation hash reuse, the empty-version inventory fix and public onboarding.
+No dependency, public API or schema migration is included in this range.
+
+The public repository provides setup, support and contribution routes, issue
+forms, private vulnerability reporting and original project artwork. Historical
+licenses and recovery snapshots are retained deliberately. A source-only release
+must not be presented as a one-click installer or a generic native mod installer.

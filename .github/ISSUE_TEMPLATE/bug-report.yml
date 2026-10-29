@@ -1,0 +1,56 @@
+name: Bug report
+description: Report a reproducible problem in the maintained tools.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Read the setup guide first. Do not attach keys, signed URLs, Vortex databases, state dumps, mod archives or credential stores. Report vulnerabilities privately through the Security tab.
+  - type: input
+    id: version
+    attributes:
+      label: Source release or commit
+      placeholder: v0.3.0 or a full commit SHA
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Vortex MCP / bridge
+        - Session plans / download lookup
+        - Native helper preparation
+        - Nexus CLI wrapper
+        - Publication runner
+        - Setup / documentation
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Relevant versions
+      description: Windows, Vortex, Node and Python; include those relevant to the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Include the smallest command or client request. Replace private paths and identifiers with placeholders.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Expected and actual result
+      description: Include a sanitized error code or short excerpt. Distinguish static checks, native Vortex operations and gameplay.
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Before submitting
+      options:
+        - label: I removed credentials, signed URLs, account data and private paths from this report and its attachments.
+          required: true
