@@ -54,6 +54,8 @@ export function adaptTrackedIndex(input) {
   const physical = /function physical\(file\)\{[^\r\n]+\}/g;
   need([...text.matchAll(physical)].length === 1 && text.includes('physicalCache.get(file)'), 'UNSUPPORTED_TRACKED_TEMPLATE');
   text = text.replace(physical, "const physical=require('./physical-proof.cjs').createPhysicalReader({fs,hash,cache:physicalCache});");
+  need(text.split('hash(cfg.appAsar)===cfg.appAsarSHA256').length === 3, 'UNSUPPORTED_TRACKED_TEMPLATE');
+  text = text.replaceAll('hash(cfg.appAsar)===cfg.appAsarSHA256', 'physical(cfg.appAsar).sha256===cfg.appAsarSHA256');
   text = once(text, 'now:()=>Date.now(),pkg,expectedSize,timeoutMs:30000,quietMs:3000',
     "now:()=>Date.now(),pkg,expectedSize,sizeSource:'verified-payload',expectedDownloadId:downloadId,expectedType:pkg.expectedType,record:event=>save(pkg.key+'-settlement-'+(++settlementSequence),event),timeoutMs:30000,quietMs:3000");
   text = once(text, "return {record:current,flags:state.persistent.profiles[baseline.health.profileId].modState||{}};",

@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
+import vm from 'node:vm';
 import { createRequire } from 'node:module';
 import { prepareHelper, verifyHelper } from './prepare-native-helper.mjs';
 const require = createRequire(import.meta.url);
@@ -50,6 +51,26 @@ test('prepared compatibility module executes the current observer, not the old q
       attributes: { modSize: 9, metadata: ++reads } }, flags: {} }), now: () => clock,
     sleep: async ms => { clock += ms; } });
   assert.equal(result.ready, true); assert.equal(clock, 3000);
+});
+
+test('prepared source guards reuse one generation hash and reject same-size source mutation', t => {
+  const f = fixture(t); prepareHelper({ ...f, apply: true });
+  const source = path.join(f.root, 'pinned-source'); fs.writeFileSync(source, 'original');
+  const pin = sha(fs.readFileSync(source)); let hashes = 0;
+  const hash = p => { hashes++; return sha(fs.readFileSync(p)); };
+  const physical = require(path.join(f.output, 'physical-proof.cjs')).createPhysicalReader({ fs, hash });
+  const code = fs.readFileSync(path.join(f.output, 'index.prepared.js'), 'utf8')
+    .match(/for\(const\[p,h\]of Object\.entries\(c\.sourcePins\)\)[^;]+;/)[0];
+  const context = { c: { sourcePins: { [source]: pin } }, hash, physical,
+    need: (v, error) => { if (!v) throw Error(error); } };
+  const before = fs.readFileSync(path.join(f.source, 'index.prepared.js'), 'utf8')
+    .match(/for\(const\[p,h\]of Object\.entries\(c\.sourcePins\)\)[^;]+;/)[0];
+  for (let n = 0; n < 10; n++) vm.runInNewContext(before, context);
+  assert.equal(hashes, 10); hashes = 0;
+  for (let n = 0; n < 10; n++) vm.runInNewContext(code, context);
+  assert.equal(hashes, 1); assert.equal(physical.metrics().cacheHits, 9);
+  fs.writeFileSync(source, 'modified'); fs.utimesSync(source, new Date(), new Date(Date.now() + 5000));
+  assert.throws(() => vm.runInNewContext(code, context), /SOURCE_CHANGED/);
 });
 test('source/module drift or an unsupported template fail before creating output', t => {
   for (const mode of ['entry', 'module', 'shape']) {

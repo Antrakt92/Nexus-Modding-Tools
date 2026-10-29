@@ -20,7 +20,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "5eaa09c2c887c861dd1fe23db95a435163f9d3705d2bfe6c2c3b70ecd7de828e"
+      "sha256_lf": "0520af0d38e9be7f5c18baade59c017188bcc6658d2a217317daa0a661be4e6e"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -212,7 +212,7 @@
     },
     {
       "path": "docs/NATIVE-HELPER-PREPARATION.md",
-      "sha256_lf": "e6a30da78d2c43d2fcce8beeff2a890825859951a725b9d810f9f30a3f5c4b5b"
+      "sha256_lf": "4ae6c3cf36f2f13bd0c803d36232b4cfd8e17ee37c1436eb87f086a1c8827582"
     },
     {
       "path": "docs/NO-RESTART-WORKFLOW.md",
@@ -588,15 +588,15 @@
     },
     {
       "path": "tools/modding/vortex-agent/prepare-native-helper.mjs",
-      "sha256_lf": "f528d0164046e1eabc73059ad93359830c5eceff183de6bb4072bb8cb843c8de"
+      "sha256_lf": "b35b6cdeed99ef14b8518333363f3b0eaddab123d94faf0577f7f6bb7c3c3866"
     },
     {
       "path": "tools/modding/vortex-agent/prepare-native-helper.test.mjs",
-      "sha256_lf": "81b634dc2073e12a9e5bc436362b0e6e990dba5f1c6f06997f54485922d59a20"
+      "sha256_lf": "e9968d99d45d7a1171ee990957bdf3586f493b8dc336f9ea81ec1651e56f61da"
     },
     {
       "path": "tools/modding/vortex-agent/prepare-tracked-nexus.mjs",
-      "sha256_lf": "f8faa5c1a58c6de9b45ad3bc939efea32c1299d19a202ba5124342db525e4b7f"
+      "sha256_lf": "c013a9d53a0d2ea100a9e74d23f027db485a1785c4d7c909b688e552200ab4b6"
     },
     {
       "path": "tools/modding/vortex-agent/process-guard.test.mjs",

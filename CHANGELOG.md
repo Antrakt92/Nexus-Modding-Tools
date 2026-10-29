@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Reuse generation-checked hashes for unchanged pinned source files in prepared
+  helpers, including Vortex's large `app.asar`; retain checks at every guard and
+  existing cache invalidation boundaries.
 - New prepared helpers verify staged files and physical bytes on every settlement
   sample instead of waiting for asynchronous native `modSize` metadata. Keep
   identity/flags/state and quiet-window gates; existing attempts remain immutable.
