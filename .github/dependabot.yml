@@ -1,11 +1,12 @@
 version: 2
 updates:
-  # Proposed updates must also pass source inventory and adapter verification.
+  # Routine upgrades are reviewed manually; keep main as the resting branch.
+  # Zero pauses version PRs, not separately configured security updates.
   - package-ecosystem: npm
     directory: /dependencies/vortex-mcp
     schedule:
       interval: weekly
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 0
     groups:
       minor-and-patch:
         patterns: ["*"]

@@ -8,6 +8,12 @@
   remove the supported template's duplicate `app.asar` hash and report proof counters.
 - Record separate guard/read/sleep timing and the last operation on settlement failure.
 - Reject nested custom/repository/collection Nexus identities in local import readiness.
+- Replace the download regression suite's 150ms disk-I/O watchdog with a bounded
+  test-runner timeout, retaining the failure/interlock assertions and production timeouts.
+- List all seven published Cyberpunk mods and the Past the Night collection;
+  expand contributor checks, helper routing and upstream/license documentation.
+- Keep routine dependency proposals in a reviewed maintenance queue instead of
+  accumulating automatic version-update branches. Security-update limits are separate.
 
 ## 0.1.0 — 2026-10-29
 

@@ -23,6 +23,17 @@ The maintained tool READMEs list additional suites. Tests and source-integrity
 checks do not establish native Vortex loading, deployed file ownership or game
 behavior. Report those observations separately when they are relevant.
 
+For native-helper preparation, settlement or physical proof changes, also run:
+
+```powershell
+node --test tools/modding/vortex-agent/prepare-native-helper.test.mjs tools/modding/vortex-agent/native-install-wait.test.cjs tools/modding/vortex-agent/physical-proof.test.cjs tools/modding/vortex-agent/install-settlement.test.cjs tools/modding/vortex-agent/local-import-readiness.test.cjs
+```
+
+Use the [helper preparation guide](docs/NATIVE-HELPER-PREPARATION.md) for fresh
+bindings and the final `verify DIR --materialization` gate. Never retrofit an
+attempted or completed helper, replay an uncertain import or clear its receipts.
+Copied template tests are executable code: review them before running them.
+
 ## Update the source inventory
 
 After reviewing and staging the intended files:
@@ -43,3 +54,20 @@ and the checks you ran. Preserve licenses, dependency pins, stable operation IDs
 and uncertain-operation recovery. Do not add unrestricted dispatch, generic mod
 installation or game-launch operations. Store runtime output in ignored
 `local-state/`; keep source changes separate from local installation state.
+
+`main` is the integration and resting branch. Use short-lived branches for
+review, delete completed remote/local branches after merge, and retain unfinished
+work. Do not force-push or delete an unmerged branch until its changes have been
+reviewed and either preserved or explicitly rejected.
+
+Dependency updates need compatibility review, the relevant local suites and
+regenerated source/provenance pins. A Dependabot PR alone does not satisfy these
+checks. Routine version PRs are paused; security updates use a separate GitHub
+limit. See [maintenance](docs/MAINTENANCE.md) for deferred proposals and required
+build checks. Do not run hosted checks or native Vortex effects merely to tidy
+the repository.
+
+Release the full change range since the previous immutable tag. New capabilities
+require a minor release; fixes and documentation alone require a patch. Keep the
+suite version separate from the embedded adapter label and distinguish a source
+release from installation into the running Vortex session.
