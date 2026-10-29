@@ -9,6 +9,9 @@ For a new helper, use the [maintained preparer](../../../docs/NATIVE-HELPER-PREP
 to copy/pin the observer and update the known caller. Verify the prepared code
 contract before activation rather than copying the old settlement module again.
 Diagnostics include separate guard/read/sleep costs and the last awaited operation.
+Tracked Nexus batches use the separate
+[manual review route](../../../docs/TRACKED-NEXUS-HELPER-REVIEW.md); the single-own
+preparer does not support that template or grant batch-install approval.
 
 ## Why this observer exists
 
@@ -32,6 +35,16 @@ quiet window. Unrelated catalog metadata and flag timestamps do not reset it.
 A conflicting defined identity aborts; missing fields keep waiting. Any sampled
 required predicate failure restarts the full window. Polling cannot prove that
 there was no transient change between samples.
+
+Native mod IDs and download IDs have different domains. Native IDs can derive
+from archive/install names, including spaces, dots, parentheses and Unicode.
+The observer accepts up to 255 UTF-16 code units, rejects leading/trailing
+whitespace, a trailing dot, path separators, Windows-invalid filename characters,
+ASCII controls and prototype-related object keys. This is a bounded observer
+policy, not proof of filesystem containment or a complete Vortex schema.
+Download IDs retain the separate 1–128 ASCII alphanumeric/underscore/hyphen
+policy. Neither domain is trimmed, case-folded or normalized for comparison.
+The target ID, every explicitly disabled old ID and archive ID remain pinned.
 
 ## Bind it to a reviewed one-shot
 
