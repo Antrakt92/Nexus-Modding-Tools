@@ -70,6 +70,14 @@ atomic snapshot or disk proof. This client-side tool needs a bridge/client reloa
 in existing MCP sessions, but no Vortex restart or extension upgrade. The bridge
 CLI can call it immediately. See [usage](../../../docs/NO-RESTART-WORKFLOW.md).
 
+For collection preparation, use the bridge-local `find_collection_downloads`
+tool with the expected active `gameId` and up to 100 exact Nexus mod/file pairs.
+One bounded inventory read returns compact matching download IDs and states,
+duplicate candidates and unknown identity counts. It shares the session reader's
+context/cap/error handling and makes no managed changes. See the
+[collection-download guide](../../../docs/COLLECTION-DOWNLOADS.md) for the schema,
+partial-result rules and the separate archive-verification gate.
+
 Supported writes are deliberately separate:
 
 | Operation | Contract |
@@ -118,6 +126,7 @@ Local modeled tests:
 ```powershell
 node --test tools/modding/vortex-agent/tests.mjs tools/modding/vortex-agent/review.test.mjs tools/modding/vortex-agent/rereview.test.mjs tools/modding/vortex-agent/audit-fixes.test.mjs tools/modding/vortex-agent/native-conflicts.test.mjs tools/modding/vortex-agent/process-guard.test.mjs tools/modding/vortex-agent/session.test.mjs tools/modding/vortex-agent/stdio.test.mjs tools/modding/vortex-agent/response-cleanup.test.mjs
 node --test tools/modding/vortex-agent/inspection-client.test.mjs
+node --test tools/modding/vortex-agent/catalog-snapshot.test.mjs tools/modding/vortex-agent/collection-downloads.test.mjs
 python -B tools/modding/vortex-agent/install.test.py
 ```
 

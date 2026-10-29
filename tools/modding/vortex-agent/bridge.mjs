@@ -95,13 +95,30 @@ const INSPECT_TOOL = {
   inputSchema: {type: 'object', properties: {diagnostics: {type: 'boolean', default: false}}, additionalProperties: false},
   annotations: {readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false},
 };
+const COLLECTION_DOWNLOADS_TOOL = {
+  name: 'find_collection_downloads',
+  description: 'Match up to 100 Nexus mod/file pairs against tracked downloads for the expected active game in one compact read. Reports finished/active/paused/failed candidates, duplicates, unknown identities and capped/partial observations. Metadata only: does not verify archive bytes or authorize downloading/installing.',
+  inputSchema: {type: 'object', required: ['gameId', 'files'], additionalProperties: false, properties: {
+    gameId: {type: 'string', pattern: '^[a-z0-9_-]{1,200}$'},
+    files: {type: 'array', minItems: 1, maxItems: 100, items: {type: 'object', additionalProperties: false,
+      required: ['nexusModId', 'nexusFileId'], properties: {
+        nexusModId: {type: 'integer', minimum: 1, maximum: Number.MAX_SAFE_INTEGER},
+        nexusFileId: {type: 'integer', minimum: 1, maximum: Number.MAX_SAFE_INTEGER},
+      }}},
+  }},
+  annotations: {readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false},
+};
+const LOCAL_TOOLS = [INSPECT_TOOL, COLLECTION_DOWNLOADS_TOOL];
+function localToolResult(result) {
+  return {content: [{type: 'text', text: JSON.stringify(result)}], structuredContent: result, ...(result.status === 'partial' ? {isError: true} : {})};
+}
 
 // Compose existing curated reads in the client; no host upgrade or native API is needed.
 export async function clientRemote(method, params = {}, transport = remote) {
   if (method === 'tools/list') {
     const result = await transport(method, params);
     if (!Array.isArray(result?.tools)) throw new Error('Invalid Vortex tool inventory');
-    return {...result, tools: [...result.tools.filter(tool => !['install_download', 'inspect_session'].includes(tool.name)), structuredClone(INSPECT_TOOL)]};
+    return {...result, tools: [...result.tools.filter(tool => tool.name !== 'install_download' && !LOCAL_TOOLS.some(local => local.name === tool.name)), ...structuredClone(LOCAL_TOOLS)]};
   }
   if (method === 'tools/call' && params.name === 'inspect_session') {
     const args = params.arguments === undefined ? {} : params.arguments;
@@ -112,7 +129,16 @@ export async function clientRemote(method, params = {}, transport = remote) {
     // Dynamic import avoids initializing session.mjs through its bridge import.
     const {inspectSession, createToolCaller} = await import('./session.mjs');
     const result = await inspectSession({call: createToolCaller(transport), diagnostics: args.diagnostics ?? false});
-    return {content: [{type: 'text', text: JSON.stringify(result)}], structuredContent: result, ...(result.status === 'partial' ? {isError: true} : {})};
+    return localToolResult(result);
+  }
+  if (method === 'tools/call' && params.name === 'find_collection_downloads') {
+    const {findCollectionDownloads} = await import('./collection-downloads.mjs');
+    const {createToolCaller} = await import('./session.mjs');
+    try { return localToolResult(await findCollectionDownloads(params.arguments, {call: createToolCaller(transport)})); }
+    catch (error) {
+      if (error.message !== 'INVALID_COLLECTION_REQUEST') throw error;
+      return {isError: true, content: [{type: 'text', text: '{"error":"INVALID_COLLECTION_REQUEST"}'}]};
+    }
   }
   return transport(method, params);
 }

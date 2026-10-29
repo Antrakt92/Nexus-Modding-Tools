@@ -16,6 +16,7 @@ missing capabilities rather than inventing another implementation.
 | Requested work | Skill | Maintained route |
 | --- | --- | --- |
 | Read Vortex profiles, mods, downloads, conflicts or dialogs | `vortex-nexus-api-audit` | Native curated MCP tools; bridge fallback; [adapter](../tools/modding/vortex-agent/README.md) |
+| Find tracked archives for collection members | `vortex-nexus-api-audit`, then `vortex-mod-lifecycle` for effects | [Batch download lookup](COLLECTION-DOWNLOADS.md); exact Nexus pairs, compact candidates, no archive-integrity claim |
 | Authorized download-only, enable or deploy | `vortex-mod-lifecycle` | Guarded adapter, stable request IDs, [reviewed plans](NO-RESTART-WORKFLOW.md) |
 | Public Nexus search, metadata or requirements | `nexus-research` | [CLI wrapper](../tools/modding/nexus-cli/README.md); inspect JSON status/errors/pagination |
 | Nexus upload preparation or authorized publication | `nexus-publication` | [Guarded publisher](../tools/modding/nexus-publish/README.md); offline by default |

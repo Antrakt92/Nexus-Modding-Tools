@@ -9,14 +9,14 @@ const health = () => ({protocol: 'vortex-agent/1', gameId: 'cyberpunk2077', prof
 const collection = completeCollection;
 const content = value => ({content: [{type: 'text', text: JSON.stringify(value)}]});
 
-test('bridge advertises exactly one local read tool and keeps unsupported installation hidden', async () => {
+test('bridge advertises each local read tool once and keeps unsupported installation hidden', async () => {
   const calls = [];
   const transport = async (method, params) => {
     calls.push({method, params});
     return {tools: [{name: 'health'}, {name: 'install_download'}, {name: 'inspect_session'}]};
   };
   const result = await clientRemote('tools/list', {}, transport);
-  assert.deepEqual(result.tools.map(t => t.name), ['health', 'inspect_session']);
+  assert.deepEqual(result.tools.map(t => t.name), ['health', 'inspect_session', 'find_collection_downloads']);
   assert.equal(result.tools[1].annotations.readOnlyHint, true);
   assert.equal(result.tools[1].inputSchema.additionalProperties, false);
   assert.equal(calls.length, 1);

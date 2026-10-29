@@ -25,6 +25,19 @@ function catalogFromDisk(util) {
     } finally { disk.closeSync(fd); }
   };
 }
+// A synchronous scan sees one catalogue. Every later scan gets a fresh reader,
+// including the final acquisition preflight; failures are never cached globally.
+function catalogSnapshot(read = () => []) {
+  let loaded = false, failed = false, rows, error;
+  return () => {
+    if (!loaded) {
+      loaded = true;
+      try { rows = read(); } catch (cause) { failed = true; error = cause; }
+    }
+    if (failed) throw error;
+    return rows;
+  };
+}
 function domainForGame(gameId, state, selectors) {
   const game = selectors.knownGames?.(state)?.find(g => g.id === gameId);
   return game?.details?.nexusPageId ?? aliases[gameId] ?? gameId;
@@ -71,14 +84,15 @@ function resolveDownload(item, state, selectors, catalog = () => []) {
 }
 function matchingDownloads(files, args, state, selectors, catalog) {
   const matches = [];
+  const snapshot = catalogSnapshot(catalog);
   for (const [id, item] of Object.entries(files)) {
-    const identity = resolveDownload(item, state, selectors, catalog);
     const info = item?.modInfo || {};
     const mods = [info.nexus?.ids?.modId, info.modId].map(positiveId);
     const ids = [info.nexus?.ids?.fileId, info.fileId].map(positiveId);
     const modMatch = mods.includes(args.nexusModId), fileMatch = ids.includes(args.nexusFileId);
     const relevant = modMatch && (fileMatch || ids.every(id => id === null)) || fileMatch && mods.every(id => id === null);
     if (!relevant) continue;
+    const identity = resolveDownload(item, state, selectors, snapshot);
     if (!identity.ambiguous && identity.gameId && identity.gameId !== args.gameId) {
       if (identity.domain === domainForGame(args.gameId, state, selectors)) throw Error('AMBIGUOUS_DOWNLOAD_IDENTITY');
       continue;
@@ -91,4 +105,4 @@ function matchingDownloads(files, args, state, selectors, catalog) {
   if (matches.length > 1) throw Error('AMBIGUOUS_EXISTING_DOWNLOAD');
   return matches;
 }
-module.exports = { ACTIVE, TERMINAL, positiveId, domainForGame, resolveDownload, matchingDownloads, catalogFromDisk };
+module.exports = { ACTIVE, TERMINAL, positiveId, domainForGame, resolveDownload, matchingDownloads, catalogFromDisk, catalogSnapshot };
