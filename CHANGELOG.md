@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Preserve empty native versions as unknown in inventory reads, rather than
+  failing the complete mod list. Keep identifier, URI and credential checks.
 - Add offline source-pinned preparation and copy-map verification for batches of
   up to four tracked Nexus originals, plus a separate published-own single batch.
   Prepare fresh read-capture code separately; neither path authorizes activation.

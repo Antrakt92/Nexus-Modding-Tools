@@ -74,6 +74,17 @@ test('re-review: named inventory IDs and versions remain lossless while display/
   assert.equal(generic.modIds[0], '[redacted]-id'); assert.equal(generic.credential, '[redacted]');
   assert.equal(guard.safe([{ id: 'mod-id', version: 'DEV beta' }], f.api, 'list_mods')[0].version, 'DEV beta');
 });
+
+test('re-review: empty native versions stay unknown without weakening operational validation', async () => {
+  const f = await fixture();
+  for (const kind of ['list_mods', 'list_profiles', 'list_downloads']) {
+    assert.equal(guard.safe([{ id: 'mod-id', version: '' }], f.api, kind)[0].version, '');
+    for (const version of ['x'.repeat(201), '1\n2', '\0', 'https://private.example/file'])
+      assert.throws(() => guard.safe([{ id: 'mod-id', version }], f.api, kind), /OPERATIONAL_VALUE_NOT_CURATED/);
+    assert.throws(() => guard.safe([{ id: '', version: '' }], f.api, kind), /OPERATIONAL_VALUE_NOT_CURATED/);
+    assert.throws(() => guard.safe([{ id: 'mod-id', version: 'actual-private-key' }], f.api, kind), /OPERATIONAL_SECRET_OVERLAP/);
+  }
+});
 test('re-review: internal bearer overlap fails before receipt persistence and error messages cannot echo credentials', async () => {
   const f = await fixture(); const token = 'b'.repeat(64); f.args.requestId = token;
   const ops = guard.createOperations(f.api, f.actions, f.selectors, { ...f.options, credentials: [token] });
