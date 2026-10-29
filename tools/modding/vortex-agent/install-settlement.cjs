@@ -165,4 +165,5 @@ async function waitForInstallSettlement(options = {}) {
   }
 }
 
-module.exports = { waitForInstallSettlement, InstallSettlementError };
+module.exports = { waitForInstallSettlement, InstallSettlementError,
+  isNativeModId: nativeId, isDownloadId: archiveId };

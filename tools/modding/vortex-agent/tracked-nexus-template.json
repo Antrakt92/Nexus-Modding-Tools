@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "entry": "index.reference.js",
+  "entrySHA256": "bee26a119fb5ec11f275fd2f6e06ed62b4162c6a6ef7babb3108d4e5a1a13f9c",
+  "modules": {
+    "deferred-policy.cjs": "1325169c354edc9e25c89f7f20212fa03eb7fe631bc15fec192ddc3fa9916e33",
+    "dependency-capture.cjs": "25d45c09285302acfc12879097d293fb5c4bf251fe1dd8709607f0f447ab4ced",
+    "extractor-admission.cjs": "7d7da582e58f7af2ae492421617cdd168a4476b524287848b2805e7c201a2e93",
+    "install-exclusivity.cjs": "0271fc55eb70f70dc11a4edce93d74855bf2e278830f138dc5c2d86d7b4a1211",
+    "native-selectors.cjs": "54946b7a3b1fb5f4ab5cc697abab4a345f26e3c41da0072cad96cf86f9b529ba",
+    "nexus-identity.cjs": "33fd52ffa4fe465d07326cabdb656a3b14a48b5a3c0acf8e11bb5a1117c3561c",
+    "poller.cjs": "14a57d3b49a32389fb17e58f1f2b0af4c9a2ba42233ea5e4218750f608f1a9ea",
+    "preference-policy.cjs": "0a0e7ebc7a8a8f7e7a6d97405a81fb1d97f915875f3fcaa2b4b1351eed750afc",
+    "protected-stages.cjs": "2f07e5b723626688c35df9893d7fed09e620702990a617fb20e54a8cf2f34476",
+    "scope-policy.cjs": "40c50236234de9a84a57ae432a3baf0e7c9115c1ce34f1cb0583f16a300c2382",
+    "settings-guard.cjs": "bf6345c34707bd413b6d1da4592070b5d7407715dfc37429b49c4c9f1d0f8212",
+    "settlement.cjs": "8f63d9efff83373b3306220b7ac72529d442bcc1753c9950d4daa2f6acc39fa2",
+    "simulate-all.cjs": "593610a9700de83593cf09ff667b15b1fb16d3b5c053e399228ba53a11a00528",
+    "tool-timestamps.cjs": "a50d4f9f8da135e214542ef89dd970c3c38c569dd2a4ae7b12c4cac43cb7b0a7",
+    "transfer-policy.cjs": "07a25a1871298cefb56b0c41d6fbeb14cd3d3b9f82a457e4a7d4095de97a68c4",
+    "version-choice-policy.cjs": "393703a5606ebce5f44aa54e0fdfd84e43c95038d7b6f972f7aa979c68215270"
+  },
+  "capture": {
+    "entrySHA256": "522bc300f502045810c8a9623fa193d4a59538024d981518c9030fdea09e2eb2",
+    "bodySHA256": "034c81da4efb7d56815192fb9029a1e2e1b2c3e4f557d08bb611f84e66b5dffd",
+    "modules": {
+      "native-selectors.cjs": "54946b7a3b1fb5f4ab5cc697abab4a345f26e3c41da0072cad96cf86f9b529ba",
+      "nexus-identity.cjs": "33fd52ffa4fe465d07326cabdb656a3b14a48b5a3c0acf8e11bb5a1117c3561c",
+      "extractor-admission.cjs": "7d7da582e58f7af2ae492421617cdd168a4476b524287848b2805e7c201a2e93"
+    }
+  }
+}
