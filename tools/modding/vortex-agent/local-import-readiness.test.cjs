@@ -183,6 +183,18 @@ test('legacy alternate Nexus identity container is not hidden by empty primary c
   await assert.rejects(importLocalArchiveReady(f.options), { code: 'IMPORT_NEXUS_IDENTITY_APPEARED' });
 });
 
+test('nested custom/repository/collection identities cannot masquerade as a local archive', async () => {
+  for (const extra of [{ modInfo: { custom: { modId: 1, fileId: 2 } } },
+    { attributes: { custom: { source: 'NEXUS' } } },
+    { modInfo: { custom: { ids: { nexusModId: 1 } } } },
+    { modInfo: { custom: { revisionId: 7 } } }, { repo: { repository: 'NexusMods' } }]) {
+    const f = fixture(); f.options.importOnce = () => {
+      ++f.state.imports; f.state.rows.push({ ...f.ready(), ...extra }); return f.callback.promise;
+    };
+    await assert.rejects(importLocalArchiveReady(f.options), { code: 'IMPORT_NEXUS_IDENTITY_APPEARED' });
+  }
+});
+
 test('file identity change while proof awaits is rejected', async () => {
   const f = fixture();
   f.options.getFileProof = async path => {

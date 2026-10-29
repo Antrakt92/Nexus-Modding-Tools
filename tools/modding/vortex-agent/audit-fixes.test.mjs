@@ -60,13 +60,15 @@ async function pinned(f, record = {}) {
   return { ...f.args, size: bytes.length, sha256: crypto.createHash('sha256').update(bytes).digest('hex'), nexusModId: 42, nexusFileId: 43 };
 }
 for (const terminal of ['missing', 'cancelled', 'canceled', 'removed', 'unknown', 'paused', 'failed', 'redirect']) {
-  test(`audit: download ${terminal} settles and retains uncertain interlock`, async () => {
+  test(`audit: download ${terminal} settles and retains uncertain interlock`, { timeout: 5000 }, async t => {
     const f = await fixture(); const args = await pinned(f); delete f.state.persistent.downloads.files.d;
     f.api.ext.nexusDownload = async () => { if (terminal !== 'missing') f.state.persistent.downloads.files.d = { state: terminal }; return 'd'; };
-    const pending = f.ops.download_nexus(args); let timer;
-    try { await assert.rejects(Promise.race([pending, new Promise((_, reject) => { timer = setTimeout(() => reject(Error('PROBE_TIMEOUT')), 150); })]),
-      e => e.message !== 'PROBE_TIMEOUT' && /DOWNLOAD/.test(e.message)); }
-    finally { clearTimeout(timer); f.abort(); await pending.catch(() => {}); }
+    // The operation includes real fsynced receipts. Bound hangs with the test
+    // runner, not a 150ms race that mistakes slow disk I/O for a guard failure.
+    t.signal.addEventListener('abort', f.abort, { once: true });
+    const pending = f.ops.download_nexus(args);
+    try { await assert.rejects(pending, e => /DOWNLOAD/.test(e.message)); }
+    finally { t.signal.removeEventListener('abort', f.abort); f.abort(); await pending.catch(() => {}); }
     const failed = JSON.parse(await fs.readFile(path.join(f.dir, 'receipts', args.requestId + '.failed.json')));
     assert.equal(failed.effectsMayHaveOccurred, true); await fs.access(path.join(f.dir, 'receipts/unresolved.json'));
     await assert.rejects(fs.access(path.join(f.dir, 'receipts/mutation.lock')));

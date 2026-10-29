@@ -44,6 +44,10 @@ import. A failed/restarted helper must reconcile existing attempt receipts befor
 calling this function; per-invocation single-import behavior is not a durable
 cross-process replay barrier.
 
+Local identity checks cover bounded nested metadata holders, including custom,
+repository and collection/revision aliases. A nested Nexus ID cannot be hidden
+behind an otherwise empty primary identity object.
+
 Adapter deadlines are rechecked after completion: a long synchronous guard
 cannot beat the timer and report late success. The ready receipt follows the
 final guard and rejects callback failures already observed during that guard.

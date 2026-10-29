@@ -41,6 +41,10 @@ async function waitForInstallSettlement(options = {}) {
   const pin = Object.fromEntries(fields.map(key => [key, expected.record[key]]));
   const enabled = expected.enabled, bytes = expected.bytes;
   const disabled = [...expected.disabledModIds];
+  const timing = Object.fromEntries(['guard', 'read', 'sleep'].map(key => [key, { calls: 0, totalMs: 0, maxMs: 0 }]));
+  let lastOperation = null;
+  const diagnostics = () => ({ lastOperation,
+    timing: Object.fromEntries(Object.entries(timing).map(([key, value]) => [key, { ...value }])) });
   let lastTime, started, since, observation, checks = 0, lastWaiting;
   function clock() {
     const value = now();
@@ -56,8 +60,9 @@ async function waitForInstallSettlement(options = {}) {
     if (left <= 0) fail('INSTALL_SETTLEMENT_TIMEOUT_RECONCILE', observation);
     return left;
   }
-  async function bounded(fn) {
+  async function bounded(fn, operation) {
     const left = timeLeft();
+    const begin = clock(); lastOperation = operation; timing[operation].calls++;
     let timer;
     try {
       const result = await Promise.race([
@@ -69,7 +74,12 @@ async function waitForInstallSettlement(options = {}) {
       ]);
       timeLeft();
       return result;
-    } finally { clearTimeout(timer); }
+    } finally {
+      clearTimeout(timer);
+      const elapsed = clock() - begin;
+      timing[operation].totalMs += elapsed;
+      timing[operation].maxMs = Math.max(timing[operation].maxMs, elapsed);
+    }
   }
   function emit(event) {
     try {
@@ -112,7 +122,7 @@ async function waitForInstallSettlement(options = {}) {
     if (!flagsReady) waiting.push('enabled_flags');
     if (!waiting.length && quietForMs < quietMs) waiting.push('quiet_window');
     observation = { checks: ++checks, elapsedMs: at - started, quietForMs,
-      identityReady, flagsReady, stateReady, sizeReady, ready: waiting.length === 0, waiting };
+      identityReady, flagsReady, stateReady, sizeReady, ready: waiting.length === 0, waiting, ...diagnostics() };
     const key = waiting.join(',');
     if (key !== lastWaiting) {
       // Do not expose the full record, raw errors, account data or metadata.
@@ -124,26 +134,27 @@ async function waitForInstallSettlement(options = {}) {
 
   try {
     while (true) {
-      await bounded(assertOperationalState);
-      let current = observe(await bounded(read));
+      await bounded(assertOperationalState, 'guard');
+      let current = observe(await bounded(read, 'read'));
       if (current.ready) {
-        await bounded(assertOperationalState);
+        await bounded(assertOperationalState, 'guard');
         // The final guard may await I/O. Re-read the target instead of returning
         // the pre-guard result when its flags or record changed in that interval.
-        current = observe(await bounded(read));
+        current = observe(await bounded(read, 'read'));
         if (current.ready) {
           emit({ phase: 'install_settlement_ready', ...current, waiting: [] });
           return current;
         }
       }
-      await bounded(() => sleep(Math.min(pollMs, timeLeft())));
+      await bounded(() => sleep(Math.min(pollMs, timeLeft())), 'sleep');
     }
   } catch (error) {
     const failure = error instanceof InstallSettlementError ? error
       : new InstallSettlementError('INSTALL_SETTLEMENT_OBSERVATION_FAILED', observation);
+    failure.diagnostics = diagnostics();
     if (failure.code !== 'INSTALL_SETTLEMENT_RECEIPT_FAILED')
       emit({ phase: 'install_settlement_failed', code: failure.code,
-        ...(observation ? { observation } : {}), noReplay: true });
+        ...(observation ? { observation } : {}), ...diagnostics(), noReplay: true });
     throw failure;
   }
 }
