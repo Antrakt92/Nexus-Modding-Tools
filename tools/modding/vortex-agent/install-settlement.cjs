@@ -25,7 +25,7 @@ const fields = ['id', 'archiveId', 'installationPath', 'type'];
 async function waitForInstallSettlement(options = {}) {
   const { expected, assertOperationalState, read, record,
     now = Date.now, sleep = ms => new Promise(resolve => setTimeout(resolve, ms)),
-    timeoutMs = 30000, quietMs = 3000, pollMs = 1000 } = options;
+    timeoutMs = 30000, quietMs = 3000, pollMs = 1000, sizeSource = 'native-metadata' } = options;
   if (!object(expected) || !object(expected.record) || !nativeId(expected.record.id)
       || Object.keys(expected).sort().join(',') !== 'bytes,disabledModIds,enabled,record'
       || Object.keys(expected.record).sort().join(',') !== 'archiveId,id,installationPath,type'
@@ -37,6 +37,7 @@ async function waitForInstallSettlement(options = {}) {
       || !Array.isArray(expected.disabledModIds) || expected.disabledModIds.some(value => !nativeId(value))
       || new Set(expected.disabledModIds).size !== expected.disabledModIds.length
       || expected.disabledModIds.includes(expected.record.id)
+      || !['native-metadata', 'verified-payload'].includes(sizeSource)
       || ![assertOperationalState, read, record, now, sleep].every(fn => typeof fn === 'function')
       || !Number.isSafeInteger(timeoutMs) || timeoutMs < 2 || timeoutMs > 120000
       || !Number.isSafeInteger(quietMs) || quietMs < 1 || quietMs >= timeoutMs
@@ -113,7 +114,12 @@ async function waitForInstallSettlement(options = {}) {
     const flagsReady = (enabled ? flag?.enabled === true : flag === undefined || flag.enabled === false)
       && disabled.every(key => snapshot.flags[key]?.enabled === false);
     const stateReady = mod?.state === 'installed';
-    const sizeReady = mod?.attributes?.modSize === bytes;
+    const metadataSizeReady = mod?.attributes?.modSize === bytes;
+    // The reviewed caller supplies this projection only after checking the exact
+    // staged file set, hashes and physical byte total on this observation.
+    const sizeReady = sizeSource === 'verified-payload'
+      ? Number.isSafeInteger(snapshot.verifiedPayloadBytes) && snapshot.verifiedPayloadBytes === bytes
+      : metadataSizeReady;
     const at = clock();
     // Unrelated catalog metadata and flag timestamps are deliberately excluded.
     // Every required predicate must stay true for the entire sampled quiet span.
@@ -124,11 +130,12 @@ async function waitForInstallSettlement(options = {}) {
     if (!mod) waiting.push('record_missing');
     else if (!identityReady) waiting.push('identity_missing');
     if (!stateReady) waiting.push('installed_state');
-    if (!sizeReady) waiting.push('mod_size');
+    if (!sizeReady) waiting.push(sizeSource === 'verified-payload' ? 'payload_bytes' : 'mod_size');
     if (!flagsReady) waiting.push('enabled_flags');
     if (!waiting.length && quietForMs < quietMs) waiting.push('quiet_window');
     observation = { checks: ++checks, elapsedMs: at - started, quietForMs,
-      identityReady, flagsReady, stateReady, sizeReady, ready: waiting.length === 0, waiting, ...diagnostics() };
+      identityReady, flagsReady, stateReady, sizeReady, sizeSource, metadataSizeReady,
+      ready: waiting.length === 0, waiting, ...diagnostics() };
     const key = waiting.join(',');
     if (key !== lastWaiting) {
       // Do not expose the full record, raw errors, account data or metadata.

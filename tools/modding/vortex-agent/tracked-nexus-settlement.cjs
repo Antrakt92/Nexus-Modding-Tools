@@ -11,10 +11,10 @@ function flagsReady(flags, pkg) {
     && pkg.oldEnabledModIds.every(id => valid(flags[id]) && flags[id]?.enabled === false);
 }
 function wait({ guard, read, record, sleep, now, pkg, expectedSize,
-  expectedDownloadId, expectedType, timeoutMs, quietMs, pollMs } = {}) {
+  expectedDownloadId, expectedType, timeoutMs, quietMs, pollMs, sizeSource } = {}) {
   return waitForInstallSettlement({ expected: { record: { id: pkg?.expectedModId,
     archiveId: expectedDownloadId, installationPath: pkg?.expectedModId, type: expectedType },
     bytes: expectedSize, enabled: pkg?.expectedEnabled, disabledModIds: pkg?.oldEnabledModIds },
-    assertOperationalState: guard, read, record, sleep, now, timeoutMs, quietMs, pollMs });
+    assertOperationalState: guard, read, record, sleep, now, timeoutMs, quietMs, pollMs, sizeSource });
 }
 module.exports = { wait, flagsReady };

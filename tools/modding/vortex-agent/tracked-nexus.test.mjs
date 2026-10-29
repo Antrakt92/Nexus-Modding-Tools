@@ -150,7 +150,7 @@ test('real pinned multi-template prepares inertly with all policy data and exact
     const args = { reference: process.env.VORTEX_TRACKED_REFERENCE, planFile, planSha256: sha(bytes), output: path.join(root, 'held') };
     assert.equal(prepareTracked(args).status, 'plan'); assert(!fs.existsSync(args.output));
     assert.equal(prepareTracked({ ...args, apply: true }).packages, 4);
-    const checked = verifyTracked(args.output); assert.equal(checked.runtime, 19); assert(checked.missingBindings.length > 0);
+    const checked = verifyTracked(args.output); assert.equal(checked.runtime, 20); assert(checked.missingBindings.length > 0);
     assert(!fs.existsSync(path.join(args.output, 'deferred-policy.cjs')));
     inert(args.output);
     assert.throws(() => prepareTracked({ ...args, apply: true }), /TRACKED_OUTPUT_EXISTS/);

@@ -17,6 +17,7 @@ function fixture(t) {
   const index = `const sequence=0;
  function physical(p){const prior=cache.get(p);return prior;}
 function verify(){return {now:Date.now,pkg,expectedSize:size,pollMs:1000};}
+function read(){return{record:s.persistent.mods[c.health.gameId][pkg.expectedModId],flags:{}};}
 need(hash(c.appAsar)===c.appAsarSHA256&&c.appAsarSHA256==='${'a'.repeat(64)}','APP_ASAR_CHANGED');
 for(const[p,h]of Object.entries(c.sourcePins))need(hash(p)===h,'SOURCE_CHANGED');
 record('guard-timing-terminal',{guardTiming,serialPoller:pollMetrics});`;

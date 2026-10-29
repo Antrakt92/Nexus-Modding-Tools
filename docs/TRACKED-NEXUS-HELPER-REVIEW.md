@@ -121,7 +121,7 @@ runtime graph. Use every runtime entry, including JSON policy data. Install kits
 add `index.prepared.js` to `index.js`, `info.json`, `reviewed.json` and `frozen.json`;
 capture kits use the same base without `frozen.json`. Reference source, kit manifests
 and the control copy-map are not plugin entries. Current install/capture graphs
-contain 19/9 runtime files, making their final copy maps 23/12 entries; derive
+contain 20/9 runtime files, making their final copy maps 24/12 entries; derive
 these counts from the kit rather than hardcoding an old host list.
 
 Fresh binding must retain both the exact module pins and `helperSHA256`.
