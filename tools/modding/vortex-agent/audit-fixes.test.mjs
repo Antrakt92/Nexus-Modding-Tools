@@ -41,6 +41,7 @@ async function fixture(hook = async () => {}) {
   let calls = 0, abort = false;
   const actions = { setModsEnabled: async () => { calls++; state.persistent.profiles.p.modState.m = { enabled: true }; } };
   const monitored = { ...fs, open: async (...a) => { const h = await fs.open(...a); return {
+    stat: (...args) => h.stat(...args), createReadStream: (...args) => h.createReadStream(...args),
     writeFile: (...args) => h.writeFile(...args), read: (...args) => h.read(...args), close: () => h.close(), sync: async () => { await hook(a[0], state); await h.sync(); } }; } };
   const module = { exports: {} };
   vm.runInThisContext('(function(require,module,exports){' + await fs.readFile(new URL('./guard.cjs', import.meta.url), 'utf8') + '\n})')(

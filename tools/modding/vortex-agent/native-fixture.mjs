@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { remote } from './bridge.mjs';
 import paths from './paths.cjs';
 import credential from './credential.cjs';
+import { ORDINARY_MOD_LIMIT, assertOrdinaryModSnapshot } from './native-fixture-snapshot.mjs';
 const base = path.join(paths.workspace, 'local-state/vortex-agent-native-fixture');
 const here = path.dirname(fileURLToPath(import.meta.url));
 const must = (ok, code) => { if (!ok) throw Error(code); };
@@ -41,7 +42,8 @@ function zip(name, data) {
 }
 async function snapshot() {
   const health = await tool('health'), profiles = await tool('list_profiles', { gameId: 'cyberpunk2077' });
-  const mods = await tool('list_mods', { gameId: 'cyberpunk2077', limit: 500 });
+  const mods = await tool('list_mods', { gameId: 'cyberpunk2077', limit: ORDINARY_MOD_LIMIT });
+  assertOrdinaryModSnapshot(mods);
   const manifestPath = path.join(health.gamePath, 'vortex.deployment.json');
   return { health, profiles, mods, manifestPath, manifestSha256: sha(fs.readFileSync(manifestPath)), processes: processes() };
 }

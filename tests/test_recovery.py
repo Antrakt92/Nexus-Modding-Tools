@@ -60,12 +60,45 @@ class RecoveryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / 'code.py').write_bytes(b'first\r\nsecond\r\n')
-            manifest = {'files': [{'path': 'code.py', 'sha256_lf': hashlib.sha256(b'first\nsecond\n').hexdigest()}]}
+            manifest = {'schema': 1, 'digest': 'SHA-256 after CRLF-to-LF normalization',
+                        'files': [{'path': 'code.py', 'sha256_lf': hashlib.sha256(b'first\nsecond\n').hexdigest()}]}
             (root / 'recovery-manifest.json').write_text(json.dumps(manifest))
             self.assertEqual(r.verify(root)['verified_files'], 1)
             (root / 'code.py').write_text('modified')
             with self.assertRaises(ValueError):
                 r.verify(root)
+
+    def test_manifest_requires_supported_schema_and_nonempty_file_inventory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            valid = {'schema': 1, 'digest': 'SHA-256 after CRLF-to-LF normalization',
+                     'files': [{'path': 'code.py', 'sha256_lf': r.digest(b'code')}]}
+            (root / 'code.py').write_bytes(b'code')
+            variants = [None, [], {}, {'files': []}, {**valid, 'schema': True},
+                        {**valid, 'schema': 2}, {**valid, 'digest': 'different algorithm'},
+                        {**valid, 'files': []}, {**valid, 'files': {}},
+                        {**valid, 'unexpected': True}]
+            for manifest in variants:
+                with self.subTest(manifest=manifest):
+                    (root / 'recovery-manifest.json').write_text(json.dumps(manifest))
+                    with self.assertRaisesRegex(ValueError, 'manifest'):
+                        r.verify(root)
+
+    def test_manifest_rows_have_exact_fields_and_lowercase_sha256_pins(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / 'code.py').write_bytes(b'code')
+            good = {'path': 'code.py', 'sha256_lf': r.digest(b'code')}
+            rows = [None, [], {}, {**good, 'extra': 1},
+                    {**good, 'path': 1}, {**good, 'sha256_lf': None},
+                    {**good, 'sha256_lf': 'a' * 63},
+                    {**good, 'sha256_lf': good['sha256_lf'].upper()}]
+            for row in rows:
+                with self.subTest(row=row):
+                    manifest = {'schema': 1, 'digest': 'SHA-256 after CRLF-to-LF normalization', 'files': [row]}
+                    (root / 'recovery-manifest.json').write_text(json.dumps(manifest))
+                    with self.assertRaisesRegex(ValueError, 'manifest'):
+                        r.verify(root)
 
     def test_path_escape_rejected(self):
         for value in ['../outside', '/absolute', 'C:/absolute', 'a\\b', 'a/../b', 'a//b', 'a:stream']:
