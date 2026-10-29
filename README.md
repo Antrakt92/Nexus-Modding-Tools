@@ -6,9 +6,9 @@
 
 Inspect a running session. Review changes offline. Keep recovery evidence intact.
 
-[![Platform: Windows](https://img.shields.io/badge/platform-Windows-0078D4)](docs/RESTORE.md) [![License: GPL-3.0-only](https://img.shields.io/badge/license-GPL--3.0--only-2563EB)](LICENSE) [![Community project](https://img.shields.io/badge/community-project-0F766E)](#project-and-license)
+[![Release: 0.1.0](https://img.shields.io/badge/release-0.1.0-0F766E)](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/tag/v0.1.0) [![Platform: Windows](https://img.shields.io/badge/platform-Windows-0078D4)](docs/RESTORE.md) [![License: GPL-3.0-only](https://img.shields.io/badge/license-GPL--3.0--only-2563EB)](LICENSE)
 
-[Get started](docs/RESTORE.md) · [Configuration](docs/CONFIGURATION.md) · [Agent workflow](docs/AGENT-WORKFLOW.md) · [Verification](docs/FULL-AUDIT-20261025.md)
+[Get started](docs/RESTORE.md) · [What's new](CHANGELOG.md) · [Configuration](docs/CONFIGURATION.md) · [Verification](docs/FULL-AUDIT-20261029.md)
 
 </div>
 
@@ -26,6 +26,24 @@ The resident adapter reuses the running Vortex process. Supported reads and mana
 operations do not need a temporary plugin, restart or client-driven window changes.
 Writes check the active profile, paths and filesystem identities, and retain durable
 operation receipts. Uncertain effects block retries until reviewed reconciliation.
+
+## Work faster with a running session
+
+| Workflow | Entry point | Result |
+| --- | --- | --- |
+| Inspect the active session | MCP `inspect_session` or CLI `session.mjs inspect` | Combined curated reads, optional collection/conflict diagnostics and explicit partial results |
+| Reuse collection downloads | MCP `find_collection_downloads` | Match up to 100 exact Nexus mod/file pairs against tracked archives |
+| Apply a reviewed plan | MCP `run_mod_plan` or CLI `session.mjs plan` | Offline validation, pinned download-only steps, batched enable/disable changes and one optional final deploy |
+
+Independent reads overlap; managed changes stay serial. Plans retain stable
+request IDs and reconcile receipts before continuing. Cancellation stops later
+steps after any invoked operation settles. See the
+[session guide](docs/NO-RESTART-WORKFLOW.md) and
+[collection download guide](docs/COLLECTION-DOWNLOADS.md).
+
+Version **0.1.0** identifies this source release. The embedded adapter's **1.0.4**
+label is separate. Existing clients need their MCP connection refreshed to load
+new bridge code; native adapter changes require the reviewed upgrade procedure.
 
 ## Start here
 
@@ -129,3 +147,13 @@ Built on [Alan Tse's vortex-mcp](https://github.com/alandtse/vortex-mcp), the
 [community Nexus CLI](https://github.com/vadimtrifonov/nexusmods-cli) and the
 [official Nexus uploader](https://github.com/Nexus-Mods/upload-action).
 See [LICENSE](LICENSE) and [component attribution](docs/LICENSES.md).
+
+## My Cyberpunk 2077 mods
+
+I also maintain these projects on Nexus Mods:
+
+| Mod | What it adds |
+| --- | --- |
+| [Clean Inventory — Search and Filters](https://www.nexusmods.com/cyberpunk2077/mods/34413) | Search, category filters and separate sorting preferences for inventory, stash and vendors |
+| [Nearby Auto Loot — Automatic Pickup](https://www.nexusmods.com/cyberpunk2077/mods/34650) | Configurable automatic pickup of nearby loot |
+| [Move Your Way](https://www.nexusmods.com/cyberpunk2077/mods/36249) | Movement settings for recovery, climbing, air dashes and extra jumps |
