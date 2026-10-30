@@ -69,6 +69,11 @@ check for the prepared and materialized configurations. Retargeting only the
 entrypoint or configuration is rejected before output or host activation;
 unsupported guard shapes require a new source review.
 
+The final independent payload proof uses its own physical reader and records
+`freshPayloadProof` metrics. It fully rehashes the new package without evicting
+the unchanged collection/source generation cache. All later guard observations
+and invalidation checks remain. See [measurements and workflow limits](LIFECYCLE-PERFORMANCE.md).
+
 ## Changes applied to the supported template
 
 - `settlement.cjs` becomes the maintained compatibility entry. The call pins the

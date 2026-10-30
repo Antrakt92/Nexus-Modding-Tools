@@ -7,6 +7,7 @@ const { actions, selectors, util, log } = require('@nexusmods/vortex-api');
 const control = require('./vortexControl');
 const { createOperations, safe } = require('./guard.cjs');
 const { dialogs, conflicts, externalChanges, listDownloads, collectionHealth, unresolvedConflicts } = require('./inspection.cjs');
+const { readModLifecycle } = require('./lifecycle-inspection.cjs');
 const { catalogFromDisk } = require('./download-identity.cjs');
 const ingress = require('./http-ingress.cjs');
 const { VERIFICATION } = require('./receipts.cjs');
@@ -30,8 +31,8 @@ function register(server, api, options = {}) {
     downloadId: id.optional(), reused: z.boolean().optional(), archiveSha256Verified: z.boolean().optional(),
     size: z.number().int().positive().optional(), autoInstall: z.literal(false).optional(), archiveCRCVerified: z.literal(false).optional(),
   });
-  const add = (name, fields, fn, writes = false) => server.registerTool(name, {
-    description: writes ? 'Guarded active-context mutation; unique requestId and live path pins required. Result is NOT disk deployment proof.' : 'Curated read-only Vortex inspection.',
+  const add = (name, fields, fn, writes = false, description) => server.registerTool(name, {
+    description: description ?? (writes ? 'Guarded active-context mutation; unique requestId and live path pins required. Result is NOT disk deployment proof.' : 'Curated read-only Vortex inspection.'),
     inputSchema: z.strictObject(fields), annotations: { readOnlyHint: !writes, destructiveHint: writes },
     ...(writes ? { outputSchema: status } : {}),
   }, async args => {
@@ -57,6 +58,9 @@ function register(server, api, options = {}) {
   add('list_downloads', { ...read, states: z.array(id).max(10).default(['finished', 'started', 'paused', 'failed', 'init', 'finalizing']) }, a => listDownloads(api, selectors, a, catalog));
   add('list_mod_rules', { gameId: id.optional(), modId: id }, a => control.listModRules(api, a.modId, a.gameId));
   add('find_mod_dependents', { gameId: id.optional(), modId: id }, a => control.findModDependents(api, a.modId, a.gameId));
+  add('read_mod_lifecycle', { gameId: id.optional(), modIds: z.array(id).min(1).max(20) },
+    a => readModLifecycle(api, selectors, util, a), false,
+    'Before preparing installation, update or removal helpers, inspect 1–20 exact installed mod IDs in one bounded state read: usage in every game profile including pending removal, native requires matches including collection file references, and archive references across games. No filesystem scan or mutation. Missing native matcher or exceeded limits fails closed. Metadata only; never authorizes installation/removal or proves deployed bytes.');
   add('list_file_conflicts', { ...read, nameFilter: id.optional() }, a => conflicts(api, selectors, a));
   add('list_known_mod_conflicts', { gameId: id.optional() }, a => control.listKnownModConflicts(api, a.gameId));
   add('list_unsolved_conflicts', {}, () => unresolvedConflicts(api, selectors, util));

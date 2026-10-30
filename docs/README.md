@@ -8,6 +8,7 @@
 - [Running-session workflows](NO-RESTART-WORKFLOW.md): inspection and reviewed download/enable/deploy plans.
 - [Collection downloads](COLLECTION-DOWNLOADS.md): exact Nexus IDs and tracked-download reuse.
 - [Collection releases](COLLECTION-RELEASES.md): early preflight, frozen candidates and separate publication/post-release boundaries.
+- [Lifecycle performance](LIFECYCLE-PERFORMANCE.md): early update/removal diagnostics, measured verification improvements and remaining native workflow gates.
 - [Support](../SUPPORT.md) and [contributing](../CONTRIBUTING.md).
 
 ## Component references

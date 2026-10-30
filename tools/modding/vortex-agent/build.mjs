@@ -9,7 +9,7 @@ const CACHE = paths.cache;
 const BUILD = paths.build;
 const source = path.dirname(fileURLToPath(import.meta.url));
 const vendor = path.join(source, '../../../dependencies/vortex-mcp');
-const modules = ['paths.cjs', 'guard.cjs', 'extension.cjs', 'credential.cjs', 'inspection.cjs', 'serialization.cjs', 'download-identity.cjs', 'receipts.cjs', 'http-ingress.cjs'];
+const modules = ['paths.cjs', 'guard.cjs', 'extension.cjs', 'credential.cjs', 'inspection.cjs', 'lifecycle-inspection.cjs', 'serialization.cjs', 'download-identity.cjs', 'receipts.cjs', 'http-ingress.cjs'];
 const sha = async file => crypto.createHash('sha256').update(await fs.readFile(file)).digest('hex');
 
 async function noReparsePaths(...files) {

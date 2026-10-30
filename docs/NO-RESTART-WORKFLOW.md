@@ -5,6 +5,13 @@ not start, restart, hide, close or focus Vortex. Vortex and its resident adapter
 must already be running. The bridge's SID/token cache survives across calls in
 this process; credentials are not written into plans or output.
 
+Before preparing an installed-mod update or cleanup, see the bounded
+[`read_mod_lifecycle` preflight](LIFECYCLE-PERFORMANCE.md). It checks usage across
+profiles, native incoming requirements and archive references without scanning
+staging files. This new resident read needs a matching extension bundle; the
+existing client-only inspection and planning tools below do not require a host
+upgrade.
+
 ## Inspect
 
 From the repository root:

@@ -93,15 +93,16 @@ function freshContext(health, expected) {
       && actual.filesystemIds[key] === expected.filesystemIds[key]), 'PLAN_CONTEXT_DRIFT');
 }
 
-async function readPool(tasks, concurrency) {
+async function readPool(tasks, concurrency, {stopOnError = false} = {}) {
   insist(Number.isInteger(concurrency) && concurrency >= 1 && concurrency <= 4, 'INVALID_READ_CONCURRENCY');
-  const result = new Array(tasks.length); let next = 0;
+  const result = new Array(tasks.length); let next = 0, failed = false;
   await Promise.all(Array.from({length: Math.min(tasks.length, concurrency)}, async () => {
     for (;;) {
+      if (stopOnError && failed) return;
       const index = next++;
       if (index >= tasks.length) return;
       try { result[index] = {value: await tasks[index]()}; }
-      catch (error) { result[index] = {error: errorCode(error)}; }
+      catch (error) { result[index] = {error: errorCode(error)}; failed = true; }
     }
   }));
   return result;
@@ -210,8 +211,8 @@ export async function runPlan(input, {apply = false, call = createToolCaller(), 
     const preflight = await readPool(queue.map(item => async () => {
       checkCancellation();
       cleanUnusedReceipt(await call('reconcile_operation', {requestId: item.args.requestId}));
-    }), 4);
-    const failed = preflight.findIndex(result => result.error);
+    }), 4, {stopOnError: true});
+    const failed = preflight.findIndex(result => result?.error);
     if (failed !== -1) {
       current = {...queue[failed], invoked: false};
       throw Error(preflight[failed].error);

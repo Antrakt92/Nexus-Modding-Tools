@@ -8,6 +8,19 @@ function insist(ok, code) { if (!ok) throw new Error(code); }
 // Policies apply to exact positions in outputs of named curated producers. They
 // are NOT a global exemption for arbitrary objects having a key named gameId/id.
 function operational(kind, trail) {
+  if (kind === 'read_mod_lifecycle') {
+    if (trail.length === 1 && ['protocol', 'gameId', 'profileId'].includes(trail[0])) return trail[0];
+    if (trail[0] === 'mods' && /^\d+$/.test(trail[1])) {
+      if (trail.length === 3 && trail[2] === 'id') return 'modId';
+      if (trail.length === 3 && trail[2] === 'archiveId') return 'downloadId';
+      if (trail.length === 5 && /^\d+$/.test(trail[3])) {
+        if (trail[2] === 'profiles' && trail[4] === 'id') return 'profileId';
+        if (['profiles', 'archiveReferences'].includes(trail[2]) && trail[4] === 'gameId') return 'gameId';
+        if (trail[2] === 'incomingRequires' && trail[4] === 'ownerId') return 'modId';
+        if (trail[2] === 'archiveReferences' && trail[4] === 'modId') return 'modId';
+      }
+    }
+  }
   if (kind === 'health') {
     if (trail.length === 1 && ['protocol', 'extensionVersion', 'targetVortexVersion', 'gameId', 'profileId', 'security'].includes(trail[0])) return trail[0];
     if (trail.length === 1 && PATH_FIELD.test(trail[0])) return 'absolutePath';
