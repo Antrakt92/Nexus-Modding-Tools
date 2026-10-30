@@ -153,6 +153,23 @@ test('real pinned multi-template prepares inertly with all policy data and exact
     const checked = verifyTracked(args.output); assert.equal(checked.runtime, 20); assert(checked.missingBindings.length > 0);
     assert(!fs.existsSync(path.join(args.output, 'deferred-policy.cjs')));
     inert(args.output);
+    const largeConfigFile = path.join(args.output, 'reviewed.prepared.json');
+    const largeConfig = JSON.parse(fs.readFileSync(largeConfigFile));
+    largeConfig.expectedProtectedStageFiles = Array.from({ length: 3600 }, (_, n) => ({
+      path: `Provider ${n}/r6/${'x'.repeat(220)}.reds`, sha256: 'a'.repeat(64) }));
+    const largeBytes = Buffer.from(JSON.stringify(largeConfig));
+    assert(largeBytes.length > 1024 * 1024);
+    fs.writeFileSync(largeConfigFile, largeBytes);
+    assert.equal(verifyTracked(args.output).status, checked.status);
+    fs.appendFileSync(largeConfigFile, ' '.repeat(8 * 1024 * 1024 - largeBytes.length));
+    assert.doesNotThrow(() => verifyTracked(args.output));
+    fs.appendFileSync(largeConfigFile, ' ');
+    assert.throws(() => verifyTracked(args.output), /ORDINARY_BOUNDED_KIT_INPUT_REQUIRED/);
+    fs.writeFileSync(largeConfigFile, largeBytes);
+    const entryFile = path.join(args.output, 'index.prepared.js'), entryBytes = fs.readFileSync(entryFile);
+    fs.writeFileSync(entryFile, Buffer.alloc(1024 * 1024 + 1, ' '));
+    assert.throws(() => verifyTracked(args.output), /ORDINARY_BOUNDED_KIT_INPUT_REQUIRED/);
+    fs.writeFileSync(entryFile, entryBytes);
     assert.throws(() => prepareTracked({ ...args, apply: true }), /TRACKED_OUTPUT_EXISTS/);
     assert.throws(() => prepareTracked({ ...args, output: path.join(root, 'bad-plan'), planSha256: '0'.repeat(64), apply: true }), /PLAN_PIN_MISMATCH/);
     assert.throws(() => prepareTracked({ ...args, output: path.resolve('C:/Task/Vortex/plugins/inactive') }), /ACTIVE_TRACKED_KIT_PATH_REFUSED/);
@@ -163,6 +180,18 @@ test('real pinned multi-template prepares inertly with all policy data and exact
       prepareTrackedCapture({ ...captureArgs, apply: true });
       const captureChecked = verifyTrackedCapture(output); assert.equal(captureChecked.packages, 4);
       assert(captureChecked.missingBindings.length > 0); inert(output);
+      const captureConfigFile = path.join(output, 'reviewed.prepared.json');
+      const captureConfig = JSON.parse(fs.readFileSync(captureConfigFile));
+      captureConfig.expectedProtectedStageFiles = largeConfig.expectedProtectedStageFiles;
+      const captureBytes = Buffer.from(JSON.stringify(captureConfig));
+      assert(captureBytes.length > 1024 * 1024);
+      fs.writeFileSync(captureConfigFile, captureBytes);
+      assert.doesNotThrow(() => verifyTrackedCapture(output));
+      fs.appendFileSync(captureConfigFile, ' '.repeat(8 * 1024 * 1024 - captureBytes.length));
+      assert.doesNotThrow(() => verifyTrackedCapture(output));
+      fs.appendFileSync(captureConfigFile, ' ');
+      assert.throws(() => verifyTrackedCapture(output), /ORDINARY_BOUNDED_KIT_INPUT_REQUIRED/);
+      fs.writeFileSync(captureConfigFile, captureBytes);
       assert.throws(() => verifyTrackedCapture(output, { materialization: true }));
       const code = fs.readFileSync(path.join(output, 'capture.cjs'), 'utf8');
       assert(!code.includes('D:/Modding/Nexus')); // Startup timestamp policy is local and source-pinned.
@@ -205,6 +234,12 @@ test('real pinned multi-template prepares inertly with all policy data and exact
     const info = path.join(args.output, 'info.json'); fs.writeFileSync(info, '{}');
     const map = JSON.parse(fs.readFileSync(path.join(args.output, 'COPY-MAP.prepared.json')));
     map.find(r => r.source === 'info.json').sha256 = sha('{}');
+    const reviewedBytes = fs.readFileSync(cfgFile);
+    fs.writeFileSync(path.join(args.output, 'reviewed.json'), reviewedBytes);
+    map.find(r => r.source === 'reviewed.json').sha256 = sha(reviewedBytes);
+    fs.writeFileSync(path.join(args.output, 'COPY-MAP.prepared.json'), JSON.stringify(map));
+    kit.files['COPY-MAP.prepared.json'] = sha(JSON.stringify(map));
+    fs.writeFileSync(path.join(args.output, 'TRACKED-NEXUS-KIT.json'), JSON.stringify(kit));
     const host = path.join(args.output, 'host.prepared.ps1'); fs.writeFileSync(host, 'throw "MODEL ONLY"');
     const ready = { runtimeModules: kit.runtime.length, filesToCopy: map.map(r => ({ ...r })),
       control: args.output, pluginPath: cfg.pluginPath, purpose: cfg.purpose, preparedOnly: true,
