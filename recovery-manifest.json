@@ -224,7 +224,7 @@
     },
     {
       "path": "docs/FILE-PROOF-WORKER.md",
-      "sha256_lf": "2a6b16087128d67bc2ec4e8f64816098f70c5d1f56303742a04d6d6227559a7c"
+      "sha256_lf": "c77f21e762dfff71b1ffb4c25b208b34b0d8635485e55b56890f10c7ebd7e29d"
     },
     {
       "path": "docs/FULL-AUDIT-20261025.md",
@@ -244,7 +244,7 @@
     },
     {
       "path": "docs/LIFECYCLE-IMPLEMENTATION.md",
-      "sha256_lf": "eedee872c55d4602525652772708b949d15aec1d599f781434ca1203dce29b58"
+      "sha256_lf": "e8b70daaa62ec09bbacf68051673bf382916ede983d6f81c734215ec1a7865c4"
     },
     {
       "path": "docs/LIFECYCLE-PERFORMANCE.md",
@@ -256,7 +256,7 @@
     },
     {
       "path": "docs/NATIVE-HELPER-PREPARATION.md",
-      "sha256_lf": "63deac9bef446924d285569617d02225867222468b48b26f7e7fb184d28bd871"
+      "sha256_lf": "f8f0526f273677fad62ec5b04c9e5bb2c960f36a28d5daff67bea1e7cb201323"
     },
     {
       "path": "docs/NO-RESTART-WORKFLOW.md",
@@ -719,8 +719,12 @@
       "sha256_lf": "87a7fb5b53856419377a9f9f36214a21750a9df7ebf6d7b1a360e3e1f91489ff"
     },
     {
+      "path": "tools/modding/vortex-agent/prepare-guard-await.test.mjs",
+      "sha256_lf": "d722b506bbc6b4037b561068e656566528c17516e57d529b821284bc51434c68"
+    },
+    {
       "path": "tools/modding/vortex-agent/prepare-native-helper.mjs",
-      "sha256_lf": "56aa5b35b1189b25e933aa84476cbffec10e3567c01da6b3fb2c431a489a8530"
+      "sha256_lf": "f7c8ec2bd2cfb631b4c82388adebc8dacff63a91bee1e9c75b147b9b7f00c23c"
     },
     {
       "path": "tools/modding/vortex-agent/prepare-native-helper.test.mjs",

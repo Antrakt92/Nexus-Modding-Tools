@@ -22,6 +22,24 @@ function replaceOnce(source, old, replacement) {
   if (source.split(old).length !== 2) throw Error('UNSUPPORTED_HELPER_TEMPLATE');
   return source.replace(old, replacement);
 }
+function awaitedGuardCallers(source) {
+  const changes = [
+    ["guard:()=>{const v=runner.current();guard({...v,accepted:acceptedSnapshot});}",
+      "guard:()=>{const v=runner.current();return guard({...v,accepted:acceptedSnapshot});}"],
+    ["check:()=>{const current=runner.current();if(current.active)guard({...current,accepted:acceptedSnapshot});}",
+      "check:()=>{const current=runner.current();if(current.active)return guard({...current,accepted:acceptedSnapshot});}"],
+    ["try{guard();need(hash(c.admissionFile)", "try{const guardResult=guard();if(guardResult&&typeof guardResult.then==='function')await guardResult;need(hash(c.admissionFile)"],
+    ["'ROOT_READY_TIMEOUT_NO_EFFECTS');guard();await", "'ROOT_READY_TIMEOUT_NO_EFFECTS');const guardResult=guard();if(guardResult&&typeof guardResult.then==='function')await guardResult;await"],
+    ["const final=guard({phase:'verify',accepted});", "const finalGuard=guard({phase:'verify',accepted});const final=finalGuard&&typeof finalGuard.then==='function'?await finalGuard:finalGuard;"],
+  ];
+  // Conditional awaits retain the current synchronous guard-to-consumer boundary.
+  // Awaiting an ordinary value would add an otherwise absent microtask gap.
+  // Non-lifecycle test inputs have none of these callers. Real lifecycle inputs
+  // must match the entire reviewed group; a partial adaptation is refused.
+  if (!changes.some(([before]) => source.includes(before)) && !/function guard\s*\(/.test(source)) return source;
+  for (const [before, after] of changes) source = replaceOnce(source, before, after);
+  return source;
+}
 function contains(root, candidate) {
   const rel = path.relative(root, candidate);
   return rel === '' || !path.isAbsolute(rel) && rel !== '..' && !rel.startsWith('..' + path.sep);
@@ -100,6 +118,7 @@ export function createHelperContents({ input, config, modules, tests = new Map()
     "for(const[p,h]of Object.entries(c.sourcePins))need(physical(p).sha256===h,'SOURCE_CHANGED')");
   index = replaceOnce(index, "record('guard-timing-terminal',{guardTiming,serialPoller:pollMetrics})",
     "record('guard-timing-terminal',{guardTiming,serialPoller:pollMetrics,physicalProof:physical.metrics()})");
+  index = awaitedGuardCallers(index);
   content.set('index.prepared.js', Buffer.from(index));
   for (const [name, bytes] of maintained) content.set(name, Buffer.from(bytes));
   content.set('settlement.cjs', Buffer.from(alias));
