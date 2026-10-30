@@ -28,7 +28,7 @@ function request(cfg, rows, fresh = false) {
   return { protocol: core.PROTOCOL, nonce: cfg.nonce, epoch: cfg.epoch, hostGeneration: cfg.hostGeneration,
     rootsDigest: core.digest(cfg.roots), requestId: 'b'.repeat(32), listDigest: core.digest(checked), fresh, rows: checked };
 }
-function fake(options, transform = value => value, behavior) {
+function fake(options, transform = value => value, behavior, clock) {
   let instance, captured;
   const client = _createFileProofClientForTests(options, (file, workerOptions) => {
     captured = { file, options: workerOptions }; const engine = core.createProofEngine(workerOptions.workerData);
@@ -45,7 +45,7 @@ function fake(options, transform = value => value, behavior) {
       });
     };
     return instance;
-  });
+  }, clock);
   return { client, instance: () => instance, captured: () => captured };
 }
 
@@ -113,7 +113,7 @@ test('worker initialization receives no inherited environment/preloads or arbitr
   assert.deepEqual(captured.options.execArgv, []); assert.equal(captured.options.trackUnmanagedFds, true);
   assert(captured.options.resourceLimits.maxOldGenerationSizeMb <= 96);
 });
-test('constructor errors are sanitized and Electron remains explicitly unsupported', t => {
+test('constructor errors are sanitized and unreviewed Electron remains explicitly refused', t => {
   const f = fixture(t);
   assert.throws(() => createFileProofClient({ ...f.options, roots: [{ ...f.roots[0], path: path.join(f.workspace, 'private-missing-path') }] }),
     error => /^FILE_PROOF_[A-Z_]+$/.test(error.message) && !error.message.includes('private-missing-path'));
@@ -177,7 +177,7 @@ test('every stale binding, extra field, missing/extra/sparse row and changed pro
     v => { v.rootsDigest = '0'.repeat(64); }, v => { v.requestId = '0'.repeat(32); }, v => { v.listDigest = '0'.repeat(64); },
     v => { v.extra = true; }, v => { v.proofs = []; }, v => { v.proofs.push(v.proofs[0]); }, v => { v.proofs = Array(1); },
     v => { v.proofs[0].sha256 = '0'.repeat(64); }, v => { v.proofs[0].mtimeNs = 'bad'; },
-    v => { v.metrics.hashes = 999; }, v => { v.effectsAllowed = true; }];
+    v => { v.metrics.hashes = 999; }, v => { v.effectsAllowed = true; }, v => { v.backend = 'original-fs'; }];
   for (const change of changes) {
     const f = fixture(t), rows = [f.row()], holder = fake(f.options, value => { change(value); return value; });
     t.after(() => holder.client.close());
@@ -213,18 +213,23 @@ test('a late duplicate reply or unexpected exit after success poisons future req
   }
 });
 test('absolute monotonic deadline covers synchronous parent admission and reply checks', async t => {
-  const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'performance'); let now = 0;
-  Object.defineProperty(globalThis, 'performance', { configurable: true, value: { now: () => now } });
-  try {
-    const f = fixture(t), holder = fake({ ...f.options, timeoutMs: 100 }, value => { now = 101; return value; }); t.after(() => holder.client.close());
-    await assert.rejects(holder.client.prove([f.row()]), /FILE_PROOF_TIMEOUT/);
-    now = 0; let spawned = 0;
-    const client = _createFileProofClientForTests({ ...f.options, timeoutMs: 100 }, () => { spawned++; throw Error('must not spawn'); }); t.after(() => client.close());
-    const rows = [f.row()], stat = fs.lstatSync; fs.lstatSync = (...args) => { const value = stat(...args); now = 101; return value; };
-    try { await assert.rejects(client.prove(rows), /FILE_PROOF_TIMEOUT/); }
-    finally { fs.lstatSync = stat; }
-    assert.equal(spawned, 0);
-  } finally { Object.defineProperty(globalThis, 'performance', descriptor); }
+  let now = 0; const clock = { now: () => now };
+  const f = fixture(t), holder = fake({ ...f.options, timeoutMs: 100 }, value => { now = 101; return value; }, undefined, clock); t.after(() => holder.client.close());
+  await assert.rejects(holder.client.prove([f.row()]), /FILE_PROOF_TIMEOUT/);
+  now = 0; let spawned = 0;
+  const client = _createFileProofClientForTests({ ...f.options, timeoutMs: 100 }, () => { spawned++; throw Error('must not spawn'); }, clock); t.after(() => client.close());
+  const rows = [f.row()], stat = fs.lstatSync; fs.lstatSync = (...args) => { const value = stat(...args); now = 101; return value; };
+  try { await assert.rejects(client.prove(rows), /FILE_PROOF_TIMEOUT/); }
+  finally { fs.lstatSync = stat; }
+  assert.equal(spawned, 0);
+});
+
+test('production deadlines ignore a renderer global performance clock with a different origin', async t => {
+  const f = fixture(t), descriptor = Object.getOwnPropertyDescriptor(globalThis, 'performance');
+  Object.defineProperty(globalThis, 'performance', { configurable: true, value: { now() { throw Error('WRONG_CHROMIUM_CLOCK'); } } });
+  let client;
+  try { client = createFileProofClient(f.options); assert.equal((await client.prove([f.row()])).ok, true); }
+  finally { await client?.close(); Object.defineProperty(globalThis, 'performance', descriptor); }
 });
 
  test('library imports inside an unrelated Node worker never arm its parent IPC', async () => {

@@ -84,7 +84,8 @@ Generation then passed in one observed 844 ms helper run and produced
 22,728,153 bytes. Required declarations, strict UTF-8, diagnostics, full hashes
 and the acceptance receipt passed. Read-only status and the legacy command
 reused the same output without invoking the tool or changing accepted files.
-The previous failed log and old CLI remain intact. Installed SCC, game files,
+The previous failed log and provenance remain intact. After consumer migration,
+the old CLI executable was moved to the Windows Recycle Bin. Installed SCC, game files,
 Vortex and the running profile were not changed.
 
 Twenty synthetic cache regressions and the three existing wrapper lock tests

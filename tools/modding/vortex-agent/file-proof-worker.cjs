@@ -1,5 +1,7 @@
 'use strict';
-const fs = require('node:fs'), path = require('node:path'), crypto = require('node:crypto');
+const backend = require('./file-proof-backend.cjs');
+const {fs, name: backendName} = backend.getBackend();
+const path = require('node:path'), crypto = require('node:crypto');
 const { parentPort, workerData, isMainThread } = require('node:worker_threads');
 const { createPhysicalReader } = require('./physical-proof.cjs');
 const PROTOCOL = 'file-proof/1';
@@ -113,7 +115,7 @@ function binding(config, request) {
   const rows = validateRows(request.rows, config.roots); need(digest(rows) === request.listDigest, 'FILE_PROOF_LIST_CHANGED'); budget(request); return rows;
 }
 function createProofEngine(input) {
-  need(!process.versions.electron, 'FILE_PROOF_ELECTRON_UNVERIFIED');
+  need(backend.getBackend().name === backendName, 'FILE_PROOF_BACKEND_CHANGED');
   const config = validateConfig(input), roots = new Map(config.roots.map(r => [r.id, r])); let current;
   const hash = file => {
     need(current?.file === file, 'FILE_PROOF_UNBOUND_FILE'); assertDirectories(current.parents);
@@ -147,11 +149,11 @@ function createProofEngine(input) {
     const result = { protocol: PROTOCOL, nonce: config.nonce, epoch: config.epoch, hostGeneration: config.hostGeneration,
       rootsDigest: request.rootsDigest, requestId: request.requestId, listDigest: request.listDigest, fresh: request.fresh,
       ok: true, proofs, metrics: Object.fromEntries(Object.keys(final).map(k => [k, final[k] - before[k]])),
-      backend: 'node:fs', hostCompatibilityVerified: false, effectsAllowed: false, diskDeploymentVerified: false, directoryInventoryVerified: false };
+      backend: backendName, hostCompatibilityVerified: false, effectsAllowed: false, diskDeploymentVerified: false, directoryInventoryVerified: false };
     budget(result); return result;
   };
 }
-module.exports = { PROTOCOL, LIMITS, exact, dense, token, nodeId, sha, decimal, signed, identity, generation,
+module.exports = { backendName, PROTOCOL, LIMITS, exact, dense, token, nodeId, sha, decimal, signed, identity, generation,
   digest, budget, validateConfig, validateRows, observeRoots, assertDirectories, observeLeaf, matches, safeCode, createProofEngine };
 if (require.main === module && !isMainThread) {
   let run;
