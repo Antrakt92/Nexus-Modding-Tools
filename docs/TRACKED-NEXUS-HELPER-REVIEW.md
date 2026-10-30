@@ -31,6 +31,9 @@ and removes the unused private-overlay policy. Move Your Way preference checks
 compare the fresh captured values; they do not force the old two/two values.
 Native target identity is projected from the pinned map key, while a conflicting
 stored ID is rejected. No completed helper is modified.
+At startup, the generated installer checks the baseline against the reviewed
+batch size and scope policy, including unique download and native target IDs.
+The pinned reference's original two-package limit is not retained.
 
 Generate the read-only capture code from its separately pinned source family:
 

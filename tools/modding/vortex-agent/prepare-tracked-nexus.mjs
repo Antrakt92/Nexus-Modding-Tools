@@ -50,6 +50,10 @@ function once(source, old, replacement) {
 
 export function adaptTrackedIndex(input) {
   let text = input.toString('utf8');
+  text = once(text, 'baseline.packages.length===2',
+    'Array.isArray(baseline.packages)&&baseline.packages.length===cfg.reviewedPackages.length');
+  text = once(text, "baseline.packages.forEach(targetPackage);must(new Set(baseline.packages.map(p=>p.nexusModId)).size===2&&new Set(baseline.packages.map(p=>p.expectedModId)).size===2,'DUPLICATE_PACKAGE_TARGETS');",
+    "require('./scope-policy.cjs').completeScope(baseline.packages);");
   text = once(text, "let originalProfiles,originalDownloads,transferStart", "let settlementSequence=0;\nlet originalProfiles,originalDownloads,transferStart");
   const physical = /function physical\(file\)\{[^\r\n]+\}/g;
   need([...text.matchAll(physical)].length === 1 && text.includes('physicalCache.get(file)'), 'UNSUPPORTED_TRACKED_TEMPLATE');
