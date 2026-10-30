@@ -228,7 +228,7 @@
     },
     {
       "path": "docs/FILE-PROOF-WORKER.md",
-      "sha256_lf": "e3ac0d71a7745201920252047db6bf9604ae28e6ce5478f693ffc0ed349c94c2"
+      "sha256_lf": "e00c8eaf2f716141fbb6cd9b00ce08276f0ead550421825d70d8be71dcf3e14e"
     },
     {
       "path": "docs/FULL-AUDIT-20261025.md",
@@ -595,8 +595,16 @@
       "sha256_lf": "e9de384c4fa6f61751d1befb2bc313a6b4cb00a84e6bab43af9eac43ec7d844c"
     },
     {
+      "path": "tools/modding/vortex-agent/file-proof-client-parity.test.mjs",
+      "sha256_lf": "1f1a12b4a4c573a1ba1a0e7b7d2aaa9a174fa11124985da4e0b7fd3d290815ca"
+    },
+    {
+      "path": "tools/modding/vortex-agent/file-proof-client.cjs",
+      "sha256_lf": "837dbc72438bad16fb3345478b47b66de2243942133608f717e24650a972973c"
+    },
+    {
       "path": "tools/modding/vortex-agent/file-proof-client.mjs",
-      "sha256_lf": "1c695b0a3e837e7085c46e67e6afb3cfe2fe5bc33782c268886f7d6d9f0ac36f"
+      "sha256_lf": "303d7db45b0f48fe4da6d7c035d9ac140b92ffbe07b5c89d3d9e32a961a3d1fd"
     },
     {
       "path": "tools/modding/vortex-agent/file-proof-worker.cjs",
@@ -609,6 +617,14 @@
     {
       "path": "tools/modding/vortex-agent/guard.cjs",
       "sha256_lf": "12bc35e0aaf8e027d10c3448ae65b6bcf27d9896710b535ccda2e833bf1a7de1"
+    },
+    {
+      "path": "tools/modding/vortex-agent/helper-source-proof.cjs",
+      "sha256_lf": "e7ddeabc9b05206a82b37e95b5939dca427c2ce401ef0167db72350df30bdd0a"
+    },
+    {
+      "path": "tools/modding/vortex-agent/helper-source-proof.test.cjs",
+      "sha256_lf": "f81bec314eedcef1230533e612374377c332af3ebad3ddff02432d9e09913875"
     },
     {
       "path": "tools/modding/vortex-agent/http-ingress.cjs",

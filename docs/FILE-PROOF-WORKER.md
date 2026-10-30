@@ -16,6 +16,13 @@ is an opaque ASCII token, not a credential. Paths, identities and expected data
 come from a separately admitted checkpoint; this API does not discover them.
 There are no production executable, filesystem, transport or worker-path options.
 
+The implementation lives in `file-proof-client.cjs`; the `.mjs` entrypoint
+reexports the same factory functions. A helper can use fixed CommonJS imports
+without a renderer ESM loader or another implementation. `assertOpen()` checks
+the client's persisted failure/close state synchronously, without filesystem
+access or starting work. A prior successful proof does not clear a later idle
+worker failure.
+
 Caps are eight roots, 4,096 rows, 8 GiB per file, 32 GiB logical bytes per request
 and 4 MiB per request/reply. Hashing streams 64 KiB chunks. Timeout defaults to
 30 seconds and is bounded to 120 seconds. An oversized baseline needs a separately
@@ -187,3 +194,33 @@ Fresh session reads matched the pre-maintenance active context, all 344 mods,
 This establishes the component's operation in that exact renderer. It does not
 establish an installation latency improvement, guard integration, native
 no-replacement admission or collection preservation during an installation.
+
+## Source-proof coordinator foundation
+
+`helper-source-proof.cjs` accepts separately admitted roots, known source rows,
+epoch and host generation. It snapshots their generations and uses the shared
+client. Concurrent ordinary checks share one identical pending request; a fresh
+request cannot join an ordinary one and is rejected rather than queued. The
+coordinator does not accept new rows or change its epoch after construction.
+
+After proof, `assertCurrent()` checks transport health and the same root,
+ancestor and leaf generations synchronously. It refuses an unsettled request.
+Each lifecycle caller must still validate its own live Vortex scope; source
+proof does not validate profiles, native activity, directories or effect authority.
+Observed source or transport drift holds the coordinator permanently.
+
+`close()` handles the pending request's rejection before awaiting process
+cleanup. It rejects forced, uncertain or explicitly incomplete pipe/IPC cleanup,
+including when an earlier source error already exists. There is no retry or
+replacement client. After a settled fresh proof, verified cleanup and another
+metadata sample, `assertFinalSnapshot()` can check those retained source
+generations for final readback. It cannot reopen `assertCurrent()` or permit
+effects. Ordinary, pending and failed proofs cannot create this final checkpoint.
+
+Fourteen coordinator regressions cover these cases, actual
+Node proof/cache/fresh reads and real root replacement; five shared-entrypoint
+regressions also cover idle transport failure.
+
+This coordinator and the CommonJS extraction are not connected to installer
+guards. The earlier renderer packet predates this new code closure and does not
+accept it. Fresh native acceptance remains required before integration is used.
