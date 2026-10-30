@@ -248,7 +248,7 @@
     },
     {
       "path": "docs/LIFECYCLE-IMPLEMENTATION.md",
-      "sha256_lf": "f2bf07a9a100fa0ec12ec6702ce1aef7c4183d1adbddaedb69161cff797a9452"
+      "sha256_lf": "6d5d70df88941030aa640879f864c1b421cce7160904dad5cf2f69705b934910"
     },
     {
       "path": "docs/LIFECYCLE-PERFORMANCE.md",
@@ -261,6 +261,10 @@
     {
       "path": "docs/NATIVE-HELPER-PREPARATION.md",
       "sha256_lf": "f8f0526f273677fad62ec5b04c9e5bb2c960f36a28d5daff67bea1e7cb201323"
+    },
+    {
+      "path": "docs/NATIVE-LIFECYCLE-GATES.md",
+      "sha256_lf": "2ade64464e85eeb386ac9665cab940913c796860a120c511e7b68b6b676ba3e3"
     },
     {
       "path": "docs/NO-RESTART-WORKFLOW.md",
@@ -276,7 +280,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256_lf": "3cfc3da772552d193b9c9d9fe045b87660f2522a699d06e9b652b14fb37b3f11"
+      "sha256_lf": "a92611b3df525a69a481e2c69b97f00e50de173566cb6e165e1f0faf0658e03a"
     },
     {
       "path": "docs/RESTORE.md",
@@ -681,6 +685,14 @@
     {
       "path": "tools/modding/vortex-agent/own-helper-binder.test.mjs",
       "sha256_lf": "d3ecdf65e673784c0202956571751ea5b5dcedcf5fedcfffa9d3ac87f0b95df2"
+    },
+    {
+      "path": "tools/modding/vortex-agent/own-install-preflight.mjs",
+      "sha256_lf": "53b271cd716c8a87a9fd99fd16a05e22b602ace1f4aaf1856f3923c63104a406"
+    },
+    {
+      "path": "tools/modding/vortex-agent/own-install-preflight.test.mjs",
+      "sha256_lf": "dfee9ac88e4d0638fff047dc7eccabc4ef62ab597b68cf835956922f3a6ebd80"
     },
     {
       "path": "tools/modding/vortex-agent/package.test.mjs",
