@@ -8,7 +8,7 @@ Local verification, native acceptance and user gameplay remain separate.
 | --- | --- | --- | --- |
 | 1 | Own-local binder and early support checks | One pinned supported family; exact archive/payload evidence; inert output; no inherited live approvals; actual package regressions | Source verified; native activation excluded |
 | 2 | Durable status for existing enable/deploy plans | Stable plan/step identity; receipts remain authoritative; lost response/cancellation/restart cannot replay an uncertain effect | Source verified; client reload required |
-| 3 | Read-only file-proof worker | Same proof results and freshness checks; bounded input/output; worker crash and stale replies rejected; host thread compatibility verified | Pending |
+| 3 | Read-only file-proof worker | Same proof results and freshness checks; bounded input/output; worker crash and stale replies rejected; host thread compatibility verified | Standalone foundation verified; native integration pending |
 | 4 | One deterministic native install contract | Proven no replacement/variant path, exact installer/source/identity, no auto-enable/deploy, durable effect intent and independent readback | Pending native contract |
 | 5 | Keeper and consumer retention | Current build inputs and rollback scope explicit; isolated restore test; unknown external consumers block deletion | Pending |
 | 6 | Sequential native removal | One ID at a time; all-profile/rule/owner closure; verified keeper; partial callbacks stop for reconciliation; deletion semantics explicit | Pending native contract |
@@ -90,3 +90,26 @@ the existing verified resident bundle; no host upgrade or native effect occurred
 Current-state/disk proof, hardware power-loss durability and a host-global
 cross-client transaction remain separate limits. Existing MCP clients need a
 bridge reload to discover the new status tool; Vortex need not restart.
+
+## Stage 3 foundation — 30 October 2026
+
+The [internal file-proof client/worker](FILE-PROOF-WORKER.md) offloads streamed
+hashing of explicitly admitted leaf files, with bounded requests, exact context
+binding, descriptor/path/root generation checks and parent-side readback. Fresh
+proofs have a new checkpoint cache. Failure, timeout or cancellation poisons the
+client; it never retries or starts a replacement worker automatically.
+
+The worker is not wired into current helpers or an MCP endpoint. The existing
+guard remains synchronous: several actual callers discard return values, so an
+async replacement would lose checks. Electron/original-fs acceptance, full await
+propagation and a fresh native pre-effect barrier remain required. Directory
+inventory, process enumeration and native-state hashing are not supplied by this
+known-file worker. This stage's native integration gate remains open.
+
+All 378 maintained Node tests passed with real pinned template fixtures and no
+skips, together with 21 recovery/bootstrap and 29 synthetic installer tests.
+Two independent audits found no remaining confirmed blocker in this standalone
+scope. A 64 MiB generated-file comparison included parent work and worker
+construction; its measured scope and limits are in the worker documentation.
+The temporary payload was recycled after verifying its hash and retained
+reconstruction recipe. No running host, mod or game files were changed.

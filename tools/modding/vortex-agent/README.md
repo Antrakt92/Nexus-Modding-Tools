@@ -140,6 +140,12 @@ provides pinned record/flag checks and specific waiting diagnostics without
 resetting its quiet window for unrelated metadata. It must be copied and pinned
 in the next helper; existing frozen helpers and the live adapter are unchanged.
 
+The internal [file-proof worker foundation](../../../docs/FILE-PROOF-WORKER.md)
+checks bounded known-file lists in standalone Node, with checkpoint-local hashes,
+stale-reply rejection and parent-side metadata checks. It is not connected to the
+adapter or native helper. Electron compatibility and guard integration remain
+separate gates; current workflows must retain their existing proof route.
+
 ## Receipts and uncertainty
 
 Operations serialize through a filesystem lock. Attempts, failures and committed
