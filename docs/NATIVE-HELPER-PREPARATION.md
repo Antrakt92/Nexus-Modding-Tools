@@ -79,6 +79,12 @@ and invalidation checks remain. See [measurements and workflow limits](LIFECYCLE
 
 ## Changes applied to the supported template
 
+- Settlement and poller callbacks return the guard result. Startup, root-ready
+  waiting and final readback wait if it is a thenable, while ordinary synchronous
+  results retain their original same-turn ordering. New tests check both pending
+  rejection and queued microtask mutation. The guard remains synchronous and no
+  worker is connected; a future asynchronous guard still needs fresh native
+  context checks after waiting and immediately before effects.
 - `settlement.cjs` becomes the maintained compatibility entry. The call pins the
   exact callback download ID, expected mod/staging ID, empty native mod type,
   expected payload size and flags, plus a synchronous durable diagnostic writer.

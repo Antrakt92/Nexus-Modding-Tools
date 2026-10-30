@@ -100,9 +100,9 @@ proofs have a new checkpoint cache. Failure, timeout or cancellation poisons the
 client; it never retries or starts a replacement worker automatically.
 
 The worker is not wired into current helpers or an MCP endpoint. The existing
-guard remains synchronous: several actual callers discard return values, so an
-async replacement would lose checks. Electron/original-fs acceptance, full await
-propagation and a fresh native pre-effect barrier remain required. Directory
+guard remains synchronous. Historical callers discarded return values; new kits
+include the propagation repair described below. Electron/original-fs acceptance
+and a fresh native pre-effect barrier remain required. Directory
 inventory, process enumeration and native-state hashing are not supplied by this
 known-file worker. This stage's native integration gate remains open.
 
@@ -113,6 +113,15 @@ scope. A 64 MiB generated-file comparison included parent work and worker
 construction; its measured scope and limits are in the worker documentation.
 The temporary payload was recycled after verifying its hash and retained
 reconstruction recipe. No running host, mod or game files were changed.
+
+New own-local code kits now propagate guard Promises through settlement/poller
+callbacks and conditionally wait at startup, root-ready and final readback.
+An independent audit caught the microtask gap introduced by unconditional
+`await` on a synchronous result; the final implementation preserves the original
+same-turn behavior. Regressions exercise pending/rejected Promises and queued
+state mutation. This removes lost-return hazards, but does not connect the
+worker or supply the required post-await native context barrier.
+The checkpoint passed 384 Node tests with the real pinned fixtures and no skips.
 
 ## Stage 7 verification — 30 October 2026
 

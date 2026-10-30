@@ -64,8 +64,9 @@ startup and physical `app.asar` handling need separate admission and acceptance.
 
 Do not change `guard()` to `async` alone. The reviewed helper has synchronous
 callers in startup, root-ready waiting, settlement callbacks, the serial poller
-and final readback. Several callbacks currently discard the return value. A
-future integration must preserve waiting/error propagation, serialize overlapping
+and final readback. Newly prepared own-local kits preserve returned Promises and
+conditionally await thenables without adding yields to synchronous guards.
+Historical kits remain unchanged. A future integration must serialize overlapping
 checks and recheck current API/profile/process/interlock/root context after each
 await and immediately before native effects. A worker reply grants no effects.
 
