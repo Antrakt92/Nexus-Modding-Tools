@@ -74,6 +74,16 @@ class UpgradeTests(unittest.TestCase):
             upgrade.install(self.new, '0' * 64)
         self.assertEqual(upgrade.sha(self.plugins / 'vortex-agent/index.js'), self.old)
 
+    def test_sibling_plan_journal_does_not_break_flat_receipt_preservation(self):
+        journal = self.root / 'plan-journals' / ('a' * 64)
+        journal.mkdir(parents=True)
+        record = journal / 'plan.json'
+        record.write_bytes(b'{"synthetic":"immutable plan"}')
+        before = upgrade.receipt_pins()
+        upgrade.install(self.new, self.old)
+        self.assertEqual(upgrade.receipt_pins(), before)
+        self.assertEqual(record.read_bytes(), b'{"synthetic":"immutable plan"}')
+
     def test_wrong_runtime_workspace_refuses_before_swap_and_preserves_receipts(self):
         metadata = self.source / 'provenance.json'
         value = json.loads(metadata.read_text())

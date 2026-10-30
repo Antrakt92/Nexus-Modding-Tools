@@ -127,6 +127,15 @@ completed steps remain recorded; they are not rolled back or replayed.
 The queue is serial within this client, not an atomic transaction across other
 Vortex clients; the adapter retains its per-operation exclusion and guards.
 
+Applying also reserves a durable local journal, keyed by the returned full
+SHA-256 `planId`. It preserves the exact validated plan and fsyncs a separate
+intent before each command. A storage failure prevents that command; a later
+storage failure stops subsequent commands. An existing journal cannot be
+overwritten, resumed or replayed, including after cancellation or restart.
+Offline validation returns the same ID without creating files.
+This covers client/process interruption; file fsync and exclusive publication
+do not promise that directory entries survive a hardware or power failure.
+
 If it stops, inspect the returned request ID and reconcile that exact operation
 through the existing adapter/receipt workflow. Do not change the IDs to get past
 the refusal. The client may read reconciliation once after a failed write; it
@@ -136,6 +145,45 @@ never retries a write, clears an interlock or resumes an old plan automatically.
 `diskDeploymentVerified:false`. Independently compare the deployment manifest,
 owners, staged/game hashes and hardlinks before claiming a deployed result;
 gameplay acceptance is a separate user test.
+
+### Inspect a plan after a disconnect
+
+```powershell
+node tools/modding/vortex-agent/session.mjs plan-status FULL_PLAN_ID
+node tools/modding/vortex-agent/bridge.mjs --call inspect_mod_plan '{"planId":"FULL_PLAN_ID"}'
+```
+
+Replace `FULL_PLAN_ID` with the 64-character lowercase SHA returned by offline
+validation or apply. The MCP tool accepts only `{ "planId": "..." }`; it has no
+apply, resume or lock-clearing option. It reads the frozen local journal and
+reconciles only its exact recorded intent IDs, at most four at a time. It does
+not read the collection or resubmit commands.
+
+Each planned step reports `adapter_completed`, `uncertain` or
+`intent_not_recorded`. The last state means the inspected journal contained no
+intent, with `remoteChecked:false`; it is not proof the ID is unused. Completion
+requires exact verified receipts for every original step, including deployment.
+An intent without a usable completion remains uncertain, even if the client
+may have crashed before sending. A current global interlock conservatively
+prevents status verification too. Corrupt, partial or pending journal files
+produce a partial result and are preserved for investigation.
+
+The journal is checked again after receipt reads. An advancing or damaged
+journal makes the result partial; `snapshotAtomic:false` remains explicit.
+Journal state records history, not a heartbeat: `executionLiveness:"unknown"`
+does not establish that an executor stopped. Historical completion reports
+`currentStateVerified:false`, `diskDeploymentVerified:false`, `retryAllowed:false`
+and `resumeSupported:false`.
+
+All clients must keep the same configured runtime workspace and therefore the
+same `<workspace>/local-state/vortex-agent-build/plan-journals` directory.
+This is a sibling of the adapter's flat `receipts` directory; it must not be
+nested inside that server-owned receipt inventory.
+Do not select a source/build checkout as a fresh runtime ledger. `not_observed`
+means no journal was found in this configured location, not that another client
+or workspace performed no effects. Adapter receipts and unresolved-operation
+interlocks remain authoritative; never delete journals or change workspaces to
+get past a refusal. Plans created by older clients have no retroactive journal.
 
 ## Download and activation phases
 

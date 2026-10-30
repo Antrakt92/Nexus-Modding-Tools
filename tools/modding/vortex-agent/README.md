@@ -80,7 +80,12 @@ default, explicit `apply:true` for pinned Nexus download-only steps, batched
 enable/disable changes and at most one requested final deploy. Initial receipt
 checks overlap at most four at a time; mutations stay serial. Cancellation or
 disconnection stops later steps after an invoked write's receipt is reconciled.
-It does not install or replace mods. See the
+Apply persists the exact plan and a durable intent before each write; the full
+`planId` also supports read-only `inspect_mod_plan` or `session.mjs plan-status`.
+Existing journals cannot be replayed or resumed. Status reports historical
+receipts, uncertainty and missing local history, without claiming current state
+or deployment proof. All clients must retain the same configured runtime
+workspace. It does not install or replace mods. See the
 [plan guide](../../../docs/NO-RESTART-WORKFLOW.md#run-the-reviewed-plan-through-mcp).
 
 For collection preparation, use the bridge-local `find_collection_downloads`

@@ -2,58 +2,28 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { remote } from './bridge.mjs';
+import {CONTEXT_KEYS, ROOTS, validateContext, validatePlan, planQueue} from './plan-contract.mjs';
+import {canonicalPlanId, createPlanJournal} from './plan-journal.mjs';
+import strictJSON from './strict-json.cjs';
+export {validateContext, validatePlan} from './plan-contract.mjs';
 
 const PROTOCOL = 'vortex-agent/1';
-const CONTEXT_KEYS = ['gameId', 'profileId', 'gamePath', 'stagingPath', 'downloadPath', 'filesystemIds'];
-const ROOTS = ['gamePath', 'stagingPath', 'downloadPath'];
-const requestId = value => typeof value === 'string' && /^[a-zA-Z0-9_-]{8,80}$/.test(value);
 const id = value => typeof value === 'string' && value.length > 0 && value.length <= 200 && !/[\x00-\x1f]/.test(value);
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
-const keys = (value, expected) => object(value) && Object.keys(value).sort().join(',') === [...expected].sort().join(',');
 const canonical = value => Array.isArray(value) ? value.map(canonical) : object(value)
   ? Object.fromEntries(Object.keys(value).sort().map(key => [key, canonical(value[key])])) : value;
 const same = (a, b) => JSON.stringify(canonical(a)) === JSON.stringify(canonical(b));
 const normalized = value => path.win32.normalize(value).toLowerCase();
 function insist(value, code) { if (!value) throw new Error(code); }
-function errorCode(error) { return /^[A-Z][A-Z0-9_]+$/.test(error?.message || '') ? error.message : 'SESSION_CALL_FAILED'; }
-
-export function validateContext(value) {
-  insist(keys(value, CONTEXT_KEYS) && id(value.gameId) && id(value.profileId), 'INVALID_PLAN_CONTEXT');
-  insist(keys(value.filesystemIds, ROOTS), 'INVALID_PLAN_CONTEXT');
-  for (const key of ROOTS) {
-    insist(typeof value[key] === 'string' && value[key].length <= 200 && /^[a-z]:[\\/]/i.test(value[key])
-      && !/[\x00-\x1f]/.test(value[key]) && typeof value.filesystemIds[key] === 'string'
-      && /^\d+:\d+$/.test(value.filesystemIds[key]), 'INVALID_PLAN_CONTEXT');
+function errorCode(error) { return /^[A-Z][A-Z0-9_]{1,99}$/.test(error?.message || '') ? error.message : 'SESSION_CALL_FAILED'; }
+function synchronousJournal(value) {
+  if (value && typeof value.then === 'function') {
+    void Promise.resolve(value).catch(() => {});
+    throw Error('PLAN_JOURNAL_ASYNC_UNSUPPORTED');
   }
   return value;
 }
-
-export function validatePlan(input) {
-  insist(keys(input, ['version', 'context', 'steps', 'deploy']) && input.version === 1, 'INVALID_PLAN');
-  validateContext(input.context);
-  insist(Array.isArray(input.steps) && input.steps.length <= 100, 'INVALID_PLAN_STEPS');
-  const ids = new Set();
-  for (const step of input.steps) {
-    if (step?.operation === 'download_nexus') {
-      insist(keys(step, ['operation', 'requestId', 'nexusModId', 'nexusFileId', 'size', 'sha256', 'reuseOnly'])
-        && requestId(step.requestId) && ['nexusModId', 'nexusFileId', 'size'].every(k => Number.isSafeInteger(step[k]) && step[k] > 0)
-        && typeof step.sha256 === 'string' && /^[a-f0-9]{64}$/.test(step.sha256) && typeof step.reuseOnly === 'boolean', 'INVALID_PLAN_STEP');
-    } else {
-      insist(keys(step, ['operation', 'requestId', 'modIds', 'enabled']) && step.operation === 'set_mods_enabled'
-        && requestId(step.requestId) && typeof step.enabled === 'boolean' && Array.isArray(step.modIds)
-        && step.modIds.length > 0 && step.modIds.length <= 100 && step.modIds.every(id)
-        && new Set(step.modIds).size === step.modIds.length, 'INVALID_PLAN_STEP');
-    }
-    insist(!ids.has(step.requestId), 'DUPLICATE_REQUEST_ID'); ids.add(step.requestId);
-  }
-  if (input.deploy !== null) {
-    insist(keys(input.deploy, ['requestId']) && requestId(input.deploy.requestId), 'INVALID_DEPLOY_STEP');
-    insist(!ids.has(input.deploy.requestId), 'DUPLICATE_REQUEST_ID');
-  }
-  insist(input.steps.length > 0 || input.deploy !== null, 'EMPTY_PLAN');
-  // Detach the queue from caller changes while asynchronous checks are pending.
-  return JSON.parse(JSON.stringify(input));
-}
+function recorded(value) {insist(synchronousJournal(value) === undefined, 'PLAN_JOURNAL_INVALID_WRITER');}
 
 export function createToolCaller(transport = remote) {
   return async (name, args = {}) => {
@@ -64,7 +34,7 @@ export function createToolCaller(transport = remote) {
       try {
         const texts = response.content?.filter(item => item?.type === 'text');
         const value = texts?.length === 1 ? JSON.parse(texts[0].text) : null;
-        if (typeof value?.error === 'string' && /^[A-Z][A-Z0-9_]+$/.test(value.error)) code = value.error;
+        if (typeof value?.error === 'string' && /^[A-Z][A-Z0-9_]{1,99}$/.test(value.error)) code = value.error;
       } catch { /* Never echo unstructured upstream errors or private transport text. */ }
       throw new Error(code);
     }
@@ -195,17 +165,19 @@ function receiptSummary(value) {
     receiptIssues: Array.isArray(value?.receiptIssues) ? value.receiptIssues.filter(item => typeof item === 'string' && /^[A-Z0-9_]+$/.test(item)) : ['UNVERIFIABLE_RESPONSE']};
 }
 
-export async function runPlan(input, {apply = false, call = createToolCaller(), signal} = {}) {
+export async function runPlan(input, {apply = false, call = createToolCaller(), signal, journal} = {}) {
   const plan = validatePlan(input);
   insist(typeof apply === 'boolean', 'INVALID_APPLY_FLAG');
   insist(signal === undefined || signal instanceof AbortSignal, 'INVALID_PLAN_SIGNAL');
-  const queue = plan.steps.map(({operation, ...parameters}) => ({operation, args: {...plan.context, ...parameters}}));
-  if (plan.deploy !== null) queue.push({operation: 'deploy_mods', args: {...plan.context, requestId: plan.deploy.requestId}});
-  if (!apply) return {status: 'validated', applied: false, operationCount: queue.length, requestIds: queue.map(item => item.args.requestId),
+  const queue = planQueue(plan), planId = canonicalPlanId(plan);
+  if (!apply) return {status: 'validated', planId, applied: false, operationCount: queue.length, requestIds: queue.map(item => item.args.requestId),
     diskDeploymentVerified: false, message: 'Offline validation only. Apply the exact reviewed plan explicitly; no Vortex calls were made.'};
-  const completed = []; let current;
+  const completed = []; let current, execution;
   const checkCancellation = () => insist(!signal?.aborted, 'PLAN_CANCELLED');
   try {
+    execution = synchronousJournal((journal ?? createPlanJournal()).begin(plan));
+    insist(object(execution) && execution.planId === planId
+      && ['intent', 'observed', 'finish'].every(key => typeof execution[key] === 'function'), 'PLAN_JOURNAL_INVALID_WRITER');
     // Check the entire queue before any effect: a used later ID must not cause a partial replay.
     checkCancellation();
     const preflight = await readPool(queue.map(item => async () => {
@@ -217,12 +189,16 @@ export async function runPlan(input, {apply = false, call = createToolCaller(), 
       current = {...queue[failed], invoked: false};
       throw Error(preflight[failed].error);
     }
-    for (const item of queue) {
+    for (const [index, item] of queue.entries()) {
       checkCancellation();
       current = {...item, invoked: false};
       cleanUnusedReceipt(await call('reconcile_operation', {requestId: item.args.requestId}));
       checkCancellation();
       freshContext(await call('health', {}), plan.context);
+      checkCancellation();
+      // Persist uncertainty before sending. A failed durable write must never
+      // become permission to dispatch without an inspectable original intent.
+      recorded(execution.intent(index, item.operation, item.args));
       checkCancellation();
       current.invoked = true;
       const acknowledgement = await call(item.operation, item.args);
@@ -233,10 +209,12 @@ export async function runPlan(input, {apply = false, call = createToolCaller(), 
       completed.push({operation: item.operation, requestId: item.args.requestId, adapterReceiptVerified: true,
         ...(item.operation === 'download_nexus' ? {downloadId: acknowledgement.downloadId, reused: acknowledgement.reused,
           size: acknowledgement.size, archiveSha256Verified: true, archiveCRCVerified: false} : {})});
+      recorded(execution.observed(index));
       current = undefined;
       checkCancellation();
     }
-    return {status: 'completed', completed, diskDeploymentVerified: false,
+    recorded(execution.finish('completed'));
+    return {status: 'completed', planId, completed, diskDeploymentVerified: false,
       verificationRequired: 'Independently verify archive CRC, preserved state, deployment manifest, owners, hashes and hardlinks. Adapter receipts do not prove installation, disk deployment or gameplay acceptance.'};
   } catch (error) {
     let reconciliation;
@@ -244,11 +222,57 @@ export async function runPlan(input, {apply = false, call = createToolCaller(), 
       try { reconciliation = receiptSummary(await call('reconcile_operation', {requestId: current.args.requestId})); }
       catch { reconciliation = {receiptIssues: ['RECONCILIATION_UNAVAILABLE']}; }
     }
-    return {status: 'stopped', completed, diskDeploymentVerified: false, code: errorCode(error),
+    let journalIssue;
+    if (execution) {
+      try {recorded(execution.finish('stopped', errorCode(error)));}
+      catch (failure) {journalIssue = errorCode(failure);}
+    }
+    return {status: 'stopped', planId, completed, diskDeploymentVerified: false, code: errorCode(error),
       ...(current ? {requestId: current.args.requestId, operation: current.operation, invocationAttempted: current.invoked} : {}),
       ...(reconciliation ? {reconciliation} : {}),
+      ...(journalIssue ? {journalIssue} : {}),
       instruction: 'Stop and inspect the exact existing request receipts. Do not generate new request IDs or retry an uncertain write.'};
   }
+}
+
+export async function inspectPlan(planId, {call = createToolCaller(), journal} = {}) {
+  const base = {...(typeof planId === 'string' && /^[a-f0-9]{64}$/.test(planId) ? {planId} : {}), diskDeploymentVerified: false, currentStateVerified: false,
+    retryAllowed: false, resumeSupported: false, snapshotAtomic: false, executionLiveness: 'unknown'};
+  try {
+    insist(typeof planId === 'string' && /^[a-f0-9]{64}$/.test(planId), 'INVALID_PLAN_ID');
+    const store = journal ?? createPlanJournal(), stored = synchronousJournal(store.read(planId));
+    if (stored === null) return {...base, status: 'not_observed', journalObserved: false,
+      instruction: 'No journal was observed in this configured workspace. This does not establish that another client or workspace performed no effects.'};
+    const plan = validatePlan(stored.plan);
+    insist(canonicalPlanId(plan) === planId, 'PLAN_JOURNAL_ID_MISMATCH');
+    const queue = planQueue(plan), intents = stored.events.filter(event => event.kind === 'intent');
+    const reads = await readPool(intents.map(event => async () => {
+      const item = queue[event.index];
+      const value = await call('reconcile_operation', {requestId: item.args.requestId});
+      // Status is deliberately conservative about a current global interlock.
+      // It never relaxes the execution gate or infers current flags from history.
+      insist(!object(value?.interlock), 'CURRENT_INTERLOCK_OBSERVED');
+      verifiedReceipt(value, item.operation, item.args, value.completion);
+      return {adapterReceiptVerified: true};
+    }), 4);
+    const byIndex = new Map(intents.map((event, n) => [event.index, reads[n]]));
+    const steps = queue.map((item, index) => {
+      const observed = byIndex.get(index);
+      return {index, operation: item.operation, requestId: item.args.requestId,
+        state: !observed ? 'intent_not_recorded' : observed.error ? 'uncertain' : 'adapter_completed',
+        remoteChecked: !!observed, ...(observed?.error ? {code: observed.error} : {})};
+    });
+    let journalAdvanced = false, journalIssue;
+    try {
+      const after = synchronousJournal(store.read(planId));
+      insist(after !== null && same(after.plan, stored.plan), 'PLAN_JOURNAL_CHANGED');
+      journalAdvanced = !same(after.events, stored.events);
+    } catch (error) {journalIssue = errorCode(error);}
+    return {...base, journalObserved: true, journalState: stored.state,
+      journalAdvanced, ...(journalIssue ? {journalIssue} : {}),
+      status: !journalAdvanced && !journalIssue && steps.every(step => step.state === 'adapter_completed') ? 'completed' : 'partial',
+      steps, instruction: 'Historical exact receipts only. An intent without verified completion remains uncertain. Do not resubmit this plan, clear locks or generate replacement request IDs. Independently verify current state and disk deployment.'};
+  } catch (error) {return {...base, status: 'partial', code: errorCode(error), journalUsable: false};}
 }
 
 async function readPlan(filename) {
@@ -262,18 +286,19 @@ async function readPlan(filename) {
       bytesRead += chunk.bytesRead;
     }
     insist(bytesRead <= 1024 * 1024, 'PLAN_FILE_TOO_LARGE');
-    try { return JSON.parse(new TextDecoder('utf-8', {fatal: true}).decode(buffer.subarray(0, bytesRead))); }
+    try { return strictJSON.parseStrictJSON(buffer.subarray(0, bytesRead), {maxBytes: 1024 * 1024}); }
     catch { throw new Error('INVALID_PLAN_FILE'); }
   } finally { await file.close(); }
 }
 
-export async function main(argv = process.argv.slice(2), {call = createToolCaller(), read = readPlan, output = value => process.stdout.write(JSON.stringify(value) + '\n')} = {}) {
+export async function main(argv = process.argv.slice(2), {call = createToolCaller(), read = readPlan, journal, output = value => process.stdout.write(JSON.stringify(value) + '\n')} = {}) {
   let result;
   try {
     if (argv[0] === 'inspect' && (argv.length === 1 || argv.length === 2 && argv[1] === '--diagnostics'))
       result = await inspectSession({call, diagnostics: argv[1] === '--diagnostics'});
     else if ((argv.length === 2 || argv.length === 3 && argv[2] === '--apply') && argv[0] === 'plan')
-      result = await runPlan(await read(argv[1]), {apply: argv[2] === '--apply', call});
+      result = await runPlan(await read(argv[1]), {apply: argv[2] === '--apply', call, journal});
+    else if (argv.length === 2 && argv[0] === 'plan-status') result = await inspectPlan(argv[1], {call, journal});
     else throw new Error('USAGE_INSPECT_OR_PLAN_FILE_OPTIONAL_APPLY');
   } catch (error) { result = {status: 'stopped', code: errorCode(error), diskDeploymentVerified: false}; }
   output(result);

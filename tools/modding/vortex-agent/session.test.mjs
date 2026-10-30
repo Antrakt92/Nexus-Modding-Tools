@@ -1,8 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {PassThrough} from 'node:stream';
-import {clientRemote, handler, runStdio} from './bridge.mjs';
-import { createToolCaller, inspectSession, main, runPlan, validatePlan } from './session.mjs';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {clientRemote as rawClientRemote, handler as rawHandler, runStdio} from './bridge.mjs';
+import { createToolCaller, inspectSession, main as rawMain, runPlan as rawRunPlan, validatePlan } from './session.mjs';
+import {createPlanJournal} from './plan-journal.mjs';
+
+const privateRoots = [];
+function privateJournal() {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'plan-session-test-')); privateRoots.push(root);
+  return createPlanJournal({root: path.join(root, 'plans')});
+}
+test.afterEach(() => {for (const root of privateRoots.splice(0)) fs.rmSync(root, {recursive: true});});
+const runPlan = (plan, options = {}) => rawRunPlan(plan, {...options, journal: privateJournal()});
+const main = (argv, options = {}) => rawMain(argv, {...options, journal: privateJournal()});
+const clientRemote = (method, params, transport, options = {}) => rawClientRemote(method, params, transport, {...options, journal: privateJournal()});
+const handler = call => rawHandler(call, {journal: privateJournal()});
 
 const context = () => ({gameId: 'cyberpunk2077', profileId: 'test-profile', gamePath: 'F:/Games/Cyberpunk',
   stagingPath: 'F:/VortexMods/cyberpunk2077', downloadPath: 'D:/Downloads/cyberpunk2077',
