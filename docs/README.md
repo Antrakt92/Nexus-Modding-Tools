@@ -7,6 +7,7 @@
 - [Configuration](CONFIGURATION.md): workspaces, local stores and client settings.
 - [Running-session workflows](NO-RESTART-WORKFLOW.md): inspection and reviewed download/enable/deploy plans.
 - [Collection downloads](COLLECTION-DOWNLOADS.md): exact Nexus IDs and tracked-download reuse.
+- [Collection releases](COLLECTION-RELEASES.md): early preflight, frozen candidates and separate publication/post-release boundaries.
 - [Support](../SUPPORT.md) and [contributing](../CONTRIBUTING.md).
 
 ## Component references
@@ -15,6 +16,7 @@
 - [Community Nexus CLI](../tools/modding/nexus-cli/README.md).
 - [Publication runner](../tools/modding/nexus-publish/README.md).
 - [Native helper preparation](NATIVE-HELPER-PREPARATION.md) and [tracked Nexus batches](TRACKED-NEXUS-HELPER-REVIEW.md): prepare installation scripts for the supported templates, then check their source, packages and current Vortex state.
+- [Technical settings comparison](TECHNICAL-SETTINGS.md): source-bound handling of known discovery timestamp changes while retaining strict preference comparisons.
 - [Agent workflow](AGENT-WORKFLOW.md), [licenses](LICENSES.md) and [maintenance](MAINTENANCE.md).
 
 ## Verification records
