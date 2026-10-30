@@ -186,7 +186,9 @@ adapter, recovery and helper checks. No live Vortex upgrade is included.
 ## 30 October standalone redscript CLI
 
 The optional authoring/decompiler CLI was updated from **0.5.31 to 0.5.32** in a
-versioned local tool directory. The old executable remains available. This does
+versioned local tool directory. After checking active consumers, the old executable
+was moved to the Windows Recycle Bin; its provenance and failed-run evidence were
+preserved. This does
 not replace installed SCC or change Vortex, game files, PATH or the JavaScript
 dependency lockfile. The update is needed for
 [Cyberpunk 2.5 bundle parsing](https://github.com/jac3km4/redscript/releases/tag/v0.5.32).

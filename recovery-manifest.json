@@ -224,11 +224,11 @@
     },
     {
       "path": "docs/DEPENDENCY-AUDIT.md",
-      "sha256_lf": "b9f9a927190e0638ee44599bf8d7d6ec45f4a67e254903a88fa157d5e837e668"
+      "sha256_lf": "0ed88844e0a63c1d3072c69c38d768cc7b14785225329181b92a12683914dc46"
     },
     {
       "path": "docs/FILE-PROOF-WORKER.md",
-      "sha256_lf": "c77f21e762dfff71b1ffb4c25b208b34b0d8635485e55b56890f10c7ebd7e29d"
+      "sha256_lf": "e3ac0d71a7745201920252047db6bf9604ae28e6ce5478f693ffc0ed349c94c2"
     },
     {
       "path": "docs/FULL-AUDIT-20261025.md",
@@ -256,7 +256,7 @@
     },
     {
       "path": "docs/LIFECYCLE-IMPLEMENTATION.md",
-      "sha256_lf": "36e81c8d8976a76c7875b4b649afa31fb22ae2aa1d83276bc6130bfbaf8edd46"
+      "sha256_lf": "1642615c9a7dfd720f1ca9ae3b0c8d510d4a89167800e70ec48a9f057c2fc180"
     },
     {
       "path": "docs/LIFECYCLE-PERFORMANCE.md",
@@ -284,7 +284,7 @@
     },
     {
       "path": "docs/PRISTINE-API-CACHE.md",
-      "sha256_lf": "d1063dde754876d39c8d90196815e7f725f7a5daf00cdf94bc81053f16f395e2"
+      "sha256_lf": "e49eb2d4c0cb884ffd250ff962acaa31c36e2c9932498d27897a60d7a1534f61"
     },
     {
       "path": "docs/README.md",
@@ -575,16 +575,36 @@
       "sha256_lf": "c808be423eba5dbf15d05cf38c357937384ca915d2b74feed9c5368293f6e530"
     },
     {
+      "path": "tools/modding/vortex-agent/file-proof-backend.cjs",
+      "sha256_lf": "fc62b6e40144b8b59961980a4bb8bdfa076a10c81ddb0ac9461da7327d38dfa0"
+    },
+    {
+      "path": "tools/modding/vortex-agent/file-proof-backend.test.cjs",
+      "sha256_lf": "31cf47fd826be657fe800f2be01ae0b74f11b540aa6c23901ab2262d4ecd97d9"
+    },
+    {
+      "path": "tools/modding/vortex-agent/file-proof-child-client.cjs",
+      "sha256_lf": "78ea47e3434ade6f8667318202c68886b7765b52c3ee73f8df8b5de583e53ac8"
+    },
+    {
+      "path": "tools/modding/vortex-agent/file-proof-child-client.test.cjs",
+      "sha256_lf": "79aec85a5b3f3051fccb3fb401ae0d70c1387ad7205816c4765059157e06eeff"
+    },
+    {
+      "path": "tools/modding/vortex-agent/file-proof-child.cjs",
+      "sha256_lf": "e9de384c4fa6f61751d1befb2bc313a6b4cb00a84e6bab43af9eac43ec7d844c"
+    },
+    {
       "path": "tools/modding/vortex-agent/file-proof-client.mjs",
-      "sha256_lf": "a77ecba560669eeebde3428b116c6bd91279d0d4a8c93406a21e012c4be474f7"
+      "sha256_lf": "1c695b0a3e837e7085c46e67e6afb3cfe2fe5bc33782c268886f7d6d9f0ac36f"
     },
     {
       "path": "tools/modding/vortex-agent/file-proof-worker.cjs",
-      "sha256_lf": "02c26262105961e1ebb99fd5cc860e423bc2ac5bebe8f2db25eff43f12107abe"
+      "sha256_lf": "1eb954f8427da789f22f2e46da1507d8095bb6a69b818915e69279c24e6d3c2c"
     },
     {
       "path": "tools/modding/vortex-agent/file-proof-worker.test.mjs",
-      "sha256_lf": "807205c1b4635826d0c68bc07a13057a220844dc2bfd776c39eb02b4f8653f45"
+      "sha256_lf": "40b3ef5271ee6c96168327e666c1d1276b3bab2b3c3390247bdd8145f67514d3"
     },
     {
       "path": "tools/modding/vortex-agent/guard.cjs",

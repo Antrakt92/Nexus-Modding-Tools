@@ -1,17 +1,20 @@
 import crypto from 'node:crypto';
+import { performance } from 'node:perf_hooks';
 import { Worker } from 'node:worker_threads';
 import { fileURLToPath } from 'node:url';
 import core from './file-proof-worker.cjs';
+import backend from './file-proof-backend.cjs';
+import childTransport from './file-proof-child-client.cjs';
 
 const workerFile = fileURLToPath(new URL('./file-proof-worker.cjs', import.meta.url));
 const need = (ok, code) => { if (!ok) throw Error(code); };
 const safeError = error => Error(/^FILE_PROOF_[A-Z_]+$/.test(error?.message || '') ? error.message : 'FILE_PROOF_CLIENT_FAILED');
 const optionsFor = config => ({ workerData: config, env: {}, execArgv: [], trackUnmanagedFds: true, stdout: true, stderr: true,
   resourceLimits: { maxOldGenerationSizeMb: 96, maxYoungGenerationSizeMb: 16, stackSizeMb: 4 } });
-const timely = deadline => need(performance.now() < deadline, 'FILE_PROOF_TIMEOUT');
+const timely = (deadline, clock) => need(clock.now() < deadline, 'FILE_PROOF_TIMEOUT');
 
-function createClient(options, factory) {
-  need(!process.versions.electron, 'FILE_PROOF_ELECTRON_UNVERIFIED');
+function createClient(options, factory, clock = performance) {
+  need(backend.getBackend().name === core.backendName, 'FILE_PROOF_BACKEND_CHANGED');
   const fields = ['roots', 'epoch', 'hostGeneration', ...(Object.hasOwn(options ?? {}, 'timeoutMs') ? ['timeoutMs'] : [])];
   need(core.exact(options, fields), 'FILE_PROOF_INVALID_OPTIONS');
   const timeoutMs = options.timeoutMs ?? 30000;
@@ -19,20 +22,21 @@ function createClient(options, factory) {
   const config = core.validateConfig({ protocol: core.PROTOCOL, nonce: crypto.randomBytes(16).toString('hex'),
     epoch: options.epoch, hostGeneration: options.hostGeneration, roots: options.roots });
   const roots = new Map(config.roots.map(r => [r.id, r])), rootPins = core.observeRoots(config.roots);
-  const rootsDigest = core.digest(config.roots); let worker, active, closed;
+  const rootsDigest = core.digest(config.roots); let worker, active, closed, cleanup = Promise.resolve({exited:true,forced:false,uncertain:false});
   function poison(code) {
     if (closed) return;
     closed = code;
     const pending = active; active = undefined;
     if (pending) { clearTimeout(pending.timer); pending.signal?.removeEventListener('abort', pending.aborted); pending.reject(Error(code)); }
     if (worker) {
-      try { Promise.resolve(worker.terminate()).catch(() => {}); } catch { /* The checkpoint remains poisoned. */ }
+      try { cleanup = Promise.resolve(worker.terminate()).then(value => typeof value === 'object' ? value : {exited:true,forced:false,uncertain:false}, () => ({exited:false,forced:false,uncertain:true})); }
+      catch { cleanup = Promise.resolve({exited:false,forced:false,uncertain:true}); }
     }
   }
   function receive(value) {
     try {
       need(active && !closed, 'FILE_PROOF_STALE_REPLY');
-      timely(active.deadline);
+      timely(active.deadline, clock);
       const request = active.request, shared = ['protocol', 'nonce', 'epoch', 'hostGeneration', 'rootsDigest', 'requestId', 'listDigest', 'fresh', 'ok'];
       const successful = value?.ok === true;
       need(core.exact(value, successful ? [...shared, 'proofs', 'metrics', 'backend', 'hostCompatibilityVerified', 'effectsAllowed', 'diskDeploymentVerified', 'directoryInventoryVerified']
@@ -43,7 +47,7 @@ function createClient(options, factory) {
       if (!successful) {
         need(value.ok === false && /^FILE_PROOF_[A-Z_]+$/.test(value.error), 'FILE_PROOF_MALFORMED_REPLY'); poison(value.error); return;
       }
-      need(value.backend === 'node:fs' && value.hostCompatibilityVerified === false && value.effectsAllowed === false
+      need(value.backend === core.backendName && value.hostCompatibilityVerified === false && value.effectsAllowed === false
         && value.diskDeploymentVerified === false && value.directoryInventoryVerified === false
         && Array.isArray(value.proofs) && value.proofs.length === request.rows.length && core.dense(value.proofs), 'FILE_PROOF_MALFORMED_REPLY');
       const metrics = value.metrics;
@@ -54,7 +58,7 @@ function createClient(options, factory) {
         && BigInt(metrics.bytesHashed) <= request.rows.reduce((n, row) => n + BigInt(row.expected.bytes), 0n), 'FILE_PROOF_MALFORMED_REPLY');
       core.assertDirectories(rootPins);
       for (const [index, proof] of value.proofs.entries()) {
-        timely(active.deadline);
+        timely(active.deadline, clock);
         const row = request.rows[index], before = active.before[index];
         need(core.exact(proof, ['rootId', 'relativePath', 'nodeId', 'bytes', 'links', 'sha256', 'mtimeNs', 'ctimeNs'])
           && proof.rootId === row.rootId && proof.relativePath === row.relativePath && proof.nodeId === row.expected.nodeId
@@ -65,16 +69,16 @@ function createClient(options, factory) {
         const generation = `${proof.nodeId}:${proof.bytes}:${proof.mtimeNs}:${proof.ctimeNs}:${proof.links}`;
         need(current.generation === before.generation && current.generation === generation && core.matches(current.stat, row.expected), 'FILE_PROOF_STALE_RESULT');
       }
-      core.assertDirectories(rootPins); timely(active.deadline);
+      core.assertDirectories(rootPins); timely(active.deadline, clock);
       const complete = active; active = undefined; clearTimeout(complete.timer);
       complete.signal?.removeEventListener('abort', complete.aborted); complete.resolve(value);
     } catch (error) { poison(safeError(error).message); }
   }
   function start() {
     if (worker) return;
-    worker = factory(workerFile, optionsFor(config));
+    worker = factory(workerFile, optionsFor(config), {deadline: active.deadline});
     need(worker && ['on', 'postMessage', 'terminate'].every(k => typeof worker[k] === 'function'), 'FILE_PROOF_INVALID_WORKER');
-    worker.on('message', receive); worker.on('error', () => poison('FILE_PROOF_WORKER_FAILED'));
+    worker.on('message', receive); worker.on('error', error => poison(/^FILE_PROOF_[A-Z_]+$/.test(error?.message || '') ? error.message : 'FILE_PROOF_WORKER_FAILED'));
     worker.on('messageerror', () => poison('FILE_PROOF_MALFORMED_REPLY'));
     worker.on('exit', () => { if (!closed) poison('FILE_PROOF_WORKER_EXITED'); });
     // Never forward worker stdout/stderr (including filesystem exception paths).
@@ -84,7 +88,7 @@ function createClient(options, factory) {
     prove(value, opts = {}) {
       if (closed) return Promise.reject(Error('FILE_PROOF_POISONED'));
       if (active) return Promise.reject(Error('FILE_PROOF_BUSY'));
-      const deadline = performance.now() + timeoutMs;
+      const deadline = clock.now() + timeoutMs;
       let request, before;
       try {
         const fields = [...(Object.hasOwn(opts ?? {}, 'fresh') ? ['fresh'] : []), ...(Object.hasOwn(opts ?? {}, 'signal') ? ['signal'] : [])];
@@ -98,27 +102,28 @@ function createClient(options, factory) {
         });
         request = { protocol: core.PROTOCOL, nonce: config.nonce, epoch: config.epoch, hostGeneration: config.hostGeneration,
           rootsDigest, requestId: crypto.randomBytes(16).toString('hex'), listDigest: core.digest(rows), fresh: opts.fresh ?? false, rows };
-        core.budget(request); timely(deadline);
+        core.budget(request); timely(deadline, clock);
       } catch (error) { poison(safeError(error).message); return Promise.reject(safeError(error)); }
       return new Promise((resolve, reject) => {
         const aborted = () => poison('FILE_PROOF_ABORTED');
         active = { request, before, resolve, reject, signal: opts.signal, aborted, deadline,
-          timer: setTimeout(() => poison('FILE_PROOF_TIMEOUT'), Math.max(1, Math.ceil(deadline - performance.now()))) };
+          timer: setTimeout(() => poison('FILE_PROOF_TIMEOUT'), Math.max(1, Math.ceil(deadline - clock.now()))) };
         opts.signal?.addEventListener('abort', aborted, { once: true });
         if (opts.signal?.aborted) { aborted(); return; }
-        try { start(); timely(deadline); if (!closed) worker.postMessage(request); }
+        try { start(); timely(deadline, clock); if (!closed) worker.postMessage(request); }
         catch (error) { poison(safeError(error).message); }
       });
     },
-    close() { poison('FILE_PROOF_CLOSED'); },
+    close() { poison('FILE_PROOF_CLOSED'); return cleanup; },
   });
 }
 export function createFileProofClient(options) {
-  try { return createClient(options, (file, workerOptions) => new Worker(file, workerOptions)); }
+  try { return createClient(options, (file, workerOptions, {deadline}) => core.backendName === 'original-fs'
+    ? childTransport.createChildAdapter(workerOptions.workerData, deadline) : new Worker(file, workerOptions)); }
   catch (error) { throw safeError(error); }
 }
 // Internal deterministic test seam; never accepted as a production option or RPC argument.
-export function _createFileProofClientForTests(options, factory) {
-  try { need(typeof factory === 'function', 'FILE_PROOF_INVALID_WORKER'); return createClient(options, factory); }
+export function _createFileProofClientForTests(options, factory, clock = performance) {
+  try { need(typeof factory === 'function', 'FILE_PROOF_INVALID_WORKER'); return createClient(options, factory, clock); }
   catch (error) { throw safeError(error); }
 }

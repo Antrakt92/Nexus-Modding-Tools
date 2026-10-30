@@ -108,7 +108,9 @@ guard remains synchronous. Historical callers discarded return values; new kits
 include the propagation repair described below. Electron/original-fs acceptance
 and a fresh native pre-effect barrier remain required. Directory
 inventory, process enumeration and native-state hashing are not supplied by this
-known-file worker. This stage's native integration gate remains open.
+known-file worker. This stage's installer integration gate remains open. A later
+exact-production renderer acceptance verified the component backend, as recorded
+in [the worker contract](FILE-PROOF-WORKER.md#local-verification--30-october-2026).
 
 All 378 maintained Node tests passed with real pinned template fixtures and no
 skips, together with 21 recovery/bootstrap and 29 synthetic installer tests.
@@ -174,7 +176,8 @@ The installed compatibility wrapper forwards to this maintained source.
 The current input matched its local installed Steam depot manifest. That parser
 does not authenticate Valve's signature, so local metadata agreement is the
 provenance boundary. After dependency review, standalone CLI 0.5.32 replaced
-0.5.31 in the authoring manifest; the old executable and failed log remain intact.
+0.5.31 in the authoring manifest. After checking consumers, the old executable
+was moved to the Windows Recycle Bin; provenance and the failed log remain intact.
 One generation produced 22,728,153 bytes in an observed 844 ms helper run.
 Independent inspection and repeat calls verified receipt/output hashes and reuse
 without invoking the tool. Required declarations passed; full API coverage and
@@ -183,10 +186,10 @@ gameplay remain unproven. Installed SCC, Vortex and game files were not changed.
 Twenty cache regressions and three existing compatibility-wrapper lock tests
 passed. The broader checkpoint passed 378 Node tests without skips, 41 Python
 recovery/bootstrap/cache tests and 29 synthetic installer tests.
-Skill tree/alias/link checks passed; native OpenCode discovery is being
-investigated separately under stage 8. The standalone skill validator could not
-run in the inspected Python environments because PyYAML was unavailable; no
-package was installed merely for linting.
+Skill tree/alias/link checks passed; native OpenCode discovery was subsequently
+verified under stage 8. The initial Python environments lacked PyYAML. Both
+affected canonical skills subsequently passed the maintained validator using
+the existing skill-validation environment; no package installation was needed.
 
 ## Stage 8 hook and discovery verification — 30 October 2026
 
