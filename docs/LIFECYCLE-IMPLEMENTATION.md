@@ -9,7 +9,7 @@ Local verification, native acceptance and user gameplay remain separate.
 | 1 | Own-local binder and early support checks | One pinned supported family; exact archive/payload evidence; inert output; no inherited live approvals; actual package regressions | Source verified; native activation excluded |
 | 2 | Durable status for existing enable/deploy plans | Stable plan/step identity; receipts remain authoritative; lost response/cancellation/restart cannot replay an uncertain effect | Source verified; client reload required |
 | 3 | Read-only file-proof worker | Same proof results and freshness checks; bounded input/output; worker crash and stale replies rejected; host thread compatibility verified | Standalone foundation verified; native integration pending |
-| 4 | One deterministic native install contract | Proven no replacement/variant path, exact installer/source/identity, no auto-enable/deploy, durable effect intent and independent readback | Pending native contract |
+| 4 | One deterministic native install contract | Proven no replacement/variant path, exact installer/source/identity, no auto-enable/deploy, durable effect intent and independent readback | Offline preflight verified; native invocation remains held |
 | 5 | Keeper and consumer retention | Current build inputs and rollback scope explicit; isolated restore test; unknown external consumers block deletion | Pending |
 | 6 | Sequential native removal | One ID at a time; all-profile/rule/owner closure; verified keeper; partial callbacks stop for reconciliation; deletion semantics explicit | Pending native contract |
 | 7 | Reference-cache status and reconstruction | Independently established input provenance, compatible pinned tool, immutable accepted output and preserved failed attempts | Source and local cache verified; full API coverage unproven |
@@ -36,6 +36,10 @@ Stages 7 and 8 are independent of source-only lifecycle work. Stage 5 is a
 prerequisite for deletion, not for read-only inspection. General updates,
 interactive installers, side-by-side exact-file dependency changes and parallel
 native effects require additional contracts; they are not implicit in stage 4.
+
+The [source-reviewed native gates](NATIVE-LIFECYCLE-GATES.md) document the exact
+replacement, dependency-ignore and permanent-removal branches that keep effects
+held. A new archive basename alone does not exclude silent replacement.
 
 The current bottleneck evidence and architectural constraints are in
 [Lifecycle performance](LIFECYCLE-PERFORMANCE.md). This checklist does not replace
@@ -122,6 +126,21 @@ same-turn behavior. Regressions exercise pending/rejected Promises and queued
 state mutation. This removes lost-return hazards, but does not connect the
 worker or supply the required post-await native context barrier.
 The checkpoint passed 384 Node tests with the real pinned fixtures and no skips.
+
+## Stage 4 preflight foundation — 30 October 2026
+
+The new pure own-install evaluator checks an exact archive and bounded detached
+inventory against the source-reviewed collision and previous-provider branches.
+It rejects defined native provider IDs, shared archive references, owner/path
+aliases, unknown profile flags, unsupported metadata and incomplete projections.
+Eleven regressions and 18 real-family binder checks passed without skips.
+Independent review repaired the distinction between full native quick metadata
+and its ID-only projection, raw installed associations and reserved owner names.
+
+`modelAccepted` proves only this model's checks. Source/extractor admission,
+inventory completeness, native metadata capture, context freshness and dependency
+closure remain unverified. It supplies no permit or effects endpoint. Fresh native
+proof, durable host-wide exclusion and post-install readback are still required.
 
 ## Stage 7 verification — 30 October 2026
 
