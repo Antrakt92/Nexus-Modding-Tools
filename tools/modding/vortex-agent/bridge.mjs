@@ -49,20 +49,35 @@ export async function remote(method, params = {}, fetcher = fetch, tokenProvider
   let message;
   if ((response.headers.get('content-type') || '').includes('text/event-stream')) {
     const reader = response.body.getReader();
-    const decoder = new TextDecoder('utf-8', { fatal: true }); let buffer = '', bytes = 0;
+    const decoder = new TextDecoder('utf-8', { fatal: true });
+    let pieces = [], dataLines = [], skipLF = false, bytes = 0;
     try {
       while (!message) {
         const { value, done } = await reader.read();
         bytes += value?.byteLength || 0;
         if (bytes > MAX_RESPONSE_BYTES) throw new Error('MCP response too large');
-        buffer += decoder.decode(value || new Uint8Array(), { stream: !done });
-        buffer = buffer.replace(/\r\n/g, '\n');
-        let end;
-        while ((end = buffer.indexOf('\n\n')) >= 0) {
-          const block = buffer.slice(0, end); buffer = buffer.slice(end + 2);
-          const data = block.split('\n').filter(line => line.startsWith('data:')).map(line => line.slice(5).trimStart()).join('\n');
-          if (data) { const candidate = parse(data); if (candidate.id === 1) message = candidate; }
+        const chunk = decoder.decode(value || new Uint8Array(), { stream: !done });
+        let start = skipLF && chunk.startsWith('\n') ? 1 : 0;
+        if (chunk.length) skipLF = false;
+        // Scan each new chunk once; rescanning a growing event for every read
+        // makes large, fragmented inventory replies quadratic.
+        const endings = /[\r\n]/g; endings.lastIndex = start;
+        let ending;
+        while ((ending = endings.exec(chunk)) !== null) {
+          pieces.push(chunk.slice(start, ending.index));
+          const line = pieces.join(''); pieces = [];
+          start = endings.lastIndex;
+          if (ending[0] === '\r') {
+            if (chunk[start] === '\n') {start++; endings.lastIndex = start;}
+            else if (start === chunk.length) skipLF = true;
+          }
+          if (line.startsWith('data:')) dataLines.push(line.slice(5).trimStart());
+          else if (!line && dataLines.length) {
+            const data = dataLines.join('\n'); dataLines = [];
+            if (data) {const candidate = parse(data); if (candidate.id === 1) message = candidate;}
+          }
         }
+        if (start < chunk.length) pieces.push(chunk.slice(start));
         if (done) break;
       }
     } catch (error) {

@@ -2,8 +2,12 @@
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import subprocess
+import tempfile
+
+from recovery import no_links
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -28,14 +32,32 @@ def content():
                         'files': rows}, indent=2) + '\n').encode()
 
 
+def update(write=False):
+    target = ROOT / 'recovery-manifest.json'
+    no_links(target)
+    expected = content()
+    if write:
+        if target.exists() and not target.is_file():
+            raise ValueError('Expected ordinary recovery manifest')
+        temporary = None
+        try:
+            with tempfile.NamedTemporaryFile(prefix='recovery-manifest-', suffix='.tmp', dir=ROOT, delete=False) as stream:
+                temporary = Path(stream.name)
+                stream.write(expected)
+                stream.flush()
+                os.fsync(stream.fileno())
+            no_links(target)
+            os.replace(temporary, target)
+        finally:
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
+    elif not target.exists() or target.read_bytes().replace(b'\r\n', b'\n') != expected:
+        raise SystemExit('Recovery manifest differs; review/stage source changes, then use --write')
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--write', action='store_true')
     args = parser.parse_args()
-    expected = content()
-    target = ROOT / 'recovery-manifest.json'
-    if args.write:
-        target.write_bytes(expected)
-    elif not target.exists() or target.read_bytes().replace(b'\r\n', b'\n') != expected:
-        raise SystemExit('Recovery manifest differs; review/stage source changes, then use --write')
+    update(args.write)
     print('Recovery manifest matches reviewed source inventory')

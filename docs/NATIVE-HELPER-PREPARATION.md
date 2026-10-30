@@ -62,6 +62,13 @@ changes runtime source or omits a module, stop and review a new kit rather than
 silently replacing its expected hashes. Keep the existing no-replay receipts,
 metadata/replacement admission, exclusive native install hooks and disk checks.
 
+For this supported template, the entrypoint and engine each carry an exact
+package guard. Preparation checks their key and archive SHA-256 against the
+reviewed package, plus the entrypoint's byte count. Verification repeats this
+check for the prepared and materialized configurations. Retargeting only the
+entrypoint or configuration is rejected before output or host activation;
+unsupported guard shapes require a new source review.
+
 ## Changes applied to the supported template
 
 - `settlement.cjs` becomes the maintained compatibility entry. The call pins the

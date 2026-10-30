@@ -16,6 +16,7 @@ function fixture(t) {
   const source = path.join(root, 'source'), output = path.join(root, 'prepared'); fs.mkdirSync(source);
   // Synthetic representation of the supported task-template integration points.
   const index = `const sequence=0;
+need(c.packages?.length===1&&c.packages[0].key==='own-fixture'&&c.packages[0].sha256==='${'b'.repeat(64)}'&&c.packages[0].bytes===100,'EXACT_ONE_DISABLED_FIXTURE');
  function physical(p){const prior=cache.get(p);return prior;}
 function verify(){return {now:Date.now,pkg,expectedSize:size,pollMs:1000};}
 function read(){return{record:s.persistent.mods[c.health.gameId][pkg.expectedModId],flags:{}};}
@@ -25,9 +26,13 @@ record('guard-timing-terminal',{guardTiming,serialPoller:pollMetrics});`;
   fs.writeFileSync(path.join(source, 'index.prepared.js'), index);
   const config = { activationApproved: false, activationHold: true, freshActualBaselineBound: false,
     noEffects: true, health: { gameId: 'cyberpunk2077' },
-    packages: [{ expectedEnabled: false, oldEnabledModIds: [] }], modulePins: {} };
+    packages: [{ key: 'own-fixture', sha256: 'b'.repeat(64), bytes: 100,
+      expectedEnabled: false, oldEnabledModIds: [] }], modulePins: {} };
   for (const name of ['engine.cjs', 'settlement.cjs', 'local-import-readiness.cjs']) {
-    fs.writeFileSync(path.join(source, name), 'module.exports={};'); config.modulePins[name] = sha('module.exports={};');
+    const code = name === 'engine.cjs'
+      ? `function check(o){need(o.packages.length===1&&o.packages[0].key==='own-fixture'&&o.packages[0].sha256==='${'b'.repeat(64)}','EXACT_ONE_FIXTURE');}module.exports={check};`
+      : 'module.exports={};';
+    fs.writeFileSync(path.join(source, name), code); config.modulePins[name] = sha(code);
   }
   const writeConfig = () => fs.writeFileSync(path.join(source, 'reviewed.prepared.json'), JSON.stringify(config));
   writeConfig();
@@ -41,6 +46,52 @@ test('dry run writes nothing; apply creates an inert pinned module set and verif
   const config = JSON.parse(fs.readFileSync(path.join(f.output, 'reviewed.prepared.json')));
   assert.equal(config.health, null); assert.equal(config.pluginPath, null); assert.equal(config.activationHold, true);
   assert(config.modulePins['install-settlement.cjs']); assert(config.modulePins['physical-proof.cjs']);
+});
+
+test('stale engine package pins fail during preparation before any output is created', t => {
+  for (const [before, after] of [["key==='own-fixture'", "key==='own-previous'"], ['b'.repeat(64), 'c'.repeat(64)]]) {
+    const f = fixture(t);
+    const engine = path.join(f.source, 'engine.cjs');
+    const code = fs.readFileSync(engine, 'utf8').replace(before, after);
+    fs.writeFileSync(engine, code); f.config.modulePins['engine.cjs'] = sha(code); f.writeConfig();
+    assert.throws(() => prepareHelper({ ...f, apply: true }), /HELPER_PACKAGE_SCOPE_DIFFERS/);
+    assert(!fs.existsSync(f.output));
+  }
+});
+
+test('entrypoint package identity and the reviewed package must agree before preparation', t => {
+  for (const field of ['key', 'sha256', 'bytes']) {
+    const f = fixture(t);
+    f.config.packages[0][field] = { key: 'own-next', sha256: 'c'.repeat(64), bytes: 101 }[field];
+    f.writeConfig();
+    assert.throws(() => prepareHelper({ ...f, apply: true }), /HELPER_PACKAGE_SCOPE_DIFFERS/);
+    assert(!fs.existsSync(f.output));
+  }
+});
+
+test('scope admission refuses array-like packages and escaped key literals', t => {
+  const malformed = fixture(t);
+  malformed.config.packages = { 0: malformed.config.packages[0], length: 1 };
+  malformed.writeConfig();
+  assert.throws(() => prepareHelper(malformed), /HELPER_PACKAGE_SCOPE_DIFFERS/);
+  const escaped = fixture(t);
+  for (const name of ['index.prepared.js', 'engine.cjs']) {
+    const file = path.join(escaped.source, name);
+    const code = fs.readFileSync(file, 'utf8').replaceAll('own-fixture', 'own-\\x66ixture');
+    fs.writeFileSync(file, code);
+    if (name === 'engine.cjs') escaped.config.modulePins[name] = sha(code);
+    else escaped.sourceSha256 = sha(code);
+  }
+  escaped.config.packages[0].key = 'own-\\x66ixture'; escaped.writeConfig();
+  assert.throws(() => prepareHelper(escaped), /UNSUPPORTED_HELPER_SCOPE_TEMPLATE/);
+});
+
+test('binding cannot silently retarget a prepared kit to a different package', t => {
+  const f = fixture(t); prepareHelper({ ...f, apply: true });
+  const file = path.join(f.output, 'reviewed.prepared.json');
+  const config = JSON.parse(fs.readFileSync(file));
+  config.packages[0].sha256 = 'c'.repeat(64); fs.writeFileSync(file, JSON.stringify(config));
+  assert.throws(() => verifyHelper(f.output), /HELPER_PACKAGE_SCOPE_DIFFERS/);
 });
 test('prepared compatibility module executes the current observer, not the old quiet key', async t => {
   const f = fixture(t); prepareHelper({ ...f, apply: true });

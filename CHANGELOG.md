@@ -17,6 +17,18 @@ embedded Vortex adapter's 1.0.4 label.
 
 Fixes made on 30 October 2026:
 
+- Update the locally bootstrapped pnpm from unsupported 9.15.0 to supported
+  10.34.9. Keep the dependency lockfile unchanged and run CI checks through
+  local tools instead of nested commands that can select a global pnpm.
+- Decode fragmented MCP event streams incrementally and accept CR-only line
+  endings. A synthetic 2 MiB response with 512-byte chunks took a median
+  5.6 ms instead of 1,065.7 ms to decode; this is not a live installation result.
+- Reject a native helper whose entrypoint, engine and reviewed package name,
+  archive hash or size disagree, before activation.
+- Make failed source recovery retryable by verifying a temporary checkout
+  before publishing its final path. Reject linked skill snapshot manifests.
+- Write the source-integrity manifest atomically and reject linked output
+  paths, preserving unrelated files and the previous manifest on failure.
 - Allow reviewed installer and capture configurations up to 8 MiB, including
   copy-map verification. Large protected-file inventories could exceed the old
   1 MiB limit. Source modules and other kit inputs retain their 1 MiB limit.

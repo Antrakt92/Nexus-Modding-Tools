@@ -147,6 +147,18 @@ class RecoveryTests(unittest.TestCase):
                 self.assertEqual(list(empty_nested.iterdir()), [])
                 self.assertEqual(r.fetch_sources(workspace, archive)['sources'][0]['state'], 'would_restore')
                 self.assertFalse(workspace.exists())
+                real_git = r.run_git
+                target = workspace / 'local-state/upstream-sources/fixture'
+                for failing_command in ['fetch', 'checkout']:
+                    def fail_recovery(args, cwd=None):
+                        if args[0] == failing_command:
+                            raise RuntimeError('Simulated Git failure')
+                        return real_git(args, cwd)
+                    with self.subTest(command=failing_command), mock.patch.object(r, 'run_git', side_effect=fail_recovery):
+                        with self.assertRaisesRegex(RuntimeError, 'Simulated Git failure'):
+                            r.fetch_sources(workspace, archive, True)
+                    self.assertFalse(target.exists(), 'failed recovery must not occupy the final checkout path')
+                    self.assertEqual(list(target.parent.iterdir()), [], 'temporary checkout must be cleaned')
                 self.assertEqual(r.fetch_sources(workspace, archive, True)['sources'][0]['state'], 'restored')
                 self.assertEqual(r.fetch_sources(workspace, archive, True)['sources'][0]['state'], 'already_verified')
                 target = workspace / 'local-state/upstream-sources/fixture'
@@ -186,6 +198,20 @@ class RecoveryTests(unittest.TestCase):
                 r.restore_skills(snapshot, dest, True)
             self.assertFalse((dest / 'example/first.md').exists())
             self.assertEqual((dest / 'example/nested').read_text(), 'preserve this file')
+
+    def test_skill_manifest_reparse_is_rejected_before_any_restore(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp); snapshot = root / 'snapshot'; dest = root / 'skills'
+            (snapshot / 'skills/example').mkdir(parents=True)
+            data = b'example skill'
+            (snapshot / 'skills/example/SKILL.md').write_bytes(data)
+            outside_manifest = root / 'outside-manifest.json'
+            outside_manifest.write_text(json.dumps({'skills': [
+                {'path': 'skills/example/SKILL.md', 'sha256': r.digest(data)}]}))
+            self.make_symlink(snapshot / 'manifest.json', outside_manifest)
+            with self.assertRaisesRegex(ValueError, 'reparse'):
+                r.restore_skills(snapshot, dest, True)
+            self.assertFalse(dest.exists())
 
 
 if __name__ == '__main__':

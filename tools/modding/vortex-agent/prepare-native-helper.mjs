@@ -28,6 +28,16 @@ function contains(root, candidate) {
 }
 const files = ['install-settlement.cjs', 'native-install-wait.cjs', 'physical-proof.cjs', 'local-import-readiness.cjs', 'payload-size-proof.cjs'];
 const alias = Buffer.from("'use strict';\nmodule.exports = require('./native-install-wait.cjs');\n");
+function packageScope(index, engine, config) {
+  const entry = [...index.toString('utf8').matchAll(/c\.packages\[0\]\.key==='([A-Za-z0-9_.-]{1,200})'&&c\.packages\[0\]\.sha256==='([a-f0-9]{64})'&&c\.packages\[0\]\.bytes===(\d+)/g)];
+  const runner = [...engine.toString('utf8').matchAll(/o\.packages\[0\]\.key==='([A-Za-z0-9_.-]{1,200})'&&o\.packages\[0\]\.sha256==='([a-f0-9]{64})'/g)];
+  if (entry.length !== 1 || runner.length !== 1) throw Error('UNSUPPORTED_HELPER_SCOPE_TEMPLATE');
+  const pkg = Array.isArray(config.packages) && config.packages.length === 1 ? config.packages[0] : null;
+  if (!pkg || pkg.key !== entry[0][1] || pkg.sha256 !== entry[0][2]
+      || !Number.isSafeInteger(pkg.bytes) || pkg.bytes <= 0 || pkg.bytes !== Number(entry[0][3])
+      || pkg.key !== runner[0][1] || pkg.sha256 !== runner[0][2])
+    throw Error('HELPER_PACKAGE_SCOPE_DIFFERS');
+}
 
 export function prepareHelper({ source, output, sourceSha256, apply = false }) {
   if (typeof apply !== 'boolean') throw Error('INVALID_HELPER_PREPARATION_ARGUMENTS');
@@ -60,6 +70,7 @@ export function prepareHelper({ source, output, sourceSha256, apply = false }) {
   }
   if (!['engine.cjs', 'settlement.cjs', 'local-import-readiness.cjs'].every(n => content.has(n)))
     throw Error('HELPER_REQUIRED_MODULE_MISSING');
+  packageScope(input, content.get('engine.cjs'), config);
   let index = input.toString('utf8');
   // Deliberately support the known reviewed template, not arbitrary task code.
   index = replaceOnce(index, "now:Date.now,pkg,expectedSize:size,pollMs:1000",
@@ -123,6 +134,7 @@ export function verifyHelper(value, { materialization = false } = {}) {
       || ![...files, 'settlement.cjs', 'engine.cjs', 'index.prepared.js', 'reviewed.prepared.json']
         .every(name => Object.hasOwn(contract.files, name)))
     throw Error('INVALID_HELPER_KIT');
+  const checkedFiles = new Map();
   for (const [name, pin] of Object.entries(contract.files)) {
     if (!/^[a-zA-Z0-9_.-]+$/.test(name) || ['.', '..'].includes(name)
       || !/^[a-f0-9]{64}$/.test(pin)) throw Error('INVALID_HELPER_KIT');
@@ -130,6 +142,7 @@ export function verifyHelper(value, { materialization = false } = {}) {
     const bytes = fs.readFileSync(file);
     // Binding legitimately changes the held config. Runtime code may not drift.
     if (name !== 'reviewed.prepared.json' && sha(bytes) !== pin) throw Error('HELPER_KIT_DRIFT');
+    checkedFiles.set(name, bytes);
   }
   for (const name of files) {
     if (contract.files[name] !== sha(fs.readFileSync(path.join(here, name)))) throw Error('STALE_HELPER_KIT');
@@ -137,15 +150,17 @@ export function verifyHelper(value, { materialization = false } = {}) {
   if (contract.files['settlement.cjs'] !== sha(alias))
     throw Error('STALE_HELPER_KIT');
   const runtime = Object.entries(contract.files).filter(([n]) => n.endsWith('.cjs') && !n.startsWith('test-'));
+  const index = checkedFiles.get('index.prepared.js'), engine = checkedFiles.get('engine.cjs');
   for (const name of ['reviewed.prepared.json', 'reviewed.json']) {
     const file = path.join(dir, name);
     if (!fs.existsSync(file)) continue;
     ordinary(file);
-    const config = JSON.parse(fs.readFileSync(file, 'utf8'));
+    const config = JSON.parse(checkedFiles.get(name) ?? fs.readFileSync(file));
     if (!config.modulePins || JSON.stringify(Object.keys(config.modulePins).sort()) !== JSON.stringify(runtime.map(([n]) => n).sort())
       || runtime.some(([n, h]) => config.modulePins[n] !== h)) throw Error('HELPER_BINDING_MODULE_PINS_DIFFER');
     if (name === 'reviewed.json' && config.helperSHA256 !== contract.files['index.prepared.js'])
       throw Error('HELPER_BINDING_ENTRY_PIN_DIFFERS');
+    packageScope(index, engine, config);
   }
   if (materialization) {
     const readyFile = path.join(dir, 'READY.prepared.json'); ordinary(readyFile);

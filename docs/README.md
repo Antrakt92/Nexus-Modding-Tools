@@ -23,6 +23,7 @@
 
 Each report lists what was checked and what still needs testing.
 
+- [30 October tooling and performance audit](TOOLING-AUDIT-20261030.md).
 - [29 October full source audit](FULL-AUDIT-20261029.md).
 - [29 October follow-up and live upgrade](AUDIT-20261029.md).
 - [Dependency pins and checks](DEPENDENCY-AUDIT.md).

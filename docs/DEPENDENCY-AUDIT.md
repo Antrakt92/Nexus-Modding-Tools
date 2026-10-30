@@ -152,3 +152,33 @@ acceptance remains separate; the generated package is bound to the isolated
 verification workspace and is not an installation candidate for the live session.
 Detailed logs and audit JSON are retained under ignored
 `local-state/dependency-refresh-20261029/`.
+
+## 30 October build-tool and source audit
+
+The local pnpm bootstrap advances from 9.15.0 to **10.34.9**. The 9.x branch is
+unsupported; its 9.15.9 update still falls within published affected ranges.
+The 10.x branch receives security support through 30 April 2027 and retains our
+current lockfile format. Moving to 12.x is a separate migration.
+Sources: [pnpm support policy](https://github.com/pnpm/pnpm/security),
+[10.34.9 release](https://github.com/pnpm/pnpm/releases/tag/v10.34.9),
+[alias traversal advisory](https://github.com/pnpm/pnpm/security/advisories/GHSA-hwx4-2j3j-g496).
+
+Official npm identity, MIT license, repository, Node requirements, registry
+signature and SHA-512 archive integrity were checked before unpacking. The
+archive contains 1,065 files / 19,969,472 unpacked bytes. No global package or
+package install script ran. Bootstrap now requires agreement between the
+package-manager version, official registry URLs and ignored output directory.
+
+The frozen lockfile remains byte-identical. Production and full registry audits
+report zero known advisories across 7 and 219 dependency entries; the separate
+registry advisory lookup for pnpm 10.34.9 is empty at this checkpoint. These are
+version-match checks, not proof against unknown vulnerabilities.
+
+The isolated build passed typecheck, lint, formatting, all 144 upstream tests,
+the upstream build and the adapted bundle build/package checks. The `ci` script
+now invokes the local tools directly: nested `pnpm` commands previously selected
+an unrelated global executable from PATH during verification. One existing lint
+warning and the existing Vite configuration warning remain visible.
+
+See the [source and performance audit](TOOLING-AUDIT-20261030.md) for the maintained
+adapter, recovery and helper checks. No live Vortex upgrade is included.
