@@ -1,8 +1,8 @@
 blank_issues_enabled: true
 contact_links:
   - name: Setup and troubleshooting
-    url: https://github.com/Antrakt92/Nexus-Modding-Tools/blob/main/docs/GETTING-STARTED.md
+    url: https://github.com/Antrakt92/vortex-nexus-modding-mcp/blob/main/docs/GETTING-STARTED.md
     about: Check requirements, installation and common connection errors.
   - name: Report a vulnerability privately
-    url: https://github.com/Antrakt92/Nexus-Modding-Tools/security
+    url: https://github.com/Antrakt92/vortex-nexus-modding-mcp/security
     about: Use private reporting rather than a public issue.

@@ -1,4 +1,4 @@
-# Nexus Modding Tools
+# Vortex Nexus Modding MCP
 
 Windows tooling for Nexus research/publication and guarded Vortex automation.
 The repository is a source and recovery project, not a mod collection or account

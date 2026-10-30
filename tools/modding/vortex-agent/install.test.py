@@ -30,7 +30,7 @@ def package(directory, version, content, historical=False):
         (directory / 'THIRD-PARTY-NOTICES.md').write_text('Synthetic dependency notice', encoding='utf-8')
         provenance.update(packageSchemaVersion=2,
             licenseFileSHA256={name: upgrade.sha(directory / name) for name in ['LICENSE.md', 'THIRD-PARTY-NOTICES.md']},
-            sourceOffer={'repository': 'https://github.com/Antrakt92/Nexus-Modding-Tools'})
+            sourceOffer={'repository': 'https://github.com/Antrakt92/vortex-nexus-modding-mcp'})
     (directory / 'provenance.json').write_text(json.dumps(provenance), encoding='utf-8')
     return digest
 
@@ -190,10 +190,41 @@ class UpgradeTests(unittest.TestCase):
 
     def test_source_repository_offer_must_match_package_source_project(self):
         metadata = self.source / 'provenance.json'
-        value = json.loads(metadata.read_text()); value['sourceOffer']['repository'] = 'https://example.invalid/foreign'
-        metadata.write_text(json.dumps(value))
-        with self.assertRaisesRegex(RuntimeError, 'source repository contract'):
-            upgrade.install(self.new, self.old)
+        value = json.loads(metadata.read_text())
+        for repository in ['https://example.invalid/foreign',
+                           'https://github.com/Antrakt92/vortex-nexus-modding-mcp-extra',
+                           'https://github.com/Other/vortex-nexus-modding-mcp', None, [], {}]:
+            with self.subTest(repository=repository):
+                value['sourceOffer']['repository'] = repository
+                metadata.write_text(json.dumps(value))
+                with self.assertRaisesRegex(RuntimeError, 'source repository contract'):
+                    upgrade.install(self.new, self.old)
+                self.assertEqual(upgrade.sha(self.plugins / 'vortex-agent/index.js'), self.old)
+
+    def test_renamed_and_previous_repository_offers_identify_the_same_package(self):
+        metadata = self.source / 'provenance.json'
+        value = json.loads(metadata.read_text())
+        for repository in ['https://github.com/Antrakt92/vortex-nexus-modding-mcp',
+                           'https://github.com/Antrakt92/Nexus-Modding-Tools']:
+            with self.subTest(repository=repository):
+                value['sourceOffer']['repository'] = repository
+                metadata.write_text(json.dumps(value))
+                self.assertEqual(upgrade.package(self.source, self.new)['sourceOffer']['repository'], repository)
+
+    def test_metadata_sync_migrates_previous_repository_offer_without_bundle_change(self):
+        receipt = self.matching_target()
+        previous = json.loads(receipt.read_text())
+        previous['sourceOffer']['repository'] = 'https://github.com/Antrakt92/Nexus-Modding-Tools'
+        receipt.write_text(json.dumps(previous))
+        metadata = self.source / 'provenance.json'
+        current = json.loads(metadata.read_text())
+        current['sourceOffer']['repository'] = 'https://github.com/Antrakt92/vortex-nexus-modding-mcp'
+        metadata.write_text(json.dumps(current))
+        marker = self.marker.read_bytes()
+        upgrade.sync_provenance(self.new)
+        self.assertEqual(json.loads(receipt.read_text())['sourceOffer'], current['sourceOffer'])
+        self.assertEqual(upgrade.sha(receipt.parent / 'index.js'), self.new)
+        self.assertEqual(self.marker.read_bytes(), marker)
 
     def test_metadata_sync_refuses_foreign_plugin_identity(self):
         receipt = self.matching_target()

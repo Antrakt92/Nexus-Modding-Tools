@@ -1,4 +1,5 @@
 import importlib.util
+import io
 import hashlib
 import json
 from pathlib import Path
@@ -12,6 +13,38 @@ spec.loader.exec_module(r)
 
 
 class RecoveryTests(unittest.TestCase):
+    def test_recovery_downloads_accept_renamed_and_previous_release_origins(self):
+        for repository in ['vortex-nexus-modding-mcp', 'Nexus-Modding-Tools']:
+            with self.subTest(repository=repository), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp); source = root / 'source'; source.mkdir()
+                data = b'synthetic pinned bundle'; commit = 'a' * 40
+                url = f'https://github.com/Antrakt92/{repository}/releases/download/test/source.bundle'
+                row = {'name': 'fixture', 'bundle': 'source.bundle', 'bytes': len(data),
+                       'sha256': r.digest(data), 'commit': commit, 'url': url}
+                (source / 'source-lock.json').write_text(json.dumps({'upstreams': [row]}))
+                with mock.patch.object(r, 'ROOT', source), \
+                     mock.patch.object(r.urllib.request, 'urlopen', return_value=io.BytesIO(data)) as fetch, \
+                     mock.patch.object(r, 'run_git', return_value=commit):
+                    result = r.fetch_sources(root / 'workspace', apply=True)
+                self.assertEqual(result['sources'][0]['state'], 'restored')
+                fetch.assert_called_once_with(url, timeout=90)
+
+    def test_recovery_repository_lookalikes_fail_before_network(self):
+        for prefix in ['https://github.com/Antrakt92/vortex-nexus-modding-mcp-extra/',
+                       'https://github.com/Other/vortex-nexus-modding-mcp/',
+                       'https://github.com.evil.invalid/Antrakt92/vortex-nexus-modding-mcp/']:
+            with self.subTest(prefix=prefix), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp); source = root / 'source'; source.mkdir()
+                row = {'name': 'fixture', 'bundle': 'source.bundle', 'bytes': 1,
+                       'sha256': 'a' * 64, 'commit': 'b' * 40,
+                       'url': prefix + 'releases/download/test/source.bundle'}
+                (source / 'source-lock.json').write_text(json.dumps({'upstreams': [row]}))
+                with mock.patch.object(r, 'ROOT', source), \
+                     mock.patch.object(r.urllib.request, 'urlopen') as fetch:
+                    with self.assertRaisesRegex(ValueError, 'download origin'):
+                        r.fetch_sources(root / 'workspace', apply=True)
+                fetch.assert_not_called()
+
     def make_symlink(self, link, target, directory=False):
         try:
             link.symlink_to(target, target_is_directory=directory)

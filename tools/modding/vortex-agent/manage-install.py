@@ -165,7 +165,9 @@ def package(directory, expected_sha, target_version=None, *, allow_historical=Fa
             if not isinstance(pin, str) or not re.fullmatch('[a-f0-9]{64}', pin) or sha(directory / name) != pin:
                 raise RuntimeError('License file pin mismatch')
         offer = provenance.get('sourceOffer')
-        if not isinstance(offer, dict) or offer.get('repository') != 'https://github.com/Antrakt92/Nexus-Modding-Tools':
+        if not isinstance(offer, dict) or not isinstance(offer.get('repository'), str) or offer['repository'] not in {
+                'https://github.com/Antrakt92/vortex-nexus-modding-mcp',
+                'https://github.com/Antrakt92/Nexus-Modding-Tools'}:
             raise RuntimeError('Corresponding source repository contract mismatch')
     return provenance
 

@@ -206,7 +206,7 @@ if (argv.includes('--prepare')) {
     packageSchemaVersion: 2,
     licenseFileSHA256: { 'LICENSE.md': await sha(path.join(plugin, 'LICENSE.md')),
       'THIRD-PARTY-NOTICES.md': await sha(path.join(plugin, 'THIRD-PARTY-NOTICES.md')) },
-    sourceOffer: { repository: 'https://github.com/Antrakt92/Nexus-Modding-Tools',
+    sourceOffer: { repository: 'https://github.com/Antrakt92/vortex-nexus-modding-mcp',
       description: 'Corresponding adapter source, build scripts, upstream source pins and dependency lockfile.' },
     authentication: 'Windows-DPAPI-CurrentUser-bearer', vortexSourceCommit: '41be6d4556568a605d6131b8c5ca90ff26dec6ac',
     pluginSha256: await sha(path.join(plugin, 'index.js')),

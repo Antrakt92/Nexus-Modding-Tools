@@ -165,7 +165,9 @@ def fetch_sources(workspace, archive_dir=None, apply=False):
                 raise ValueError('Missing supplied recovery bundle')
             bundle.parent.mkdir(parents=True, exist_ok=True)
             url = row['url']
-            if not url.startswith('https://github.com/Antrakt92/Nexus-Modding-Tools/releases/download/'):
+            if not url.startswith((
+                    'https://github.com/Antrakt92/vortex-nexus-modding-mcp/releases/download/',
+                    'https://github.com/Antrakt92/Nexus-Modding-Tools/releases/download/')):
                 raise ValueError('Unexpected recovery download origin')
             with urllib.request.urlopen(url, timeout=90) as response:
                 data = response.read(row['bytes'] + 1)
