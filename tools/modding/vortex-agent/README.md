@@ -110,6 +110,26 @@ The [native-install design](LOCAL-PACKAGE-INSTALL-DESIGN.md) explains why a fres
 archive name and `allowAutoEnable:false` do not prove non-replacement. A queue
 around the same native install event would not repair that boundary.
 
+### Prepare one own-local helper offline
+
+`own-helper-binder.mjs` prepares a held helper from one pinned, reviewed
+Clean Inventory template family. It checks the ZIP's CRCs, sizes, hashes,
+complete payload and pinned source/build evidence before producing anything.
+It does not contact Vortex or install, enable or deploy a mod.
+
+```powershell
+node tools/modding/vortex-agent/own-helper-binder.mjs --reference ABSOLUTE_TEMPLATE_DIRECTORY --plan ABSOLUTE_PLAN_JSON --plan-sha256 RAW_PLAN_SHA256 --output ABSOLUTE_NEW_LOCAL_STATE_DIRECTORY
+```
+
+The default is a dry run. On Windows, `--apply` writes a new inactive directory
+under this checkout's ignored `local-state`; existing outputs are refused.
+The template itself is environment-specific: this is not a portable installer.
+The output explicitly lists missing current-session bindings and still needs
+source/build review, native admission and a separately reviewed materializer.
+Old approvals, baselines, attempts and completions are never inherited.
+See the [input and output contract](../../../docs/OWN-LOCAL-BINDER.md) and
+[implementation checklist](../../../docs/LIFECYCLE-IMPLEMENTATION.md).
+
 For reviewed task-owned one-shots, the [installation settlement observer](install-settlement.md)
 provides pinned record/flag checks and specific waiting diagnostics without
 resetting its quiet window for unrelated metadata. It must be copied and pinned

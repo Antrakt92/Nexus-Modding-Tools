@@ -28,6 +28,12 @@ function contains(root, candidate) {
 }
 const files = ['install-settlement.cjs', 'native-install-wait.cjs', 'physical-proof.cjs', 'local-import-readiness.cjs', 'payload-size-proof.cjs'];
 const alias = Buffer.from("'use strict';\nmodule.exports = require('./native-install-wait.cjs');\n");
+// Trusted repository inputs are captured once; the content constructor performs
+// no filesystem access and accepts no runtime-module overrides.
+const maintained = new Map(files.map(name => [name, fs.readFileSync(path.join(here, name))]));
+const maintainedTests = new Map(Object.entries({ 'test-settlement.cjs': 'native-install-wait.test.cjs',
+  'test-install-settlement.cjs': 'install-settlement.test.cjs', 'test-physical-proof.cjs': 'physical-proof.test.cjs' })
+  .map(([target, owner]) => [target, fs.readFileSync(path.join(here, owner))]));
 function packageScope(index, engine, config) {
   const entry = [...index.toString('utf8').matchAll(/c\.packages\[0\]\.key==='([A-Za-z0-9_.-]{1,200})'&&c\.packages\[0\]\.sha256==='([a-f0-9]{64})'&&c\.packages\[0\]\.bytes===(\d+)/g)];
   const runner = [...engine.toString('utf8').matchAll(/o\.packages\[0\]\.key==='([A-Za-z0-9_.-]{1,200})'&&o\.packages\[0\]\.sha256==='([a-f0-9]{64})'/g)];
@@ -39,18 +45,13 @@ function packageScope(index, engine, config) {
     throw Error('HELPER_PACKAGE_SCOPE_DIFFERS');
 }
 
-export function prepareHelper({ source, output, sourceSha256, apply = false }) {
-  if (typeof apply !== 'boolean') throw Error('INVALID_HELPER_PREPARATION_ARGUMENTS');
-  source = directory(source); output = directory(output);
-  if (contains(source, output)) throw Error('HELPER_OUTPUT_INSIDE_SOURCE');
-  if (fs.existsSync(output)) throw Error('HELPER_OUTPUT_EXISTS');
-  const names = fs.readdirSync(source);
-  if (names.some(n => /^(?:reviewed\.json|attempt\.json|failed\.json|completed\.json|HOST-)/.test(n)))
-    throw Error('MATERIALIZED_OR_ATTEMPTED_HELPER_REFUSED');
-  const read = name => { const p = path.join(source, name); ordinary(p); return fs.readFileSync(p); };
-  const input = read('index.prepared.js');
+export function createHelperContents({ input, config, modules, tests = new Map(), info, output, sourceSha256 }) {
+  if (!Buffer.isBuffer(input) || !config || typeof config !== 'object'
+      || !(modules instanceof Map) || !(tests instanceof Map)
+      || typeof output !== 'string' || !path.isAbsolute(output))
+    throw Error('INVALID_HELPER_PREPARATION_ARGUMENTS');
+  if (/[\\/]vortex[\\/]plugins(?:[\\/]|$)/i.test(output)) throw Error('ACTIVE_HELPER_PATH_REFUSED');
   if (!/^[a-f0-9]{64}$/.test(sourceSha256 || '') || sha(input) !== sourceSha256) throw Error('HELPER_SOURCE_PIN_MISMATCH');
-  const config = JSON.parse(read('reviewed.prepared.json'));
   for (const root of ['gamePath', 'stagingPath', 'downloadPath'].map(key => config.health?.[key]))
     if (typeof root === 'string' && path.isAbsolute(root) && contains(root, output)) throw Error('MANAGED_OUTPUT_PATH_REFUSED');
   if (config.activationApproved !== false || config.activationHold !== true
@@ -62,10 +63,12 @@ export function prepareHelper({ source, output, sourceSha256, apply = false }) {
   const content = new Map();
   if (!config.modulePins || !Object.keys(config.modulePins).length || Object.keys(config.modulePins).length > 64)
     throw Error('INVALID_HELPER_MODULE_PINS');
+  if (JSON.stringify([...modules.keys()].sort()) !== JSON.stringify(Object.keys(config.modulePins).sort()))
+    throw Error('HELPER_MODULE_PIN_MISMATCH');
   for (const [name, pin] of Object.entries(config.modulePins)) {
     if (!/^[a-z0-9-]+\.cjs$/.test(name) || !/^[a-f0-9]{64}$/.test(pin)) throw Error('INVALID_HELPER_MODULE_PINS');
-    const bytes = read(name);
-    if (sha(bytes) !== pin) throw Error('HELPER_MODULE_PIN_MISMATCH');
+    const bytes = modules.get(name);
+    if (!Buffer.isBuffer(bytes) || sha(bytes) !== pin) throw Error('HELPER_MODULE_PIN_MISMATCH');
     content.set(name, bytes);
   }
   if (!['engine.cjs', 'settlement.cjs', 'local-import-readiness.cjs'].every(n => content.has(n)))
@@ -98,8 +101,8 @@ export function prepareHelper({ source, output, sourceSha256, apply = false }) {
   index = replaceOnce(index, "record('guard-timing-terminal',{guardTiming,serialPoller:pollMetrics})",
     "record('guard-timing-terminal',{guardTiming,serialPoller:pollMetrics,physicalProof:physical.metrics()})");
   content.set('index.prepared.js', Buffer.from(index));
-  for (const name of files) content.set(name, fs.readFileSync(path.join(here, name)));
-  content.set('settlement.cjs', alias);
+  for (const [name, bytes] of maintained) content.set(name, Buffer.from(bytes));
+  content.set('settlement.cjs', Buffer.from(alias));
   const held = { ...config, control: output, pluginPath: null, health: null,
     packages: [{ ...config.packages[0], expectedType: '' }],
     modulePins: Object.fromEntries([...content].filter(([n]) => n.endsWith('.cjs')).map(([n, b]) => [n, sha(b)])),
@@ -109,15 +112,44 @@ export function prepareHelper({ source, output, sourceSha256, apply = false }) {
   };
   content.set('reviewed.prepared.json', Buffer.from(JSON.stringify(held, null, 2) + '\n'));
   // Keep task-specific regressions as review inputs; never execute copied code.
-  for (const name of names.filter(n => /^test-[a-z0-9-]+\.cjs$/.test(n))) content.set(name, read(name));
-  for (const [target, owner] of Object.entries({ 'test-settlement.cjs': 'native-install-wait.test.cjs',
-    'test-install-settlement.cjs': 'install-settlement.test.cjs', 'test-physical-proof.cjs': 'physical-proof.test.cjs' }))
-    content.set(target, fs.readFileSync(path.join(here, owner)));
-  if (names.includes('info.prepared.json')) content.set('info.prepared.json', read('info.prepared.json'));
+  for (const [name, bytes] of tests) {
+    if (!/^test-[a-z0-9-]+\.cjs$/.test(name) || !Buffer.isBuffer(bytes)) throw Error('INVALID_HELPER_PREPARATION_ARGUMENTS');
+    content.set(name, bytes);
+  }
+  for (const [name, bytes] of maintainedTests) content.set(name, Buffer.from(bytes));
+  if (info !== undefined) {
+    if (!Buffer.isBuffer(info)) throw Error('INVALID_HELPER_PREPARATION_ARGUMENTS');
+    content.set('info.prepared.json', info);
+  }
   const contract = { schema: 'native-helper-kit/1', sourceSha256,
     files: Object.fromEntries([...content].map(([n, b]) => [n, sha(b)])),
     reviewRequired: true, activationGranted: false, nativeEffects: false };
   content.set('HELPER-KIT.json', Buffer.from(JSON.stringify(contract, null, 2) + '\n'));
+  return content;
+}
+
+export function prepareHelper({ source, output, sourceSha256, apply = false }) {
+  if (typeof apply !== 'boolean') throw Error('INVALID_HELPER_PREPARATION_ARGUMENTS');
+  source = directory(source); output = directory(output);
+  if (contains(source, output)) throw Error('HELPER_OUTPUT_INSIDE_SOURCE');
+  if (fs.existsSync(output)) throw Error('HELPER_OUTPUT_EXISTS');
+  const names = fs.readdirSync(source);
+  if (names.some(n => /^(?:reviewed\.json|attempt\.json|failed\.json|completed\.json|HOST-)/.test(n)))
+    throw Error('MATERIALIZED_OR_ATTEMPTED_HELPER_REFUSED');
+  const read = name => { const p = path.join(source, name); ordinary(p); return fs.readFileSync(p); };
+  const input = read('index.prepared.js');
+  if (!/^[a-f0-9]{64}$/.test(sourceSha256 || '') || sha(input) !== sourceSha256) throw Error('HELPER_SOURCE_PIN_MISMATCH');
+  const config = JSON.parse(read('reviewed.prepared.json'));
+  if (!config.modulePins || !Object.keys(config.modulePins).length || Object.keys(config.modulePins).length > 64)
+    throw Error('INVALID_HELPER_MODULE_PINS');
+  const modules = new Map();
+  for (const [name, pin] of Object.entries(config.modulePins)) {
+    if (!/^[a-z0-9-]+\.cjs$/.test(name) || !/^[a-f0-9]{64}$/.test(pin)) throw Error('INVALID_HELPER_MODULE_PINS');
+    modules.set(name, read(name));
+  }
+  const tests = new Map(names.filter(n => /^test-[a-z0-9-]+\.cjs$/.test(n)).map(name => [name, read(name)]));
+  const content = createHelperContents({ input, config, modules, tests,
+    info: names.includes('info.prepared.json') ? read('info.prepared.json') : undefined, output, sourceSha256 });
   if (apply) {
     ordinary(output);
     fs.mkdirSync(output);

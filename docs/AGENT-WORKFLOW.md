@@ -21,6 +21,7 @@ missing capabilities rather than inventing another implementation.
 | Authorized download-only, enable or deploy | `vortex-mod-lifecycle` | Guarded adapter, stable request IDs, [reviewed plans](NO-RESTART-WORKFLOW.md) |
 | Coordinate downloads or installed-mod activation | `vortex-mod-lifecycle` | `run_mod_plan` MCP / session CLI; batch exact installed IDs, one final deploy, reconcile before recovery; native installation remains a separate stage |
 | Prepare a task-owned native install helper | `vortex-mod-lifecycle` | [Maintained code kit](NATIVE-HELPER-PREPARATION.md); offline preparation and code-contract verification before fresh binding/activation; completed helpers stay frozen |
+| Bind one own-local package to the supported reviewed family | `vortex-mod-lifecycle` | [Offline binder](OWN-LOCAL-BINDER.md); exact archive/source/build pins, new inert output and separate native admission |
 | Public Nexus search, metadata or requirements | `nexus-research` | [CLI wrapper](../tools/modding/nexus-cli/README.md); inspect JSON status/errors/pagination |
 | Nexus upload preparation or authorized publication | `nexus-publication` | [Guarded publisher](../tools/modding/nexus-publish/README.md); offline by default |
 | Release a collection revision | `nexus-collection-release`, `nexus-publication` | [Collection workflow](COLLECTION-RELEASES.md); owning collection's frozen plan and guard, early preflight, separate publication and post-release work |

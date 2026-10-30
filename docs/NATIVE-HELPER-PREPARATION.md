@@ -4,6 +4,9 @@ Native installation is still outside the permanent MCP adapter. This offline
 preparer upgrades the known held, single-package Cyberpunk helper template; it
 does not add an install endpoint, approve replacement or activate a plugin.
 Other games/types/template shapes require their own reviewed preparation.
+To bind a different own-local package to the pinned supported family, use the
+[own-local binder](OWN-LOCAL-BINDER.md), which validates its complete package and
+evidence tuple before calling the same maintained constructor.
 For already tracked Nexus originals, follow the separate
 [batch helper review route](TRACKED-NEXUS-HELPER-REVIEW.md). Do not change this
 preparer's single-package/local-only admission merely to accept a Nexus batch.
