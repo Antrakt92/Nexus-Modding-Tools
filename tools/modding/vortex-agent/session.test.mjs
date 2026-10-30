@@ -92,6 +92,37 @@ test('replay and a used later request ID stop before the first new write', async
   assert.equal(result.status, 'stopped'); assert.equal(result.requestId, plan().deploy.requestId); assert.equal(other.writes.length, 0);
 });
 
+test('a known failed preflight stops dispatching new receipt reads while settling the bounded in-flight pool', async () => {
+  const p = plan();
+  p.steps = Array.from({length: 100}, (_, n) => ({operation: 'set_mods_enabled',
+    requestId: 'early_preflight_' + n, modIds: ['own-' + n], enabled: false}));
+  const started = [], release = deferred(); let settled = 0;
+  const s = server({beforeCall: async (name, args) => {
+    if (name !== 'reconcile_operation') return;
+    started.push(args.requestId);
+    if (args.requestId === p.steps[0].requestId) {
+      await release.promise;
+      return {...unused(), attempt: {requestId: args.requestId}};
+    }
+    await release.promise;
+    settled++;
+    return unused();
+  }});
+  const work = runPlan(p, {apply: true, call: s.call});
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(started.length, 4, 'the initial pool remains bounded');
+  release.resolve();
+  const result = await work;
+  assert.equal(result.status, 'stopped');
+  assert.equal(result.code, 'REQUEST_ID_USED_OR_RECEIPT_UNCERTAIN');
+  assert.equal(result.requestId, p.steps[0].requestId);
+  assert.equal(result.invocationAttempted, false);
+  assert.equal(started.length, 4, 'no remaining receipt calls after a failure already guarantees no effects');
+  assert.equal(settled, 3, 'all already dispatched reads finish before returning');
+  assert.equal(s.writes.length, 0);
+  assert.equal(s.calls.some(c => c.name === 'health'), false);
+});
+
 test('context and inode drift before every write stop remaining operations', async () => {
   for (const mutate of [h => {h.profileId = 'different';}, h => {h.gamePath = 'F:/Other';}, h => {h.filesystemIds.gamePath = '9:9';}]) {
     let checks = 0;
@@ -233,6 +264,21 @@ test('initial receipt reads overlap at most four; all finish before the first wr
   const p = plan(); p.steps = Array.from({length: 8}, (_, i) => ({...p.steps[0], requestId: 'batch_request_' + i}));
   assert.equal((await runPlan(p, {apply: true, call: s.call})).status, 'completed');
   assert.equal(maximum, 4); assert.equal(s.maxWrites, 1);
+  assert.deepEqual(s.calls.slice(0, 9).map(c => [c.name, c.args.requestId]),
+    [...p.steps, p.deploy].map(step => ['reconcile_operation', step.requestId]));
+});
+
+test('inspection keeps collecting later read results after a failed read even with one worker', async () => {
+  const calls = [];
+  const result = await inspectSession({concurrency: 1, call: async name => {
+    calls.push(name);
+    if (name === 'health') return health();
+    if (name === 'list_mods') throw Error('UNAVAILABLE');
+    return [];
+  }});
+  assert.equal(result.status, 'partial');
+  assert.deepEqual(calls, ['health', 'list_mods', 'list_downloads', 'list_dialogs', 'list_external_changes', 'health']);
+  assert.deepEqual(result.results.list_external_changes, []);
 });
 
 test('unsafe download acknowledgements and acknowledgement/receipt ID disagreement stop later changes', async () => {

@@ -18,6 +18,8 @@ function fixture(t) {
   const index = `const sequence=0;
 need(c.packages?.length===1&&c.packages[0].key==='own-fixture'&&c.packages[0].sha256==='${'b'.repeat(64)}'&&c.packages[0].bytes===100,'EXACT_ONE_DISABLED_FIXTURE');
  function physical(p){const prior=cache.get(p);return prior;}
+ function tree(root){const out={};function visit(rel){for(const e of fs.readdirSync(path.join(root,rel),{withFileTypes:true})){const r=path.join(rel,e.name),p=safe(root,r);if(e.isDirectory())visit(r);else{need(e.isFile(),'SPECIAL_STAGE_FILE');if(e.name!=='__folder_managed_by_vortex')out[r.replace(/\\\\/g,'/')]=physical(p);}}}visit('');return out;}
+function verifyPayload(){cache.clear();const again=tree(root);need(canonical(again)===canonical(files),'OWN_PAYLOAD_CHANGED_DURING_SETTLE');record(pkg.key+'-payload-proof',{ownerId:pkg.expectedModId,downloadId:id,files:again,disabled:true});}
 function verify(){return {now:Date.now,pkg,expectedSize:size,pollMs:1000};}
 function read(){return{record:s.persistent.mods[c.health.gameId][pkg.expectedModId],flags:{}};}
 need(hash(c.appAsar)===c.appAsarSHA256&&c.appAsarSHA256==='${'a'.repeat(64)}','APP_ASAR_CHANGED');
@@ -122,6 +124,75 @@ test('prepared source guards reuse one generation hash and reject same-size sour
   assert.equal(hashes, 1); assert.equal(physical.metrics().cacheHits, 9);
   fs.writeFileSync(source, 'modified'); fs.utimesSync(source, new Date(), new Date(Date.now() + 5000));
   assert.throws(() => vm.runInNewContext(code, context), /SOURCE_CHANGED/);
+});
+
+test('generated final payload proof fully rehashes payload without evicting unrelated guard generations', t => {
+  const f = fixture(t); prepareHelper({ ...f, apply: true });
+  const oldCode = fs.readFileSync(path.join(f.source, 'index.prepared.js'), 'utf8');
+  const code = fs.readFileSync(path.join(f.output, 'index.prepared.js'), 'utf8');
+  const treeBody = body => body.match(/ function tree\([^\r\n]+/)?.[0];
+  assert.equal(treeBody(code).replace('tree(root,reader=physical)', 'tree(root)')
+    .replace(']=reader(p);', ']=physical(p);'), treeBody(oldCode), 'tree path and file checks are preserved');
+  const payloadRoot = path.join(f.root, 'payload'); fs.mkdirSync(payloadRoot);
+  for (const name of ['first', 'second']) fs.writeFileSync(path.join(payloadRoot, name), 'payload');
+  const protectedFiles = Array.from({ length: 128 }, (_, n) => {
+    const file = path.join(f.root, `protected-${n}`); fs.writeFileSync(file, Buffer.alloc(4096, n)); return file;
+  });
+  const { createPhysicalReader } = require(path.join(f.output, 'physical-proof.cjs'));
+  const run = (body, mutate) => {
+    const cache = new Map(), hashes = [];
+    const hash = p => { hashes.push(p); return sha(fs.readFileSync(p)); };
+    const physical = createPhysicalReader({ fs, hash, cache }), records = [];
+    const context = { fs, path, physical, cache, hash, root: payloadRoot,
+      require: id => { assert.equal(id, './physical-proof.cjs'); return { createPhysicalReader }; },
+      safe: (root, relative) => path.join(root, relative),
+      need: (ok, message) => { if (!ok) throw Error(message); },
+      canonical: value => JSON.stringify(value), pkg: { key: 'own', expectedModId: 'own-target' }, id: 'download',
+      record: (name, value) => records.push({ name, value }),
+    };
+    const sandbox = vm.createContext(context);
+    vm.runInContext(treeBody(body), sandbox);
+    const pins = protectedFiles.map(p => physical(p));
+    context.files = vm.runInContext('tree(root)', sandbox);
+    if (mutate) mutate();
+    const final = body.match(/function verifyPayload\(\)\{([^\r\n]+)\}/)?.[1]; assert(final);
+    vm.runInContext(final, sandbox);
+    const afterPayload = hashes.length;
+    protectedFiles.forEach((p, n) => assert.equal(physical(p).sha256, pins[n].sha256));
+    return { hashes: hashes.length, afterPayload, physical, records, protectedPins: pins };
+  };
+  const before = run(oldCode), after = run(code);
+  assert.equal(before.hashes, 260); // 128 protected + 2 payload, then payload + all protected again.
+  assert.equal(after.hashes, 132); // Original guard hashes plus independent two-file payload proof.
+  assert.equal(after.afterPayload, after.hashes, 'later full guards still sample but do not rehash unchanged protected data');
+  assert.equal(after.records[0].value.freshPayloadProof.hashes, 2);
+  assert.equal(after.records[0].value.freshPayloadProof.bytesHashed, 14);
+  assert.equal(after.physical.metrics().reads + after.records[0].value.freshPayloadProof.reads,
+    before.physical.metrics().reads, 'the same guarded and payload paths still receive physical observations');
+  fs.writeFileSync(protectedFiles[0], Buffer.alloc(4096, 255));
+  fs.utimesSync(protectedFiles[0], new Date(), new Date(Date.now() + 5000));
+  assert.notEqual(after.physical(protectedFiles[0]).sha256, after.protectedPins[0].sha256,
+    'a changed protected generation is independently rehashed');
+  const sourceGuard = code.match(/for\(const\[p,h\]of Object\.entries\(c\.sourcePins\)\)[^;]+;/)[0];
+  assert.throws(() => vm.runInNewContext(sourceGuard, {
+    c: { sourcePins: { [protectedFiles[0]]: after.protectedPins[0].sha256 } }, physical: after.physical,
+    need: (ok, message) => { if (!ok) throw Error(message); },
+  }), /SOURCE_CHANGED/, 'the next full guard rejects a changed protected/source generation');
+  assert.throws(() => run(code, () => {
+    fs.writeFileSync(path.join(payloadRoot, 'first'), 'changed');
+    fs.utimesSync(path.join(payloadRoot, 'first'), new Date(), new Date(Date.now() + 5000));
+  }), /OWN_PAYLOAD_CHANGED_DURING_SETTLE/);
+});
+
+test('unsupported tree or final payload checkpoint shapes fail before preparation writes', t => {
+  for (const [from, to] of [['function tree(root)', 'function otherTree(root)'],
+    ['cache.clear();const again=tree(root);', 'const again=tree(root);']]) {
+    const f = fixture(t), file = path.join(f.source, 'index.prepared.js');
+    const code = fs.readFileSync(file, 'utf8').replace(from, to);
+    fs.writeFileSync(file, code); f.sourceSha256 = sha(code);
+    assert.throws(() => prepareHelper({ ...f, apply: true }), /UNSUPPORTED_HELPER_TEMPLATE/);
+    assert(!fs.existsSync(f.output));
+  }
 });
 test('source/module drift or an unsupported template fail before creating output', t => {
   for (const mode of ['entry', 'module', 'shape']) {

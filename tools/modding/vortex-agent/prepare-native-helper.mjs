@@ -82,6 +82,13 @@ export function prepareHelper({ source, output, sourceSha256, apply = false }) {
   if (matches.length !== 1 || !matches[0][0].includes('prior=cache.get(p)') || !index.includes('sequence=0'))
     throw Error('UNSUPPORTED_HELPER_TEMPLATE');
   index = index.replace(physical, " const physical=require('./physical-proof.cjs').createPhysicalReader({fs,hash,cache});");
+  const tree = / function tree\(root\)\{[^\r\n]+\}/g;
+  if ([...index.matchAll(tree)].length !== 1) throw Error('UNSUPPORTED_HELPER_TEMPLATE');
+  index = index.replace(tree, match => replaceOnce(replaceOnce(match,
+    'function tree(root)', 'function tree(root,reader=physical)'), ']=physical(p);', ']=reader(p);'));
+  index = replaceOnce(index,
+    "cache.clear();const again=tree(root);need(canonical(again)===canonical(files),'OWN_PAYLOAD_CHANGED_DURING_SETTLE');record(pkg.key+'-payload-proof',{ownerId:pkg.expectedModId,downloadId:id,files:again,disabled:true});",
+    "const freshPayloadProof=require('./physical-proof.cjs').createPhysicalReader({fs,hash});const again=tree(root,freshPayloadProof);need(canonical(again)===canonical(files),'OWN_PAYLOAD_CHANGED_DURING_SETTLE');record(pkg.key+'-payload-proof',{ownerId:pkg.expectedModId,downloadId:id,files:again,disabled:true,freshPayloadProof:freshPayloadProof.metrics()});");
   const asar = /need\(hash\(c\.appAsar\)===c\.appAsarSHA256&&c\.appAsarSHA256==='([a-f0-9]{64})','APP_ASAR_CHANGED'\);/g;
   const asars = [...index.matchAll(asar)];
   if (asars.length !== 1) throw Error('UNSUPPORTED_HELPER_TEMPLATE');

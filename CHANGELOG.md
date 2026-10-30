@@ -15,6 +15,19 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+Lifecycle work made on 30 October 2026:
+
+- Add the read-only `read_mod_lifecycle` source endpoint for batches of 1–20
+  installed mod IDs: profile usage including pending removal, native incoming
+  requirements and cross-game archive references. It needs a new host bundle;
+  metadata results do not authorize installation or deletion.
+- Give the single-own helper's final payload check an independent physical
+  reader instead of clearing the whole collection cache. A generated-helper
+  benchmark halved hashed bytes while retaining every physical observation and
+  fully rehashing the new payload. Live installation speed has not been measured.
+- Stop unnecessary receipt reads when initial plan admission already failed;
+  settle started reads and preserve all successful-plan safety checks.
+
 Fixes made on 30 October 2026:
 
 - Update the locally bootstrapped pnpm from unsupported 9.15.0 to supported

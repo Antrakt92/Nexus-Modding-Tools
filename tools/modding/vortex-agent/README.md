@@ -25,6 +25,11 @@ reviewed plan. It uses stable request IDs, serial download/enable changes and on
 final deployment, then checks acknowledgements and exact terminal receipts.
 See [the no-restart workflow](../../../docs/NO-RESTART-WORKFLOW.md).
 
+For update or removal preparation, the current source adds the bounded read-only
+[`read_mod_lifecycle` preflight](../../../docs/LIFECYCLE-PERFORMANCE.md): exact
+installed IDs, usage across profiles, native incoming requirements and global
+archive references. It requires the new resident bundle and grants no effects.
+
 The client does not call window or restart APIs. Vortex itself can still show a
 legitimate native dialog during a requested operation. Starting minimized is
 not a guarantee against a brief window.
