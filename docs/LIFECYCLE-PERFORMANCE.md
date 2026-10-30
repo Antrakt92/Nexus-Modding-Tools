@@ -38,9 +38,13 @@ preferences, archive integrity and retained build inputs still need separate
 checks.
 
 The new read requires the new resident extension bundle. Reloading just the
-bridge cannot add it to an older host. Build/package checks are local evidence;
-coordinate a later host upgrade and native acceptance. Do not restart Vortex
-during another chat's install or a user's game test.
+bridge cannot add it to an older host. Build/package checks do not establish
+native loading. On the maintained workspace, the 30 October upgrade was verified
+through the actual running reader: ten profiles, 344 game mods and 506 rules,
+with unknown profile flags reported as zero. Before/after session values and the
+deployment manifest matched; this does not establish gameplay or removal safety.
+Coordinate any host upgrade; do not restart Vortex during another chat's install
+or a user's game test.
 
 ## Avoid repeated work without losing freshness
 
@@ -71,6 +75,15 @@ Two historical single-own installation receipts recorded 60 / 68 guard calls,
 43.586 / 60.384 seconds in guards, and about 20.6 GB hashed in each operation.
 Warm guards cost approximately 0.5–0.64 seconds. Those receipts identify a real
 bottleneck; they are not a before/after measurement of this change.
+
+Another historical Family receipt recorded 95 guards taking 126.575 seconds,
+with eight warm samples of 1.145–1.255 seconds. Its physical reader recorded
+1,297,000 observations but only 5,511 hashes: about 99.575% were cache hits.
+Moving source hashing off-thread therefore leaves substantial metadata,
+directory-inventory and synchronous process-enumeration work. These receipts
+have different workloads and code checkpoints; they are not a controlled timing
+comparison. Source-only offloading must not be described as eliminating the
+whole install bottleneck.
 
 The generated-helper benchmark used the same 512 protected 8 KiB files and two
 4 KiB payload files: cold guard, independent payload proof, then full guard.

@@ -34,6 +34,40 @@ node tools/modding/vortex-agent/prepare-native-helper.mjs --source 'C:/Task/inac
 node tools/modding/vortex-agent/prepare-native-helper.mjs verify 'C:/Task/current-template'
 ```
 
+### Held worker mode
+
+The default `cached-sync` mode retains the previous generated packet. Add
+`--source-proof-mode worker` to this preparer or the own-local binder to prepare
+the reviewed Family template with asynchronous source proofs. Other template
+shapes are refused; matching a few guard fragments is insufficient. This mode
+still returns an inactive kit, not permission to install it.
+
+The held config has `sourceProof:null`. Fresh root binding must supply the exact
+approved source set as `{roots, rows, epoch, hostGeneration, timeoutMs?}`. Roots
+and leaf identities come from an independently admitted fresh capture; each row
+retains the approved SHA-256 plus node ID, size and link count. Do not infer an
+approved hash from a newly observed file merely to make admission pass.
+
+The descriptors must match all canonical `sourcePins` paths and hashes exactly.
+Identical Windows case/separator aliases are deduplicated; conflicting aliases,
+ambiguous roots, unused roots and more than eight roots are refused. Current
+mutable config/control receipts are excluded. Immutable baselines and historical
+receipts elsewhere remain valid inputs. No directory or source-path discovery
+is performed by the runtime validator.
+
+The worker mode moves only the `sourcePins` proof off the caller thread.
+Bootstrap entry/module/process-guard hashing and the full live guard remain.
+After each proof, callers validate fresh live state; import and installation
+also have synchronous barriers immediately next to their native events. Final
+readback stops and drains the poller, requests a fresh proof, verifies cleanup,
+then samples source metadata and live state before writing completion. Forced
+or uncertain cleanup cannot produce a completion receipt.
+
+All fixed CommonJS runtime modules must remain in the generated pins, kit and
+copy map. The initial code check, final materialization check, fresh native
+admission and independent payload/deployment checks are still separate gates.
+Component or modeled tests alone do not accept the generated installer in Vortex.
+
 The result is **inert code and tests**: copied pinned runtime modules, a modified
 entrypoint, held config, regressions and `HELPER-KIT.json`. Existing plugin metadata
 is retained as a review input if present. Native startup/cleanup scripts, fresh plugin metadata,

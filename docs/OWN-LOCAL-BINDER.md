@@ -12,6 +12,10 @@ Default execution validates in memory; Windows `--apply` publishes a new held
 directory under the checkout's ignored `local-state`. Its parent must exist.
 An existing destination, changed input or attempted reference is refused.
 
+`--source-proof-mode worker` opts into the held asynchronous source-proof kit;
+the default remains `cached-sync`. It does not change the package plan or grant
+activation. See the [worker-mode binding gates](NATIVE-HELPER-PREPARATION.md#held-worker-mode).
+
 ## Plan contract
 
 The plan is a JSON object with exactly these fields:

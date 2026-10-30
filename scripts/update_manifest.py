@@ -10,6 +10,20 @@ import tempfile
 from recovery import no_links
 
 ROOT = Path(__file__).resolve().parents[1]
+TEXT_SUFFIXES = {'.cjs', '.mjs', '.js', '.ts', '.tsx', '.py', '.ps1', '.json',
+                 '.md', '.yml', '.yaml', '.txt', '.css', '.html', '.svg', '.cs', '.toml', '.xml'}
+
+
+def validate_encoding(name, data):
+    # Node replaces invalid UTF-8 silently. A matching byte hash must not bless
+    # damaged maintained source; upstream byte-pinned snapshots stay untouched.
+    parts = Path(name).parts
+    maintained = len(parts) == 1 or parts[0] in {'tools', 'scripts', 'tests', 'docs', '.github'}
+    if maintained and Path(name).suffix.lower() in TEXT_SUFFIXES:
+        try:
+            data.decode('utf-8', errors='strict')
+        except UnicodeDecodeError:
+            raise ValueError('Maintained text is not valid UTF-8: ' + name) from None
 
 
 def content():
@@ -25,7 +39,9 @@ def content():
         path = ROOT / name
         if path.is_symlink() or getattr(path, 'is_junction', lambda: False)() or not path.is_file():
             raise ValueError('Expected ordinary source file: ' + name)
-        rows.append({'path': name, 'sha256_lf': hashlib.sha256(path.read_bytes().replace(b'\r\n', b'\n')).hexdigest()})
+        data = path.read_bytes()
+        validate_encoding(name, data)
+        rows.append({'path': name, 'sha256_lf': hashlib.sha256(data.replace(b'\r\n', b'\n')).hexdigest()})
     if not rows:
         raise ValueError('Stage the reviewed source inventory before generating its manifest')
     return (json.dumps({'schema': 1, 'digest': 'SHA-256 after CRLF-to-LF normalization',

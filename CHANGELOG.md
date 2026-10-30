@@ -27,6 +27,24 @@ Lifecycle work made on 30 October 2026:
   fully rehashing the new payload. Live installation speed has not been measured.
 - Stop unnecessary receipt reads when initial plan admission already failed;
   settle started reads and preserve all successful-plan safety checks.
+- Add an own-local archive binder with ZIP/CRC, payload and source/build checks.
+  It prepares an inactive kit for the supported family; offline replacement
+  preflight does not grant native installation permission.
+- Persist stable plan IDs and step intents, and add `inspect_mod_plan` plus the
+  `plan-status` CLI to reconcile interrupted plans without replaying effects.
+- Add a bounded read-only file-proof worker and the physical `original-fs`
+  backend for the verified Vortex runtime. Exact production component probes
+  passed in Vortex 2.9.1; this is not an installation speed benchmark.
+- Add explicit `--source-proof-mode worker` preparation. It shares source checks,
+  rechecks live context next to native commands and drains pending checks before
+  final proof/cleanup. Kits remain held; the default `cached-sync` packet is
+  unchanged. Full native installer admission remains required.
+- Retain declared build inputs in a pinned keeper and verify an isolated byte/
+  archive restore. Unknown consumers and unproven native restoration still block
+  retirement; the keeper does not remove mods.
+- Add API-cache status, strict input/tool/recipe pins and immutable generation/
+  reuse receipts. Reconstruction was verified with standalone redscript CLI
+  0.5.32; installed SCC is a separate tool and is not replaced.
 
 Fixes made on 30 October 2026:
 
@@ -51,6 +69,17 @@ Fixes made on 30 October 2026:
   targets through the same scope policy as the reviewed plan.
 - Add a regression that executes the generated baseline admission code for
   batch sizes one through four, including missing, extra and changed packages.
+- Document authorized native Vortex shutdown through hidden owned windows in
+  MCP metadata and agent guidance, with exact process identities and no force
+  fallback. A missing MCP shutdown endpoint alone does not require manual Quit.
+- Allow `sync-provenance --package-root` for a verified package outside the
+  runtime workspace, preserving bundle, license, source and receipt checks.
+- Add guarded retirement of exact obsolete Rusty-hook templates while preserving
+  unknown hooks, configuration and recovery evidence.
+- Reject invalid UTF-8 in maintained text before recording source-integrity pins;
+  preserve upstream snapshots' original bytes.
+- Bound HTTP audit request/body/teardown waits and stop server admission before
+  destroying connections. Production ingress is unchanged by this test repair.
 
 Documentation changes since 0.3.0, made on 29 October 2026:
 

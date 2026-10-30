@@ -1,9 +1,10 @@
 # Read-only file-proof worker
 
 This internal component moves file-content hashing away from its caller. It is
-not a Vortex endpoint, installer or replacement for the current guard. Production
-installer guards and the resident adapter do not import it. Isolated acceptance
-probes have their own packets and receipts.
+not a Vortex endpoint or installer. The resident adapter and previously prepared
+helpers remain unchanged. Newly generated held kits can opt into source-proof
+integration; their activation and native installer admission remain separate.
+Isolated acceptance probes have their own packets and receipts.
 
 ## Contract
 
@@ -221,6 +222,27 @@ Fourteen coordinator regressions cover these cases, actual
 Node proof/cache/fresh reads and real root replacement; five shared-entrypoint
 regressions also cover idle transport failure.
 
-This coordinator and the CommonJS extraction are not connected to installer
-guards. The earlier renderer packet predates this new code closure and does not
-accept it. Fresh native acceptance remains required before integration is used.
+The [held worker mode](NATIVE-HELPER-PREPARATION.md#held-worker-mode) connects this
+coordinator to the supported template's source guard. Its unchanged default
+cached-sync packet was compared against the previous constructor using the real
+Family input: all 30 files were byte-identical. Worker mode adds the fixed runtime
+closure and source descriptors, while retaining synchronous live checks.
+
+A later exact nine-file CommonJS packet passed eight component groups in the
+actual Vortex 2.9.1 renderer: shared cold proof, warm cache, poller stop/drain,
+fresh proof and verified close, post-close source drift, closed effect refusal,
+open source drift and cancellation with joined cleanup. All four child cleanups
+observed exit without force or uncertainty, with closed parent pipes and
+disconnected IPC. The aggregate ChildProcess close event was not observed;
+process exit was verified separately.
+
+One diagnostic run took 593.911 ms cold, 2.647 ms warm and 168.410 ms for fresh
+proof plus cleanup. Its full 2.532-second probe included independent expected
+hashes and source checks. It read the physical application archive, one own
+16 MiB fixture and one public runtime source file. These single samples do not
+measure installation latency or the full guard's collection traversal.
+
+Generated guard ordering has modeled adversarial coverage; the native packet
+tests the component closure, not a generated installer performing an operation.
+Fresh native source/state admission and a real intended package remain required
+before activating an installation. No general install/remove endpoint is added.
