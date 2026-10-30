@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "6363e8d8dc481c1400687e15a376b1327b74b7ac5978ef33f2d39bfdde0544cf"
+      "sha256_lf": "86636e9cd89954cd7cf621b41309d64f9596498da002a9e9001c2d617e499160"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -264,7 +264,7 @@
     },
     {
       "path": "docs/TRACKED-NEXUS-HELPER-REVIEW.md",
-      "sha256_lf": "884df0578714d068108fac1ada9703df51f9ccbf13cb5e72ac3fb3b49d5d430f"
+      "sha256_lf": "b03df3c0f129ff46c4140c5a8be4848514f43bb08cc0e36bcafd33901992efea"
     },
     {
       "path": "recovery/accepted-adapter/README.md",
@@ -640,7 +640,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/prepare-tracked-nexus.mjs",
-      "sha256_lf": "8f0aab9e0b0ccf1adfaabfd24ad4ffcff289185e63d2974b8506e3d41a1cbd77"
+      "sha256_lf": "7c361c49dd9764fcd9c404e648bd76f80a08b06d29d66fc4434620d0102ead93"
     },
     {
       "path": "tools/modding/vortex-agent/process-guard.test.mjs",
@@ -708,7 +708,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/tracked-nexus.test.mjs",
-      "sha256_lf": "9f14f73efac2ccd7977bfc23da919ac656b095ea382571c28003c3a4889e84a1"
+      "sha256_lf": "2c76d23dcae8d307f99ec6c26b2531dc95e90b95061ad0779558ec1a915ef309"
     },
     {
       "path": "tools/modding/vortex-agent/tracked-preferences.cjs",

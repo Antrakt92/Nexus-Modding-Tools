@@ -34,6 +34,12 @@ function read(file, maxBytes = 1024 * 1024) {
   need(stat.isFile() && stat.size <= maxBytes, 'ORDINARY_BOUNDED_KIT_INPUT_REQUIRED');
   return fs.readFileSync(file);
 }
+function readKitFile(dir, name) {
+  // Bound collection inventories can exceed source-module limits.
+  const maxBytes = ['reviewed.prepared.json', 'reviewed.json'].includes(name)
+    ? 8 * 1024 * 1024 : 1024 * 1024;
+  return read(path.join(dir, name), maxBytes);
+}
 function inside(root, candidate) {
   const rel = path.relative(root, candidate);
   return rel === '' || !path.isAbsolute(rel) && rel !== '..' && !rel.startsWith('..' + path.sep);
@@ -176,7 +182,7 @@ export function verifyTracked(value, { materialization = false } = {}) {
   need(JSON.stringify(Object.keys(contract.files).sort()) === JSON.stringify(required), 'TRACKED_FILE_SET_DIFFERS');
   for (const [name, pin] of Object.entries(contract.files)) {
     need(/^[a-zA-Z0-9.-]+$/.test(name) && /^[a-f0-9]{64}$/.test(pin), 'INVALID_TRACKED_KIT_PIN');
-    const bytes = read(path.join(dir, name));
+    const bytes = readKitFile(dir, name);
     if (name !== 'reviewed.prepared.json') need(sha(bytes) === pin, 'TRACKED_KIT_DRIFT');
     if (owners.has(name)) need(pin === sha(owners.get(name)), 'STALE_TRACKED_KIT');
     else if (Object.hasOwn(catalog.modules, name)) need(pin === catalog.modules[name], 'TRACKED_REFERENCE_MODULE_DRIFT');
@@ -187,7 +193,7 @@ export function verifyTracked(value, { materialization = false } = {}) {
   const pins = JSON.parse(read(path.join(dir, 'scope-pins.json')));
   need(JSON.stringify(pins) === JSON.stringify(contract.scopePins), 'TRACKED_SCOPE_DIFFERS');
   const policy = createScopePolicy(pins);
-  const cfg = JSON.parse(read(path.join(dir, 'reviewed.prepared.json')));
+  const cfg = JSON.parse(readKitFile(dir, 'reviewed.prepared.json'));
   need(cfg.purpose === 'tracked-nexus-native-install/1' && cfg.activationApproved === false && cfg.activationHold === true && cfg.allActivationHold === true
     && cfg.noEffects === true && cfg.ownStableCPIncluded === contract.ownStableCPIncluded
     && cfg.ownSourceCommit === contract.ownSourceCommit && cfg.ownSourceProofSHA256 === contract.ownSourceProofSHA256,
@@ -221,7 +227,7 @@ export function verifyTracked(value, { materialization = false } = {}) {
       seen.add(row.destination);
       if (row.sha256 === null && (allowUnbound && ['info.json', 'reviewed.json', 'frozen.json'].includes(row.source)
         || ['reviewed.json', 'frozen.json'].includes(row.source) && !fs.existsSync(path.join(dir, row.source)))) continue;
-      need(sha(read(path.join(dir, row.source))) === row.sha256, 'TRACKED_COPY_PIN_DIFFERS');
+      need(sha(readKitFile(dir, row.source)) === row.sha256, 'TRACKED_COPY_PIN_DIFFERS');
     }
   }
   checkMap(JSON.parse(read(path.join(dir, 'COPY-MAP.prepared.json'))), true);
@@ -286,7 +292,7 @@ export function prepareTrackedCapture({ reference, installKit, output, apply = f
   contents.set('scope.cjs', captureScopeAlias);
   contents.set('capture.cjs', adapted.body); contents.set('index.prepared.js', adapted.index);
   contents.set('reference-index.js', entry); contents.set('reference-capture.cjs', body);
-  const source = JSON.parse(read(path.join(installKit, 'reviewed.prepared.json')));
+  const source = JSON.parse(readKitFile(installKit, 'reviewed.prepared.json'));
   const runtime = [...contents.keys()].filter(n => (n.endsWith('.cjs') && n !== 'reference-capture.cjs') || n === 'scope-pins.json');
   const cfg = { purpose: 'tracked-nexus-read-capture/1', control: output, pluginPath: null,
     activationApproved: false, allActivationHold: true, noEffects: true, freshRootDiskBaselineFinalized: false,
@@ -323,7 +329,7 @@ export function verifyTrackedCapture(value, { materialization = false } = {}) {
     && JSON.stringify(Object.keys(contract.files).sort()) === JSON.stringify(required), 'INVALID_TRACKED_CAPTURE_KIT');
   for (const [name, pin] of Object.entries(contract.files)) {
     need(/^[a-zA-Z0-9.-]+$/.test(name) && /^[a-f0-9]{64}$/.test(pin), 'INVALID_TRACKED_CAPTURE_PIN');
-    const bytes = read(path.join(dir, name));
+    const bytes = readKitFile(dir, name);
     if (name !== 'reviewed.prepared.json') need(sha(bytes) === pin, 'TRACKED_CAPTURE_DRIFT');
     if (Object.hasOwn(catalog.capture.modules, name)) need(pin === catalog.capture.modules[name], 'TRACKED_CAPTURE_REFERENCE_DRIFT');
   }
@@ -337,7 +343,7 @@ export function verifyTrackedCapture(value, { materialization = false } = {}) {
   need(sha(code.index) === contract.files['index.prepared.js'] && sha(code.body) === contract.files['capture.cjs'], 'TRACKED_CAPTURE_ENTRY_DIFFERS');
   const pins = JSON.parse(read(path.join(dir, 'scope-pins.json'))), policy = createScopePolicy(pins);
   need(JSON.stringify(pins) === JSON.stringify(contract.scopePins), 'TRACKED_CAPTURE_SCOPE_DIFFERS');
-  const cfg = JSON.parse(read(path.join(dir, 'reviewed.prepared.json')));
+  const cfg = JSON.parse(readKitFile(dir, 'reviewed.prepared.json'));
   need(cfg.activationApproved === false && cfg.allActivationHold === true && cfg.noEffects === true
     && cfg.purpose === 'tracked-nexus-read-capture/1' && cfg.helperSHA256 === contract.files['index.prepared.js']
     && cfg.modulePins && JSON.stringify(Object.keys(cfg.modulePins).sort()) === JSON.stringify(runtime)
@@ -359,7 +365,7 @@ export function verifyTrackedCapture(value, { materialization = false } = {}) {
       need(row && !seen.has(row.destination) && expected.get(row.destination) === row.source, 'TRACKED_CAPTURE_COPY_MAP_DIFFERS'); seen.add(row.destination);
       if (row.sha256 === null && (!bound && row.source === 'info.json'
         || row.source === 'reviewed.json' && !fs.existsSync(path.join(dir, row.source)))) continue;
-      need(sha(read(path.join(dir, row.source))) === row.sha256, 'TRACKED_CAPTURE_COPY_PIN_DIFFERS');
+      need(sha(readKitFile(dir, row.source)) === row.sha256, 'TRACKED_CAPTURE_COPY_PIN_DIFFERS');
     }
   };
   checkMap(JSON.parse(read(path.join(dir, 'COPY-MAP.prepared.json'))), false);

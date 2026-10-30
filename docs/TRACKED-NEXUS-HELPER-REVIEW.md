@@ -34,6 +34,9 @@ stored ID is rejected. No completed helper is modified.
 At startup, the generated installer checks the baseline against the reviewed
 batch size and scope policy, including unique download and native target IDs.
 The pinned reference's original two-package limit is not retained.
+Reviewed configuration files have an 8 MiB read limit to accommodate protected
+collection inventories; source modules and other kit inputs remain limited to
+1 MiB. Baseline files retain their separate 64 MiB limit.
 
 Generate the read-only capture code from its separately pinned source family:
 

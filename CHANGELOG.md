@@ -17,6 +17,9 @@ embedded Vortex adapter's 1.0.4 label.
 
 Fixes made on 30 October 2026:
 
+- Allow reviewed installer and capture configurations up to 8 MiB, including
+  copy-map verification. Large protected-file inventories could exceed the old
+  1 MiB limit. Source modules and other kit inputs retain their 1 MiB limit.
 - Fix generated tracked Nexus installers rejecting one-, three- and four-mod
   batches because startup still required exactly two packages. Baseline checks
   now use the reviewed batch size and reject duplicate downloads and native
