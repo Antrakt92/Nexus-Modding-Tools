@@ -524,7 +524,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/README.md",
-      "sha256_lf": "098f1b23aaf91aadeefe24d2667cc007dc7b93596700d8a6e225eb35b8d43b84"
+      "sha256_lf": "ebf91e5f09322a6c83e215127ef1fda5cef04c94e1f4acbc719a89787afe0605"
     },
     {
       "path": "tools/modding/vortex-agent/audit-fixes.test.mjs",
@@ -636,7 +636,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/install.test.py",
-      "sha256_lf": "fd65b6d3a4dee912bd9e739ac2cff8d8040f26e93050d973c7682e2348412c82"
+      "sha256_lf": "99fa8d0f4bef0aa1b2c054776cc4948406e194b738817d8c226d5badcbf534e8"
     },
     {
       "path": "tools/modding/vortex-agent/keeper.mjs",
@@ -676,7 +676,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/manage-install.py",
-      "sha256_lf": "a834a847f74522436aea68c462e6a6bb65f120f86462f39d81733e59d4e1f83c"
+      "sha256_lf": "414e5fe5e3d646d02371ecb16235520da29106508ddbff573028d972f7ad3126"
     },
     {
       "path": "tools/modding/vortex-agent/native-audit.test.mjs",

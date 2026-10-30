@@ -1,6 +1,8 @@
 """Synthetic installation paths only; never touches the active plugin/processes."""
 import hashlib
+import contextlib
 import importlib.util
+import io
 import json
 from pathlib import Path
 import tempfile
@@ -293,6 +295,72 @@ class UpgradeTests(unittest.TestCase):
         self.assertEqual(self.marker.read_bytes(), marker)
         self.assertEqual((self.plugins / 'unrelated/sentinel').read_bytes(), b'untouched')
         self.assertFalse((self.root / 'upgrades/install.lock').exists())
+
+    def test_external_metadata_sync_uses_exact_matching_bundle_and_original_runtime(self):
+        target = self.matching_target()
+        metadata = self.source / 'provenance.json'
+        data = json.loads(metadata.read_text()); data['evidence'] = 'external verified source package'
+        metadata.write_text(json.dumps(data))
+        before = {str(p): p.read_bytes() for p in self.plugins.rglob('*') if p.is_file()}
+        receipts = upgrade.receipt_pins()
+        # The default build is a different historical bundle. It must not be
+        # copied, inspected as our source or used to select a receipt workspace.
+        historical = self.root / 'historical-build'
+        package(historical, '1.0.4', b'different historical default bundle')
+        with patch.object(upgrade, 'SOURCE', historical), patch.object(upgrade, 'stopped', side_effect=AssertionError('metadata-only')):
+            upgrade.sync_provenance(self.new, package_root=str(self.source))
+        self.assertEqual(target.read_bytes(), metadata.read_bytes())
+        self.assertEqual(upgrade.receipt_pins(), receipts)
+        for filename, raw in before.items():
+            if Path(filename) != target:
+                self.assertEqual(Path(filename).read_bytes(), raw)
+        self.assertEqual(upgrade.sha(target.parent / 'index.js'), self.new)
+        self.assertFalse((self.root / 'upgrades/install.lock').exists())
+
+    def test_external_metadata_sync_refuses_wrong_runtime_bundle_sources_or_reparse(self):
+        target = self.matching_target(); original = target.read_bytes(); receipts = upgrade.receipt_pins()
+        external = self.root / 'external'
+        package(external, '1.0.4', b'synthetic new bundle')
+        metadata = external / 'provenance.json'; valid = json.loads(metadata.read_text())
+        maintained = self.root / 'external-maintained'; maintained.mkdir()
+        (maintained / 'bridge.mjs').write_bytes(b'changed maintained source')
+        for name in ['runtime', 'source', 'bundle', 'schema']:
+            with self.subTest(name=name):
+                value = json.loads(json.dumps(valid)); metadata.write_text(json.dumps(value))
+                (external / 'index.js').write_bytes(b'synthetic new bundle')
+                if name == 'runtime': value['workspaceRoot'] = str(self.root / 'wrong-runtime')
+                elif name == 'source': value.update(maintainedSource=str(maintained), sources={'bridge.mjs': '0' * 64})
+                elif name == 'bundle': (external / 'index.js').write_bytes(b'other bundle')
+                elif name == 'schema': value['packageSchemaVersion'] = 1
+                metadata.write_text(json.dumps(value))
+                with self.assertRaises((RuntimeError, FileNotFoundError)):
+                    upgrade.sync_provenance(self.new, package_root=str(external))
+                self.assertEqual(target.read_bytes(), original); self.assertEqual(upgrade.receipt_pins(), receipts)
+        metadata.write_text(json.dumps(valid)); (external / 'index.js').write_bytes(b'synthetic new bundle')
+        alias = self.root / 'external-alias'; alias.symlink_to(external, target_is_directory=True)
+        with self.assertRaisesRegex(RuntimeError, 'Reparse'):
+            upgrade.sync_provenance(self.new, package_root=str(alias))
+        self.assertEqual(target.read_bytes(), original); self.assertEqual(upgrade.receipt_pins(), receipts)
+        with self.assertRaisesRegex(RuntimeError, 'absolute path'):
+            upgrade.sync_provenance(self.new, package_root='relative/package')
+
+    def test_external_metadata_sync_still_refuses_installed_bundle_mismatch(self):
+        target = self.plugins / 'vortex-agent/provenance.json'
+        original = target.read_bytes(); receipts = upgrade.receipt_pins()
+        with self.assertRaisesRegex(RuntimeError, 'bundle pin mismatch'):
+            upgrade.sync_provenance(self.new, package_root=str(self.source))
+        self.assertEqual(target.read_bytes(), original); self.assertEqual(upgrade.receipt_pins(), receipts)
+
+    def test_package_root_cli_scope_includes_metadata_sync_only_with_install_and_upgrade(self):
+        with patch.object(upgrade, 'sync_provenance') as sync:
+            upgrade.main(['sync-provenance', '--expected-sha', self.new, '--package-root', str(self.source)])
+        sync.assert_called_once_with(self.new, package_root=str(self.source))
+        for operation, labels in [('snapshot', ['one']), ('compare', ['one', 'two'])]:
+            for root in [str(self.source), '']:
+                with self.subTest(operation=operation, root=root), patch.object(upgrade, operation) as invoke:
+                    with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as error:
+                        upgrade.main([operation, *labels, '--package-root', root])
+                    self.assertEqual(error.exception.code, 2); invoke.assert_not_called()
 
     def test_installer_lock_cleanup_does_not_delete_a_replacement_owner(self):
         with self.assertRaisesRegex(RuntimeError, 'ownership changed'):

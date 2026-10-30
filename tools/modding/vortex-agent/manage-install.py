@@ -280,15 +280,16 @@ def install(expected_sha, from_sha=None, package_root=None):
         (run / 'upgrade.json').write_text(json.dumps(result, indent=2), encoding='utf-8')
         print(json.dumps(result))
 
-def sync_provenance(expected_sha):
+def sync_provenance(expected_sha, package_root=None):
+    source = SOURCE if package_root is None else absolute_root(package_root, 'Package root')
     target = PLUGINS / 'vortex-agent'
     with install_lock():
-        provenance = package(SOURCE, expected_sha, '1.0.4')
+        provenance = package(source, expected_sha, '1.0.4')
         package(target, expected_sha, '1.0.4')
         verify_runtime_workspace(provenance)
         verify_sources(provenance)
         pins = receipt_pins()
-        metadata = (SOURCE / 'provenance.json').read_bytes()
+        metadata = (source / 'provenance.json').read_bytes()
         if json.loads(metadata) != provenance:
             raise RuntimeError('Source provenance changed before sync')
         temp = target / ('provenance-' + uuid.uuid4().hex + '.tmp')
@@ -301,7 +302,7 @@ def sync_provenance(expected_sha):
                 raise RuntimeError('Receipt pins changed before metadata sync')
             verify_runtime_workspace(provenance)
             verify_sources(provenance)
-            if (SOURCE / 'provenance.json').read_bytes() != metadata:
+            if (source / 'provenance.json').read_bytes() != metadata:
                 raise RuntimeError('Source provenance changed during metadata staging')
             os.replace(temp, target / 'provenance.json')
         finally:
@@ -309,7 +310,7 @@ def sync_provenance(expected_sha):
                 temp.unlink()
     print(json.dumps({'provenance_synced': True, 'runtime_bundle_changed': False, 'sha256': expected_sha}))
 
-if __name__ == '__main__':
+def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument('operation', choices=['snapshot', 'compare', 'install', 'upgrade', 'sync-provenance'])
     parser.add_argument('--expected-sha')
@@ -317,9 +318,9 @@ if __name__ == '__main__':
     parser.add_argument('--package-root', help='Absolute verified package directory; runtime workspace must still match NEXUS_WORKSPACE')
     parser.add_argument('--game-root', action='append', help='Absolute game directory protected by snapshot; repeat for every game')
     parser.add_argument('labels', nargs='*')
-    args = parser.parse_args()
-    if args.package_root and args.operation not in {'install', 'upgrade'}:
-        parser.error('--package-root is supported only for install/upgrade')
+    args = parser.parse_args(argv)
+    if args.package_root is not None and args.operation not in {'install', 'upgrade', 'sync-provenance'}:
+        parser.error('--package-root is supported only for install/upgrade/sync-provenance')
     if args.operation == 'snapshot' and len(args.labels) == 1:
         snapshot(args.labels[0], args.game_root)
     elif args.operation == 'compare' and len(args.labels) == 2:
@@ -331,6 +332,10 @@ if __name__ == '__main__':
             parser.error('upgrade requires --from-sha')
         install(args.expected_sha, args.from_sha, args.package_root)
     elif args.operation == 'sync-provenance' and not args.labels:
-        sync_provenance(args.expected_sha)
+        sync_provenance(args.expected_sha, package_root=args.package_root)
     else:
         parser.error('snapshot requires one label; compare two; install none')
+
+
+if __name__ == '__main__':
+    main()

@@ -45,6 +45,13 @@ Keep the installed package and bridge environment consistent. The installer
 accepts an explicit `--package-root` but refuses a different runtime workspace
 before replacing anything, preserving the existing credential and receipt paths.
 
+`manage-install.py sync-provenance --expected-sha <installed-bundle-sha256>`
+updates only installed provenance for that exact bundle. It also accepts
+`--package-root <absolute-verified-package-directory>` when build artifacts live
+outside the runtime workspace. Source pins, package licenses, runtime workspace
+and receipt preservation are still checked; the flag does not bypass them or
+replace the running bundle. Snapshot and compare reject this flag.
+
 On a new Windows account, initialize the per-user bearer explicitly:
 
 ```powershell
