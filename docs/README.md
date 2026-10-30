@@ -17,6 +17,7 @@
 - [Community Nexus CLI](../tools/modding/nexus-cli/README.md).
 - [Publication runner](../tools/modding/nexus-publish/README.md).
 - [Pristine API cache](PRISTINE-API-CACHE.md): read-only status, exact reference pins and explicit generation.
+- [Legacy Git hooks](LEGACY-GIT-HOOKS.md): retire the exact obsolete templates while preserving backups and unrelated hooks.
 - [Native helper preparation](NATIVE-HELPER-PREPARATION.md) and [tracked Nexus batches](TRACKED-NEXUS-HELPER-REVIEW.md): prepare installation scripts for the supported templates, then check their source, packages and current Vortex state.
 - [Own-local binder](OWN-LOCAL-BINDER.md): bind the supported reviewed template to one package without inheriting live approvals.
 - [File-proof worker](FILE-PROOF-WORKER.md): standalone foundation; native guard integration is pending.

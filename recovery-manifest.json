@@ -239,12 +239,16 @@
       "sha256_lf": "bacfdfc9042f0647408699197e90cf934b5855e7be473f208f1e97b91c69505c"
     },
     {
+      "path": "docs/LEGACY-GIT-HOOKS.md",
+      "sha256_lf": "1c731dd86fb46c1e1cd08440fd986a9aa8340b72d5d89d23e152f99f3afb85eb"
+    },
+    {
       "path": "docs/LICENSES.md",
       "sha256_lf": "724088f6e9abb3f7e3ae4fb60ed664dbd44870cb20906cfc519a7d3372540fb6"
     },
     {
       "path": "docs/LIFECYCLE-IMPLEMENTATION.md",
-      "sha256_lf": "e8b70daaa62ec09bbacf68051673bf382916ede983d6f81c734215ec1a7865c4"
+      "sha256_lf": "f2bf07a9a100fa0ec12ec6702ce1aef7c4183d1adbddaedb69161cff797a9452"
     },
     {
       "path": "docs/LIFECYCLE-PERFORMANCE.md",
@@ -272,7 +276,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256_lf": "8b7a64de355308f8d252319dea99ae78f5c0a7de7b922fa6262c089ead5f044c"
+      "sha256_lf": "3cfc3da772552d193b9c9d9fe045b87660f2522a699d06e9b652b14fb37b3f11"
     },
     {
       "path": "docs/RESTORE.md",
@@ -377,6 +381,10 @@
     {
       "path": "tests/test_release_metadata.py",
       "sha256_lf": "f23900b200536821f6ac9bc9c9e8c5b2b9970317db2ea8a012f004f1f8c35462"
+    },
+    {
+      "path": "tests/test_retire_rusty_hooks.py",
+      "sha256_lf": "0bc42dd0e36e5ce311d54fdbffc48cfe7fbf3225cb37a0fd645c260a86fb30c6"
     },
     {
       "path": "tests/test_update_manifest.py",
@@ -493,6 +501,10 @@
     {
       "path": "tools/modding/nexus-publish/windows-credential.py",
       "sha256_lf": "0c043386d747fd0af075c6890f85bca628898f1197f35b9ff6d488e7a467f429"
+    },
+    {
+      "path": "tools/modding/retire-rusty-hooks.py",
+      "sha256_lf": "3f885ddacdc6c53dab9a054cc82db75bd4055ad03a452dc55dd898ecd7f6e772"
     },
     {
       "path": "tools/modding/vortex-agent/LOCAL-PACKAGE-INSTALL-DESIGN.md",

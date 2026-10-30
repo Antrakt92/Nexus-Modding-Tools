@@ -13,7 +13,7 @@ Local verification, native acceptance and user gameplay remain separate.
 | 5 | Keeper and consumer retention | Current build inputs and rollback scope explicit; isolated restore test; unknown external consumers block deletion | Pending |
 | 6 | Sequential native removal | One ID at a time; all-profile/rule/owner closure; verified keeper; partial callbacks stop for reconciliation; deletion semantics explicit | Pending native contract |
 | 7 | Reference-cache status and reconstruction | Independently established input provenance, compatible pinned tool, immutable accepted output and preserved failed attempts | Source and local cache verified; full API coverage unproven |
-| 8 | Shared Git hook and current framework route | Inspect canonical owner and intended checks; preserve historical pins; fix only the active supported route | Pending |
+| 8 | Shared Git hook and current framework route | Inspect canonical owner and intended checks; preserve historical pins; fix only the active supported route | Hook migration and discovery verified; framework route audit pending |
 | 9 | Final integration audit | Affected suites, generated inventory, protocol/receipt compatibility, failure injection, measured critical path and explicit residual gates | Pending |
 
 ## Boundaries
@@ -146,3 +146,21 @@ Skill tree/alias/link checks passed; native OpenCode discovery is being
 investigated separately under stage 8. The standalone skill validator could not
 run in the inspected Python environments because PyYAML was unavailable; no
 package was installed merely for linting.
+
+## Stage 8 hook and discovery verification — 30 October 2026
+
+The [exact legacy Rusty-hook retirement](LEGACY-GIT-HOOKS.md) passed eleven
+synthetic regressions and was applied to the coordination workspace after
+checking the effective hooks path and stopping concurrent Git work. All 19
+template entrypoints and two helpers were copied and verified before retirement.
+The inactive backup, immutable attempt and completion record remain under `.git`.
+The only remaining active hook checks staged whitespace; unknown/sample hooks,
+the Rusty config and unrelated dirty source were preserved. No Rust install ran.
+
+The local shared skill checker now retries only missing native discovery names,
+bounded to six calls and one 45-second deadline. Duplicates and owner/body/path
+errors still fail immediately. Twenty checker tests passed; all four fresh
+native snapshots returned 29 skills with exact required owner/body matches.
+The earlier empty/two-item responses are consistent with asynchronous plugin
+registration; their historical startup trigger was not independently reproduced.
+No OpenCode configuration, model call or service restart was needed.
