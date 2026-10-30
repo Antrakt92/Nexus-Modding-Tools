@@ -528,7 +528,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/audit-fixes.test.mjs",
-      "sha256_lf": "3a7871be95013eadb145ad7ffa23bb7cd9001454bfdb743302e3efb224d39abc"
+      "sha256_lf": "0f59b272400b31648af7505eb38ed164a2586302fba113d62a4cd68fd7ca9db4"
     },
     {
       "path": "tools/modding/vortex-agent/bridge-audit.test.mjs",

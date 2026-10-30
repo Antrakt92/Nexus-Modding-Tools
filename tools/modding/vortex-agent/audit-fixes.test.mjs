@@ -161,14 +161,50 @@ async function server(options = {}) {
   const endpoint = `http://127.0.0.1:${listener.address().port}/mcp`, headers = { 'content-type': 'application/json', accept: 'application/json, text/event-stream', authorization: 'Bearer ' + '7'.repeat(64) };
   return { listener, endpoint, headers };
 }
+const HTTP_PHASE_MS = 5000;
+async function closeServer(listener) {
+  let timer;
+  try {
+    await new Promise((resolve, reject) => {
+      timer = setTimeout(() => reject(new Error('AUDIT_SERVER_CLOSE_TIMEOUT')), HTTP_PHASE_MS);
+      // Stop admission before destroying connections; otherwise a late accept can survive cleanup.
+      listener.close(error => error ? reject(error) : resolve());
+      listener.closeAllConnections();
+    });
+  } finally { clearTimeout(timer); }
+}
+async function fetchText(s, body, phase) {
+  const signal = AbortSignal.timeout(HTTP_PHASE_MS);
+  try {
+    const response = await fetch(s.endpoint, { method: 'POST', headers: s.headers, body, signal });
+    return { status: response.status, text: await response.text() };
+  } catch (error) { throw new Error(`AUDIT_${phase}_${signal.aborted ? 'TIMEOUT' : 'FAILED'}`, { cause: error }); }
+}
+async function chunkedStatus(s, body) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const finish = (error, status) => {
+      if (settled) return; settled = true; clearTimeout(timer);
+      if (error) { req.destroy(); reject(error); } else resolve(status);
+    };
+    const req = http.request(s.endpoint, { method: 'POST', headers: { ...s.headers, 'transfer-encoding': 'chunked' } }, res => {
+      res.on('error', error => finish(new Error('AUDIT_CHUNKED_RESPONSE_FAILED', { cause: error })));
+      res.on('aborted', () => finish(new Error('AUDIT_CHUNKED_RESPONSE_ABORTED')));
+      res.on('close', () => { if (!res.complete) finish(new Error('AUDIT_CHUNKED_RESPONSE_INCOMPLETE')); });
+      res.on('end', () => finish(null, res.statusCode)); res.resume();
+    });
+    const timer = setTimeout(() => finish(new Error('AUDIT_CHUNKED_RESPONSE_TIMEOUT')), HTTP_PHASE_MS);
+    req.on('error', error => finish(new Error('AUDIT_CHUNKED_REQUEST_FAILED', { cause: error })));
+    req.end(body);
+  });
+}
 test('audit: HTTP preparse byte/batch limits and explicit external-change projection', async () => {
   const s = await server(); try {
-    const big = await fetch(s.endpoint, { method: 'POST', headers: s.headers, body: ' '.repeat(1024 * 1024 + 1) }); await big.text(); assert.equal(big.status, 413);
-    const batch = await fetch(s.endpoint, { method: 'POST', headers: s.headers, body: JSON.stringify(Array.from({ length: 17 }, (_, i) => ({ jsonrpc: '2.0', id: i, method: 'tools/list' }))) });
-    await batch.text(); assert.equal(batch.status, 413);
-    const result = await fetch(s.endpoint, { method: 'POST', headers: s.headers, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'list_external_changes', arguments: {} } }) });
-    assert.ok(!(await result.text()).includes('not-curated'));
-  } finally { s.listener.closeAllConnections(); await new Promise(r => s.listener.close(r)); }
+    const big = await fetchText(s, ' '.repeat(1024 * 1024 + 1), 'OVERSIZED_BODY'); assert.equal(big.status, 413);
+    const batch = await fetchText(s, JSON.stringify(Array.from({ length: 17 }, (_, i) => ({ jsonrpc: '2.0', id: i, method: 'tools/list' }))), 'OVERSIZED_BATCH'); assert.equal(batch.status, 413);
+    const result = await fetchText(s, JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'list_external_changes', arguments: {} } }), 'EXTERNAL_CHANGES');
+    assert.ok(!result.text.includes('not-curated'));
+  } finally { await closeServer(s.listener); }
 });
 test('audit: process-wide ingress concurrency and abort release', async () => {
   const a = await server(), b = await server(), requests = [];
@@ -178,10 +214,10 @@ test('audit: process-wide ingress concurrency and abort release', async () => {
     const until = Date.now() + 3000;
     while (require('./http-ingress.cjs').activity().requests < 16 && Date.now() < until) await new Promise(r => setTimeout(r, 10));
     assert.equal(require('./http-ingress.cjs').activity().requests, 16);
-    const overloaded = await fetch(b.endpoint, { method: 'POST', headers: b.headers, body: '{}' }); await overloaded.text(); assert.equal(overloaded.status, 503);
+    const overloaded = await fetchText(b, '{}', 'CONCURRENCY_OVERLOAD'); assert.equal(overloaded.status, 503);
     for (const req of requests) req.destroy(); await new Promise(r => setTimeout(r, 100));
-    const released = await fetch(b.endpoint, { method: 'POST', headers: b.headers, body: '{bad' }); await released.text(); assert.equal(released.status, 400);
-  } finally { for (const req of requests) req.destroy(); for (const s of [a, b]) { s.listener.closeAllConnections(); await new Promise(r => s.listener.close(r)); } }
+    const released = await fetchText(b, '{bad', 'CONCURRENCY_RELEASE'); assert.equal(released.status, 400);
+  } finally { for (const req of requests) req.destroy(); for (const s of [a, b]) { await closeServer(s.listener); } }
 });
 test('audit: initialization grace allows a delayed record, then disappearance settles', async () => {
   const f = await fixture(); const args = await pinned(f); const record = f.state.persistent.downloads.files.d; delete f.state.persistent.downloads.files.d;
@@ -216,12 +252,9 @@ test('audit: malformed Windows process output fails closed', async () => {
 });
 test('audit: chunked oversized body and invalid batch cannot bypass ingress limits', async () => {
   const s = await server(); try {
-    const status = await new Promise((resolve, reject) => {
-      const req = http.request(s.endpoint, { method: 'POST', headers: { ...s.headers, 'transfer-encoding': 'chunked' } }, res => { res.resume(); res.on('end', () => resolve(res.statusCode)); });
-      req.on('error', reject); req.end(Buffer.alloc(1024 * 1024 + 1, 32));
-    }); assert.equal(status, 413);
-    const empty = await fetch(s.endpoint, { method: 'POST', headers: s.headers, body: '[]' }); await empty.text(); assert.equal(empty.status, 413);
-  } finally { s.listener.closeAllConnections(); await new Promise(r => s.listener.close(r)); }
+    const status = await chunkedStatus(s, Buffer.alloc(1024 * 1024 + 1, 32)); assert.equal(status, 413);
+    const empty = await fetchText(s, '[]', 'EMPTY_BATCH'); assert.equal(empty.status, 413);
+  } finally { await closeServer(s.listener); }
 });
 test('audit: receipt publication is no-overwrite and pending crash phases are inconclusive', async () => {
   const f = await fixture(); const args = { ...f.args, modIds: ['m'], enabled: true }; await f.ops.set_mods_enabled(args);
@@ -233,7 +266,24 @@ test('audit: receipt publication is no-overwrite and pending crash phases are in
 test('audit: stalled auth and ingress timeout release process-wide admission', async () => {
   const s = await server({ tokenProvider: () => new Promise(() => {}), bodyTimeoutMs: 50 });
   try {
-    const res = await fetch(s.endpoint, { method: 'POST', headers: s.headers, body: '{}' }); await res.text(); assert.equal(res.status, 408);
+    const res = await fetchText(s, '{}', 'AUTH_DEADLINE'); assert.equal(res.status, 408);
     await new Promise(r => setTimeout(r, 10)); assert.equal(require('./http-ingress.cjs').activity().requests, 0);
-  } finally { s.listener.closeAllConnections(); await new Promise(r => s.listener.close(r)); }
+  } finally { await closeServer(s.listener); }
+});
+
+test('audit: server cleanup closes an admitted unfinished upload', { timeout: 10000 }, async () => {
+  const s = await server(), req = http.request(s.endpoint, { method: 'POST', headers: { ...s.headers, 'transfer-encoding': 'chunked' } });
+  req.on('error', () => {});
+  const closed = new Promise(resolve => req.once('close', resolve));
+  try {
+    req.flushHeaders(); req.write('{');
+    const until = Date.now() + 3000;
+    while (require('./http-ingress.cjs').activity().requests === 0 && Date.now() < until) await new Promise(r => setTimeout(r, 10));
+    assert.equal(require('./http-ingress.cjs').activity().requests, 1, 'unfinished upload must reach admission');
+    await closeServer(s.listener);
+    let timer;
+    try { await Promise.race([closed, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('AUDIT_UPLOAD_CLOSE_TIMEOUT')), 1000); })]); }
+    finally { clearTimeout(timer); }
+    assert.equal(s.listener.listening, false); assert.equal(req.destroyed, true);
+  } finally { req.destroy(); if (s.listener.listening) await closeServer(s.listener); }
 });
