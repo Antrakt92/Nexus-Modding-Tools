@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { assertWorkerTemplate, workerGuardSource, WORKER_MODULES } from './prepare-source-guard.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
@@ -45,6 +46,9 @@ function contains(root, candidate) {
   return rel === '' || !path.isAbsolute(rel) && rel !== '..' && !rel.startsWith('..' + path.sep);
 }
 const files = ['install-settlement.cjs', 'native-install-wait.cjs', 'physical-proof.cjs', 'local-import-readiness.cjs', 'payload-size-proof.cjs'];
+const workerFiles = WORKER_MODULES;
+const mode = value => {if (!['cached-sync', 'worker'].includes(value)) throw Error('INVALID_SOURCE_PROOF_MODE'); return value;};
+const workerMaintained = new Map(workerFiles.map(name => [name, fs.readFileSync(path.join(here, name))]));
 const alias = Buffer.from("'use strict';\nmodule.exports = require('./native-install-wait.cjs');\n");
 // Trusted repository inputs are captured once; the content constructor performs
 // no filesystem access and accepts no runtime-module overrides.
@@ -63,7 +67,9 @@ function packageScope(index, engine, config) {
     throw Error('HELPER_PACKAGE_SCOPE_DIFFERS');
 }
 
-export function createHelperContents({ input, config, modules, tests = new Map(), info, output, sourceSha256 }) {
+export function createHelperContents({ input, config, modules, tests = new Map(), info, output, sourceSha256, sourceProofMode = 'cached-sync' }) {
+  mode(sourceProofMode);
+  if (sourceProofMode === 'cached-sync' && config?.sourceProofMode === 'worker') throw Error('HELPER_SOURCE_PROOF_MODE_DIFFERS');
   if (!Buffer.isBuffer(input) || !config || typeof config !== 'object'
       || !(modules instanceof Map) || !(tests instanceof Map)
       || typeof output !== 'string' || !path.isAbsolute(output))
@@ -92,6 +98,7 @@ export function createHelperContents({ input, config, modules, tests = new Map()
   if (!['engine.cjs', 'settlement.cjs', 'local-import-readiness.cjs'].every(n => content.has(n)))
     throw Error('HELPER_REQUIRED_MODULE_MISSING');
   packageScope(input, content.get('engine.cjs'), config);
+  if (sourceProofMode === 'worker') assertWorkerTemplate(input, content.get('engine.cjs'));
   let index = input.toString('utf8');
   // Deliberately support the known reviewed template, not arbitrary task code.
   index = replaceOnce(index, "now:Date.now,pkg,expectedSize:size,pollMs:1000",
@@ -119,6 +126,10 @@ export function createHelperContents({ input, config, modules, tests = new Map()
   index = replaceOnce(index, "record('guard-timing-terminal',{guardTiming,serialPoller:pollMetrics})",
     "record('guard-timing-terminal',{guardTiming,serialPoller:pollMetrics,physicalProof:physical.metrics()})");
   index = awaitedGuardCallers(index);
+  if (sourceProofMode === 'worker') {
+    index = workerGuardSource(index);
+    for (const [name, bytes] of workerMaintained) content.set(name, Buffer.from(bytes));
+  }
   content.set('index.prepared.js', Buffer.from(index));
   for (const [name, bytes] of maintained) content.set(name, Buffer.from(bytes));
   content.set('settlement.cjs', Buffer.from(alias));
@@ -129,6 +140,10 @@ export function createHelperContents({ input, config, modules, tests = new Map()
     requiredFreshInputs: ['package/source review', 'health/context/filesystem pins', 'baseline',
       'source admission', 'source/module pins', 'root effect approval'],
   };
+  if (sourceProofMode === 'worker') {
+    held.sourceProofMode = 'worker'; held.sourceProof = null;
+    held.requiredFreshInputs.push('exact source-proof roots/rows/epoch/host generation');
+  }
   content.set('reviewed.prepared.json', Buffer.from(JSON.stringify(held, null, 2) + '\n'));
   // Keep task-specific regressions as review inputs; never execute copied code.
   for (const [name, bytes] of tests) {
@@ -143,11 +158,13 @@ export function createHelperContents({ input, config, modules, tests = new Map()
   const contract = { schema: 'native-helper-kit/1', sourceSha256,
     files: Object.fromEntries([...content].map(([n, b]) => [n, sha(b)])),
     reviewRequired: true, activationGranted: false, nativeEffects: false };
+  if (sourceProofMode === 'worker') contract.sourceProofMode = 'worker';
   content.set('HELPER-KIT.json', Buffer.from(JSON.stringify(contract, null, 2) + '\n'));
   return content;
 }
 
-export function prepareHelper({ source, output, sourceSha256, apply = false }) {
+export function prepareHelper({ source, output, sourceSha256, apply = false, sourceProofMode = 'cached-sync' }) {
+  mode(sourceProofMode);
   if (typeof apply !== 'boolean') throw Error('INVALID_HELPER_PREPARATION_ARGUMENTS');
   source = directory(source); output = directory(output);
   if (contains(source, output)) throw Error('HELPER_OUTPUT_INSIDE_SOURCE');
@@ -168,14 +185,26 @@ export function prepareHelper({ source, output, sourceSha256, apply = false }) {
   }
   const tests = new Map(names.filter(n => /^test-[a-z0-9-]+\.cjs$/.test(n)).map(name => [name, read(name)]));
   const content = createHelperContents({ input, config, modules, tests,
-    info: names.includes('info.prepared.json') ? read('info.prepared.json') : undefined, output, sourceSha256 });
+    info: names.includes('info.prepared.json') ? read('info.prepared.json') : undefined, output, sourceSha256, sourceProofMode });
   if (apply) {
+    if (sourceProofMode === 'worker') {
+      // Constructor buffers are import-time snapshots. A worker kit must never
+      // silently publish those snapshots after the maintained owners drift.
+      for (const name of [...files, ...workerFiles]) {
+        const owner = path.join(here, name); ordinary(owner);
+        if (!fs.lstatSync(owner).isFile() || sha(fs.readFileSync(owner)) !== sha(content.get(name)))
+          throw Error('STALE_HELPER_KIT');
+      }
+    }
     ordinary(output);
     fs.mkdirSync(output);
     for (const [name, bytes] of content) {
       const file = path.join(output, name); ordinary(file);
       fs.writeFileSync(file, bytes, { flag: 'wx' });
     }
+    // A failed final readback deliberately leaves this new held output for
+    // inspection. It is never overwritten, retried or activated here.
+    if (sourceProofMode === 'worker') verifyHelper(output);
   }
   return { status: apply ? 'prepared-held' : 'plan', output, fileCount: content.size,
     reviewRequired: true, activationGranted: false, nativeEffects: false };
@@ -192,6 +221,9 @@ export function verifyHelper(value, { materialization = false } = {}) {
       || ![...files, 'settlement.cjs', 'engine.cjs', 'index.prepared.js', 'reviewed.prepared.json']
         .every(name => Object.hasOwn(contract.files, name)))
     throw Error('INVALID_HELPER_KIT');
+  const workerMode = contract.sourceProofMode === 'worker';
+  if (contract.sourceProofMode !== undefined && !workerMode) throw Error('INVALID_SOURCE_PROOF_MODE');
+  if (workerMode && !workerFiles.every(name => Object.hasOwn(contract.files, name))) throw Error('INVALID_HELPER_KIT');
   const checkedFiles = new Map();
   for (const [name, pin] of Object.entries(contract.files)) {
     if (!/^[a-zA-Z0-9_.-]+$/.test(name) || ['.', '..'].includes(name)
@@ -202,7 +234,7 @@ export function verifyHelper(value, { materialization = false } = {}) {
     if (name !== 'reviewed.prepared.json' && sha(bytes) !== pin) throw Error('HELPER_KIT_DRIFT');
     checkedFiles.set(name, bytes);
   }
-  for (const name of files) {
+  for (const name of [...files, ...(workerMode ? workerFiles : [])]) {
     if (contract.files[name] !== sha(fs.readFileSync(path.join(here, name)))) throw Error('STALE_HELPER_KIT');
   }
   if (contract.files['settlement.cjs'] !== sha(alias))
@@ -218,6 +250,12 @@ export function verifyHelper(value, { materialization = false } = {}) {
       || runtime.some(([n, h]) => config.modulePins[n] !== h)) throw Error('HELPER_BINDING_MODULE_PINS_DIFFER');
     if (name === 'reviewed.json' && config.helperSHA256 !== contract.files['index.prepared.js'])
       throw Error('HELPER_BINDING_ENTRY_PIN_DIFFERS');
+    if (workerMode !== (config.sourceProofMode === 'worker')
+        || !workerMode && config.sourceProofMode !== undefined && config.sourceProofMode !== 'cached-sync')
+      throw Error('HELPER_SOURCE_PROOF_MODE_DIFFERS');
+    if (workerMode && name === 'reviewed.prepared.json' && config.sourceProof !== null)
+      throw Error('HELD_SOURCE_PROOF_BINDINGS_REQUIRED');
+    if (workerMode !== index.toString('utf8').includes("function startSourceProof()")) throw Error('HELPER_SOURCE_PROOF_MODE_DIFFERS');
     packageScope(index, engine, config);
   }
   if (materialization) {
@@ -249,11 +287,11 @@ export function main(args = process.argv.slice(2)) {
   for (let i = 0; i < args.length; i++) {
     const name = args[i];
     if (name === '--apply' && !values.apply) values.apply = true;
-    else if (['--source', '--output', '--source-sha256'].includes(name) && !values[name] && args[i + 1]) values[name] = args[++i];
+    else if (['--source', '--output', '--source-sha256', '--source-proof-mode'].includes(name) && !values[name] && args[i + 1]) values[name] = args[++i];
     else throw Error('INVALID_HELPER_PREPARATION_ARGUMENTS');
   }
   return prepareHelper({ source: values['--source'], output: values['--output'],
-    sourceSha256: values['--source-sha256'], apply: values.apply === true });
+    sourceSha256: values['--source-sha256'], sourceProofMode: values['--source-proof-mode'] ?? 'cached-sync', apply: values.apply === true });
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try { process.stdout.write(JSON.stringify(main()) + '\n'); }

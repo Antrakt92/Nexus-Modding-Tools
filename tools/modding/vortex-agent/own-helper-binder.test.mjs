@@ -1,3 +1,4 @@
+import vm from 'node:vm';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -71,7 +72,7 @@ test('bounded ZIP proof checks actual bytes, hashes, CRC and the complete payloa
 });
 test('ZIP paths reject traversal, Windows aliases/devices, Unicode, FOMOD and override instructions', () => {
   for (const name of ['../escape', '/absolute', 'C:/absolute', 'r6/a:stream', 'r6/a\\b', 'r6/NUL.txt', 'r6/file.',
-    'r6/file ', 'r6//a', 'r6/./a', 'r6/' + 'a'.repeat(256), 'r6/путь', 'fomod/ModuleConfig.xml', 'r6/vortex_override_instructions.json'])
+    'r6/file ', 'r6//a', 'r6/./a', 'r6/' + 'a'.repeat(256), 'r6/Ð¿ÑƒÑ‚ÑŒ', 'fomod/ModuleConfig.xml', 'r6/vortex_override_instructions.json'])
     assert.throws(() => inspectOwnZip(zip([{ name }])), /OWN_BINDER_UNSAFE_PAYLOAD_PATH|OWN_BINDER_UNSUPPORTED_INSTALLER/);
   for (const names of [['r6/a', 'R6/A'], ['r6/a', 'r6/a/b'], ['r6/a', 'r6/a']])
     assert.throws(() => inspectOwnZip(zip(names.map(name => ({ name })))), /OWN_BINDER_DUPLICATE_ZIP_PATH/);
@@ -306,4 +307,25 @@ test('public CLI sanitizes filesystem failures without exposing local paths', t 
   assert.throws(() => execFileSync(process.execPath, [path.join(here, 'own-helper-binder.mjs'), '--reference', path.join(f.root, 'missing-reference'),
     '--plan', args.planFile, '--plan-sha256', args.planSHA256, '--output', args.output], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }),
   error => { assert.equal(error.stderr, 'OWN_BINDER_PREPARATION_FAILED\n'); return true; });
+});
+
+test('worker own-local binder propagates explicit mode into held kit and complete copy map',
+  {skip: !process.env.VORTEX_OWN_HELPER_REFERENCE || process.platform !== 'win32'}, t=>{
+    const f=fixture(t),args={...f.args(),sourceProofMode:'worker'};
+    const plan=prepareOwnHelper(args);assert.equal(plan.sourceProofMode,'worker');assert(!fs.existsSync(f.output));
+    const result=prepareOwnHelper({...args,apply:true});assert.equal(result.installReady,false);assert.equal(result.activationGranted,false);
+    assert.equal(verifyHelper(f.output).status,'code-contract-verified');
+    const cfg=JSON.parse(fs.readFileSync(path.join(f.output,'reviewed.prepared.json'))), map=JSON.parse(fs.readFileSync(path.join(f.output,'COPY-MAP.prepared.json')));
+    assert.equal(cfg.sourceProofMode,'worker');assert.equal(cfg.sourceProof,null);
+    for(const name of ['helper-source-proof.cjs','helper-source-scope.cjs','guard-poller.cjs','file-proof-client.cjs','file-proof-worker.cjs','file-proof-backend.cjs','file-proof-child-client.cjs','file-proof-child.cjs']) {
+      assert.equal(cfg.modulePins[name],sha(fs.readFileSync(path.join(f.output,name))));
+      assert.equal(map.find(row=>row.destination===name).sha256,cfg.modulePins[name]);
+    }
+    assert(result.missingBindings.some(value=>value.includes('source-proof')));
+    const index=fs.readFileSync(path.join(f.output,'index.prepared.js'),'utf8');new vm.Script(index);
+    const proof=JSON.parse(fs.readFileSync(path.join(f.output,'BINDER-PROOF.json')));assert.equal(proof.sourceProof,null);assert.equal(proof.sourceProofMode,'worker');
+    const file=path.join(f.output,'helper-source-scope.cjs');fs.appendFileSync(file,'\n// drift');assert.throws(()=>verifyHelper(f.output),/HELPER_KIT_DRIFT/);
+  });
+test('binder refuses invalid source proof modes before opening inputs or creating output',t=>{
+  const f=fixture(t);assert.throws(()=>prepareOwnHelper({...f.args(),sourceProofMode:'auto'}),/OWN_BINDER_INVALID_SOURCE_PROOF_MODE/);assert(!fs.existsSync(f.output));
 });

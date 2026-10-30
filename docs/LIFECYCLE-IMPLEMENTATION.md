@@ -8,7 +8,7 @@ Local verification, native acceptance and user gameplay remain separate.
 | --- | --- | --- | --- |
 | 1 | Own-local binder and early support checks | One pinned supported family; exact archive/payload evidence; inert output; no inherited live approvals; actual package regressions | Source verified; native activation excluded |
 | 2 | Durable status for existing enable/deploy plans | Stable plan/step identity; receipts remain authoritative; lost response/cancellation/restart cannot replay an uncertain effect | Source verified; client reload required |
-| 3 | Read-only file-proof worker | Same proof results and freshness checks; bounded input/output; worker crash and stale replies rejected; host thread compatibility verified | Standalone foundation verified; native integration pending |
+| 3 | Read-only file-proof worker | Same proof results and freshness checks; bounded input/output; worker crash and stale replies rejected; exact host backend verified | Component renderer gate verified; coordination source verified; installer integration pending |
 | 4 | One deterministic native install contract | Proven no replacement/variant path, exact installer/source/identity, no auto-enable/deploy, durable effect intent and independent readback | Offline preflight verified; native invocation remains held |
 | 5 | Keeper and consumer retention | Current build inputs and rollback scope explicit; isolated restore test; unknown external consumers block deletion | Catalog/copy/isolated archive restore verified; native restore unproven |
 | 6 | Sequential native removal | One ID at a time; all-profile/rule/owner closure; verified keeper; partial callbacks stop for reconciliation; deletion semantics explicit | Pending native contract |
@@ -128,6 +128,30 @@ same-turn behavior. Regressions exercise pending/rejected Promises and queued
 state mutation. This removes lost-return hazards, but does not connect the
 worker or supply the required post-await native context barrier.
 The checkpoint passed 384 Node tests with the real pinned fixtures and no skips.
+
+### Held worker-mode integration — 30 October 2026
+
+New kits can opt into `--source-proof-mode worker`; the default cached-sync
+packet remains byte-identical to the previous constructor on the real Family
+input (30 files). Worker mode admits the complete reviewed template, binds the
+exact source scope and uses a shared CommonJS client. Runtime modules are pinned
+before import. Post-proof live guards and synchronous effect-adjacent barriers
+retain the existing native context checks. Final readback stops/drains the poller,
+freshly proves sources, verifies cleanup and samples source/native state before
+writing completion. Mutable receipt aliases and damaged source encoding are
+covered by regressions.
+
+All 498 Node tests passed without skips. Independent reviews covered the source
+scope, poller, generated barriers, finalization and plain-preparer owner drift.
+The exact nine-file runtime closure separately passed eight read-only component
+groups in the actual Vortex renderer, including four verified child cleanups.
+The temporary probe was retired, Vortex restarted normally, and fresh session
+values plus the deployment manifest matched the pre-maintenance baseline.
+
+This does not accept a generated installer executing a real intended package.
+The new mode remains held until fresh operation/source/state admission; no
+general install/remove endpoint is exposed. Source-only offloading also leaves
+the full guard's repeated metadata traversal and synchronous process checks.
 
 ## Stage 4 preflight foundation — 30 October 2026
 

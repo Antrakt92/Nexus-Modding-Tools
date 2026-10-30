@@ -1,4 +1,5 @@
 import importlib.util
+import json
 from pathlib import Path
 import shutil
 import subprocess
@@ -16,6 +17,31 @@ spec.loader.exec_module(u)
 
 
 class UpdateManifestTests(unittest.TestCase):
+    def test_manifest_rejects_non_utf8_maintained_source_before_pinning_it(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / 'tools' / 'scope.cjs'
+            source.parent.mkdir()
+            source.write_bytes(b"const value = 'COM\xb9';\n")
+            with mock.patch.object(u, 'ROOT', root), mock.patch.object(u.subprocess, 'check_output', side_effect=[b'', b'tools/scope.cjs\0']):
+                with self.assertRaisesRegex(ValueError, 'not valid UTF-8: tools/scope.cjs'):
+                    u.content()
+            self.assertEqual(source.read_bytes(), b"const value = 'COM\xb9';\n")
+
+    def test_manifest_accepts_unicode_source_and_preserves_opaque_upstream_bytes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            maintained = root / 'tools' / 'scope.cjs'
+            upstream = root / 'dependencies' / 'pinned.cjs'
+            maintained.parent.mkdir()
+            upstream.parent.mkdir()
+            maintained.write_bytes("const value = 'COM\u00b9';\n".encode('utf-8'))
+            upstream.write_bytes(b'opaque pinned upstream \xb9\r\n')
+            with mock.patch.object(u, 'ROOT', root), mock.patch.object(u.subprocess, 'check_output', side_effect=[b'', b'tools/scope.cjs\0dependencies/pinned.cjs\0']):
+                result = json.loads(u.content())
+            self.assertEqual(len(result['files']), 2)
+            self.assertEqual(upstream.read_bytes(), b'opaque pinned upstream \xb9\r\n')
+
     def test_manifest_symlink_cannot_redirect_write_or_check(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); repo = root / 'repo'; (repo / 'scripts').mkdir(parents=True)

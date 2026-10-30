@@ -51,6 +51,8 @@ python -B scripts/update_manifest.py
 
 Review the generated `recovery-manifest.json` and stage it with the source change.
 The manifest pins the distributed source; it is not a publisher signature.
+The generator rejects invalid UTF-8 in maintained text sources before pinning
+them. Upstream snapshots retain their original bytes.
 
 ## Submit a change
 

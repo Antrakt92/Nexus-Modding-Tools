@@ -259,7 +259,7 @@ function buildEvidence(plan, observations) {
 function scopeTest(pkg) {
   return Buffer.from(`'use strict';\nconst assert=require('node:assert/strict'),{createRunner}=require('./engine.cjs');\nconst c=require('./reviewed.prepared.json');\n(async()=>{let effects=0,guards=0;const options=packages=>({packages,guard:async()=>{guards++;throw Error('OFFLINE_SCOPE_HOLD');},record:()=>{},findTracked:()=>effects++,importOnce:()=>effects++,install:()=>effects++});\nawait assert.rejects(createRunner(options(c.packages)).run(),/OFFLINE_SCOPE_HOLD/);assert.equal(guards,1);assert.equal(effects,0);\nconst wrong={...c.packages[0],sha256:${JSON.stringify(pkg.sha256 === family.oldSHA256 ? '0'.repeat(64) : family.oldSHA256)}};await assert.rejects(createRunner(options([wrong])).run(),/EXACT_ONE/);assert.equal(guards,1);assert.equal(effects,0);console.log(JSON.stringify({actualPreparedPackageScopeVerified:true,nativeEffects:false}));})().catch(()=>{process.stderr.write('OWN_PACKAGE_SCOPE_TEST_FAILED\\n');process.exitCode=1;});\n`);
 }
-function makeContents(plan, reference, output, planSHA256) {
+function makeContents(plan, reference, output, planSHA256, sourceProofMode) {
   const pkg = { ...plan.package, expectedEnabled: false, oldEnabledModIds: [], expectedType: '' };
   let entry = reference.input.toString('utf8');
   entry = replaceOnce(entry, "c.purpose==='one-own-ci-stash-family-disabled-only'", "c.purpose==='one-own-local-disabled-only'");
@@ -281,7 +281,7 @@ function makeContents(plan, reference, output, planSHA256) {
     expectedNativeModRecordsSHA256: null, expectedNativeProfilesSHA256: null, expectedNativeDownloadsSHA256: null,
     expectedNativeSettingsComparableSHA256: null, reviewedPeerExtensions: null, sourceParityPins: null,
     appAsar: null, appAsarSHA256: null, provenance: structuredClone(plan.provenance) };
-  const contents = createHelperContents({ input, config, modules, output, sourceSha256: sha(input),
+  const contents = createHelperContents({ input, config, modules, output, sourceSha256: sha(input), sourceProofMode,
     tests: new Map([['test-package-scope.cjs', scopeTest(pkg)]]) });
   const held = JSON.parse(contents.get('reviewed.prepared.json')); held.helperSHA256 = sha(contents.get('index.prepared.js'));
   contents.set('reviewed.prepared.json', Buffer.from(canonical(held)));
@@ -297,10 +297,12 @@ function makeContents(plan, reference, output, planSHA256) {
     sourceHostSHA256: family.appAsarSHA256, provenance: plan.provenance,
     archiveCRCVerified: true, payloadHashesVerified: true, sourceBuildAcceptanceRequiresReview: true,
     sourceBuildAcceptanceVerified: false, installReady: false, activationGranted: false, nativeEffects: false,
-    missingBindings: [...MISSING_BINDINGS], files: Object.fromEntries([...contents].map(([name, bytes]) => [name, sha(bytes)])) };
+    ...(sourceProofMode === 'worker' ? {sourceProofMode, sourceProof: null} : {}),
+    missingBindings: [...MISSING_BINDINGS, ...(sourceProofMode === 'worker' ? ['exact fresh source-proof roots/rows/epoch/host generation'] : [])], files: Object.fromEntries([...contents].map(([name, bytes]) => [name, sha(bytes)])) };
   contents.set('BINDER-PROOF.json', Buffer.from(canonical(proof))); return contents;
 }
-export function prepareOwnHelper({ reference, planFile, planSHA256, output, apply = false }) {
+export function prepareOwnHelper({ reference, planFile, planSHA256, output, apply = false, sourceProofMode = 'cached-sync' }) {
+  need(['cached-sync', 'worker'].includes(sourceProofMode), 'OWN_BINDER_INVALID_SOURCE_PROOF_MODE');
   need(typeof apply === 'boolean', 'OWN_BINDER_INVALID_ARGUMENTS');
   if (apply) need(process.platform === 'win32', 'OWN_BINDER_PUBLICATION_PLATFORM_UNSUPPORTED');
   output = absolute(output); const relativeOutput = path.relative(scratch, output);
@@ -320,7 +322,7 @@ export function prepareOwnHelper({ reference, planFile, planSHA256, output, appl
   const archive = boundedRead(plan.package.archive, LIMITS.archiveBytes, observations), inspected = inspectOwnZip(archive);
   need(['bytes', 'sha256', 'md5', 'expectedUncompressedBytes'].every(k => inspected[k] === plan.package[k])
     && sameMap(inspected.payload, plan.package.payload), 'OWN_BINDER_ARCHIVE_PROJECTION_DIFFERS');
-  const contents = makeContents(plan, source, output, planSHA256);
+  const contents = makeContents(plan, source, output, planSHA256, sourceProofMode);
   unchanged();
   if (apply) {
     // Windows directory rename refuses an existing target; POSIX rename can
@@ -377,18 +379,19 @@ export function prepareOwnHelper({ reference, planFile, planSHA256, output, appl
   return { status: apply ? 'own-helper-held' : 'plan', output, files: contents.size, runtimeModules: Object.keys(JSON.parse(contents.get('reviewed.prepared.json')).modulePins).length,
     archiveCRCVerified: true, payloadHashesVerified: true, payloadFiles: inspected.payloadFiles,
     sourceBuildAcceptanceRequiresReview: true, installReady: false, activationGranted: false, nativeEffects: false,
-    missingBindings: [...MISSING_BINDINGS] };
+    ...(sourceProofMode === 'worker' ? {sourceProofMode} : {}),
+    missingBindings: [...MISSING_BINDINGS, ...(sourceProofMode === 'worker' ? ['exact fresh source-proof roots/rows/epoch/host generation'] : [])] };
 }
 export function main(args = process.argv.slice(2)) {
   const values = {};
   for (let n = 0; n < args.length; n++) {
     const name = args[n];
     if (name === '--apply' && !values.apply) values.apply = true;
-    else if (['--reference', '--plan', '--plan-sha256', '--output'].includes(name) && !values[name] && args[n + 1]) values[name] = args[++n];
+    else if (['--reference', '--plan', '--plan-sha256', '--output', '--source-proof-mode'].includes(name) && !values[name] && args[n + 1]) values[name] = args[++n];
     else throw Error('OWN_BINDER_INVALID_ARGUMENTS');
   }
   return prepareOwnHelper({ reference: values['--reference'], planFile: values['--plan'], planSHA256: values['--plan-sha256'],
-    output: values['--output'], apply: values.apply === true });
+    output: values['--output'], sourceProofMode: values['--source-proof-mode'] ?? 'cached-sync', apply: values.apply === true });
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try { process.stdout.write(JSON.stringify(main()) + '\n'); }
