@@ -221,3 +221,45 @@ test('real pinned multi-template prepares inertly with all policy data and exact
     fs.appendFileSync(path.join(args.output, 'scope-pins.json'), ' ');
     assert.throws(() => verifyTracked(args.output), /TRACKED_KIT_DRIFT/);
   });
+
+test('generated entrypoint admits the exact reviewed batch at baseline startup for sizes one through four',
+  { skip: !process.env.VORTEX_TRACKED_REFERENCE }, t => {
+    const root = fs.mkdtempSync(path.join(scratch, 'tracked-startup-test-'));
+    t.after(() => fs.rmSync(root, { recursive: true }));
+    for (const count of [1, 2, 3, 4]) {
+      const plan = held(); plan.reviewedPackages = plan.reviewedPackages.slice(0, count);
+      const planFile = path.join(root, `plan-${count}.json`), bytes = Buffer.from(JSON.stringify(plan));
+      fs.writeFileSync(planFile, bytes);
+      const output = path.join(root, `kit-${count}`);
+      prepareTracked({ reference: process.env.VORTEX_TRACKED_REFERENCE, planFile,
+        planSha256: sha(bytes), output, apply: true });
+      verifyTracked(output);
+      const code = fs.readFileSync(path.join(output, 'index.prepared.js'), 'utf8');
+      const startup = code.match(/baseline=read\(cfg\.baselineFile\);[\s\S]*?deadline=Date\.now\(\)\+900000;/)?.[0];
+      assert(startup, 'actual generated baseline admission block must be exercised');
+      const policy = require(path.join(output, 'scope-policy.cjs'));
+      const rows = bound().rows.slice(0, count);
+      const check = packages => vm.runInNewContext(startup, {
+        cfg: { baselineFile: 'model-only', reviewedPackages: rows },
+        read: () => ({ health: { gameId: 'cyberpunk2077' }, packages,
+          deployedFiles: Array.from({ length: 8 }, (_, n) => ({ gamePath: `r6/${n}.reds` })),
+          protectedStageFiles: [{}] }),
+        must: (ok, message) => { if (!ok) throw Error(message); },
+        targetPackage: policy.target,
+        require: id => { assert.equal(id, './scope-policy.cjs'); return policy; },
+      }, { timeout: 1000 });
+      assert.doesNotThrow(() => check(rows), `reviewed batch size ${count}`);
+      assert.throws(() => check(rows.slice(1)), /BASELINE_SCOPE|COUNT_REQUIRED/);
+      assert.throws(() => check([...rows, rows[0]]), /BASELINE_SCOPE|COUNT_REQUIRED/);
+      const changed = structuredClone(rows); changed[0].nexusFileId++;
+      assert.throws(() => check(changed), /EXACT_TRACKED_NEXUS_SCOPE/);
+      if (count > 1) {
+        for (const field of ['nexusModId', 'requiredDownloadId', 'expectedModId']) {
+          const duplicate = structuredClone(rows); duplicate[1][field] = duplicate[0][field];
+          assert.throws(() => check(duplicate));
+        }
+        const duplicate = structuredClone(rows); duplicate[1].expectedModId = duplicate[0].expectedModId.toUpperCase();
+        assert.throws(() => check(duplicate), /DUPLICATE_TRACKED_NEXUS_TARGET/);
+      }
+    }
+  });

@@ -15,6 +15,15 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+Fixes made on 30 October 2026:
+
+- Fix generated tracked Nexus installers rejecting one-, three- and four-mod
+  batches because startup still required exactly two packages. Baseline checks
+  now use the reviewed batch size and reject duplicate downloads and native
+  targets through the same scope policy as the reviewed plan.
+- Add a regression that executes the generated baseline admission code for
+  batch sizes one through four, including missing, extra and changed packages.
+
 Documentation changes since 0.3.0, made on 29 October 2026:
 
 - Remove the README banner and simplify setup, support and release wording.
