@@ -5,6 +5,7 @@ import hashlib
 import io
 import json
 from pathlib import Path, PurePosixPath
+import re
 import tarfile
 import tempfile
 import urllib.request
@@ -41,8 +42,20 @@ def entries(data, lock):
 
 def bootstrap(apply=False, archive_path=None):
     vendor = ROOT / 'dependencies/vortex-mcp'
+    no_links(vendor / 'PNPM-BOOTSTRAP.json')
     lock = json.loads((vendor / 'PNPM-BOOTSTRAP.json').read_text())
     target = vendor / recovery_relative(lock['retainedUnderIgnored'])
+    version = lock.get('version')
+    if (lock.get('package') != 'pnpm' or not isinstance(version, str)
+            or not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', version)
+            or lock.get('registryMetadata') != f'https://registry.npmjs.org/pnpm/{version}'
+            or lock.get('tarball') != f'https://registry.npmjs.org/pnpm/-/pnpm-{version}.tgz'
+            or lock['retainedUnderIgnored'] != f'.tooling/pnpm-{version}'):
+        raise ValueError('Inconsistent pinned build-tool metadata')
+    no_links(vendor / 'package.json')
+    package = json.loads((vendor / 'package.json').read_text())
+    if package.get('packageManager') != f'pnpm@{version}':
+        raise ValueError('Pinned build-tool version differs from packageManager')
     no_links(target)
     if not apply:
         return {'mode': 'plan', 'target': str(target), 'network_accessed': False}
@@ -50,8 +63,6 @@ def bootstrap(apply=False, archive_path=None):
         no_links(Path(archive_path).absolute())
         data = Path(archive_path).read_bytes()
     else:
-        if lock['tarball'] != 'https://registry.npmjs.org/pnpm/-/pnpm-9.15.0.tgz':
-            raise ValueError('Unexpected build-tool source')
         with urllib.request.urlopen(lock['tarball'], timeout=45) as response:
             data = response.read(lock['archiveBytes'] + 1)
     files = entries(data, lock)

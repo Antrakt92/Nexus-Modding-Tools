@@ -22,7 +22,7 @@
     "format:check": "node scripts/check-source.mjs format:check",
     "test": "vitest run",
     "test:watch": "vitest",
-    "ci": "pnpm run typecheck && pnpm run lint && pnpm run format:check && pnpm run test && pnpm run build",
+    "ci": "tsc --noEmit && node scripts/check-source.mjs lint && node scripts/check-source.mjs format:check && vitest run && tsup",
     "install-plugin": "node scripts/install-local.mjs",
     "docs:tools": "node scripts/generate-readme-tools-table.mjs",
     "docs:tools:check": "node scripts/generate-readme-tools-table.mjs --check"
@@ -46,7 +46,7 @@
   "engines": {
     "node": "^24.11.0 || >=26.0.0"
   },
-  "packageManager": "pnpm@9.15.0",
+  "packageManager": "pnpm@10.34.9",
   "pnpm": {
     "overrides": {
       "@hono/node-server": "2.1.5",

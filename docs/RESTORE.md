@@ -66,7 +66,7 @@ python scripts/bootstrap_pnpm.py --apply
 
 The bootstrap checks the size, SHA-512 and archive inventory recorded in
 `dependencies/vortex-mcp/PNPM-BOOTSTRAP.json`. It installs no global package and
-runs no package scripts. Use `--archive 'C:/RecoveryBundles/pnpm-9.15.0.tgz'`
+runs no package scripts. Use `--archive 'C:/RecoveryBundles/pnpm-10.34.9.tgz'`
 with `--apply` for an already obtained archive.
 
 Prepare a new isolated build tree, install its frozen dependencies with scripts
@@ -74,7 +74,7 @@ disabled, then compile and package:
 
 ```powershell
 node tools/modding/vortex-agent/build.mjs --prepare
-node dependencies/vortex-mcp/.tooling/pnpm-9.15.0/bin/pnpm.cjs --dir "$env:NEXUS_WORKSPACE/local-state/vortex-agent-build/upstream" install --ignore-scripts --frozen-lockfile
+node dependencies/vortex-mcp/.tooling/pnpm-10.34.9/bin/pnpm.cjs --dir "$env:NEXUS_WORKSPACE/local-state/vortex-agent-build/upstream" install --ignore-scripts --frozen-lockfile
 node tools/modding/vortex-agent/build.mjs --patch
 node tools/modding/vortex-agent/build.mjs --compile
 node tools/modding/vortex-agent/build.mjs --package

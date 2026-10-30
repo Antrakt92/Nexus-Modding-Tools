@@ -41,9 +41,11 @@ extension is not the installed product.
 - Build tools require Node 24.11 or later in the 24.x line, or Node 26+. The
   plugin's compilation target remains Node 20; runtime SDK packages declare
   Node 20+. Native host verification remains separate from these build checks.
-- pnpm 9.15.0 is bootstrapped locally using the official tarball and verified
+- pnpm 10.34.9 is bootstrapped locally using the official tarball and verified
   SHA-512 metadata in `PNPM-BOOTSTRAP.json`. Its files, node_modules, build outputs
   and audit logs remain ignored. Package install scripts are disabled.
+- The `ci` script invokes the local check tools directly. Nested `pnpm` commands
+  could otherwise select an unrelated global package manager from `PATH`.
 
 `LICENSE.md` preserves GPL-3.0-only for the upstream work. Runtime dependency
 licenses are retained in `THIRD-PARTY-NOTICES.md`, including the newer MCP

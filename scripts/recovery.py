@@ -8,6 +8,7 @@ from pathlib import Path, PurePosixPath
 import re
 import stat
 import subprocess
+import tempfile
 import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -105,7 +106,9 @@ def configure(workspace, apply=False, source=ROOT):
 
 def restore_skills(snapshot, destination, apply=False):
     snapshot, destination = absolute(snapshot), absolute(destination)
-    manifest = json.loads((snapshot / 'manifest.json').read_text(encoding='utf-8'))
+    manifest_path = snapshot / 'manifest.json'
+    no_links(manifest_path)
+    manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
     plan = []
     for row in manifest['skills']:
         rel = relative(row['path'])
@@ -172,13 +175,18 @@ def fetch_sources(workspace, archive_dir=None, apply=False):
                 out.write(data)
         if bundle.stat().st_size != row['bytes'] or digest(bundle.read_bytes()) != row['sha256']:
             raise ValueError('Recovery bundle changed')
-        # A new empty repository only; no reset/clean against existing work.
-        target.mkdir(parents=True, exist_ok=False)
-        run_git(['init', '--quiet'], target)
-        run_git(['fetch', '--quiet', '--no-tags', bundle, 'HEAD'], target)
-        run_git(['checkout', '--quiet', '--detach', row['commit']], target)
-        if run_git(['rev-parse', 'HEAD'], target) != row['commit']:
-            raise ValueError('Recovered upstream commit mismatch')
+        # Publish a checkout only after verification, so failed Git operations
+        # cannot strand an incomplete repository at the final recovery path.
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix='source-restore-', dir=target.parent) as tmp:
+            candidate = Path(tmp) / 'checkout'
+            candidate.mkdir()
+            run_git(['init', '--quiet'], candidate)
+            run_git(['fetch', '--quiet', '--no-tags', bundle, 'HEAD'], candidate)
+            run_git(['checkout', '--quiet', '--detach', row['commit']], candidate)
+            if run_git(['rev-parse', 'HEAD'], candidate) != row['commit']:
+                raise ValueError('Recovered upstream commit mismatch')
+            candidate.rename(target)
         results.append({'name': name, 'state': 'restored'})
     return {'mode': 'apply' if apply else 'plan', 'sources': results,
             'vortex_restarted': False, 'credentials_included': False}
