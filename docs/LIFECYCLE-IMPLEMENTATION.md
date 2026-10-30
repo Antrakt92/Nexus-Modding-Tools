@@ -7,7 +7,7 @@ Local verification, native acceptance and user gameplay remain separate.
 | Stage | Deliverable | Acceptance gate | State |
 | --- | --- | --- | --- |
 | 1 | Own-local binder and early support checks | One pinned supported family; exact archive/payload evidence; inert output; no inherited live approvals; actual package regressions | Source verified; native activation excluded |
-| 2 | Durable status for existing enable/deploy plans | Stable plan/step identity; receipts remain authoritative; lost response/cancellation/restart cannot replay an uncertain effect | Pending |
+| 2 | Durable status for existing enable/deploy plans | Stable plan/step identity; receipts remain authoritative; lost response/cancellation/restart cannot replay an uncertain effect | Source verified; client reload required |
 | 3 | Read-only file-proof worker | Same proof results and freshness checks; bounded input/output; worker crash and stale replies rejected; host thread compatibility verified | Pending |
 | 4 | One deterministic native install contract | Proven no replacement/variant path, exact installer/source/identity, no auto-enable/deploy, durable effect intent and independent readback | Pending native contract |
 | 5 | Keeper and consumer retention | Current build inputs and rollback scope explicit; isolated restore test; unknown external consumers block deletion | Pending |
@@ -66,3 +66,27 @@ Private manifests, payloads and receipts remain in ignored local state.
 This completes offline binding only. No running extension was upgraded, no
 helper activated and no game launched. Install readiness, fresh source/session
 admission, deployment proof and gameplay acceptance are not granted by this kit.
+
+## Stage 2 verification — 30 October 2026
+
+Reviewed plans now return a stable full `planId`. Apply reserves an immutable
+local plan journal and persists each intent before dispatch; a storage failure
+stops later effects. The read-only `inspect_mod_plan` and `plan-status` CLI check
+exact original receipts, retain uncertainty and never resume or replay a plan.
+The journal lives beside the adapter's flat receipts, preserving installer
+upgrade/retirement consumers. See the [workflow](NO-RESTART-WORKFLOW.md).
+
+Regressions cover lost acknowledgements, cancellation during intent persistence,
+async storage misuse, corrupt/pending histories, URI rejection before storage,
+same-size write mutation, a fresh process, exact receipt/context drift, bounded
+status concurrency, journal advancement and the full 101-operation limit.
+Windows timestamp finalization after closing a writer is checked by reopening
+and verifying exact bytes before pinning the file generation.
+
+Local verification passed 361 Node tests without skips, 21 recovery/bootstrap
+tests and 29 synthetic installer tests. Two independent reviews found no remaining
+confirmed blocker in this scope. The package provenance was refreshed against
+the existing verified resident bundle; no host upgrade or native effect occurred.
+Current-state/disk proof, hardware power-loss durability and a host-global
+cross-client transaction remain separate limits. Existing MCP clients need a
+bridge reload to discover the new status tool; Vortex need not restart.

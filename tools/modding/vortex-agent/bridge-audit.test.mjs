@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {PassThrough} from 'node:stream';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import {handler, runStdio} from './bridge.mjs';
+import {createPlanJournal} from './plan-journal.mjs';
 
 const deferred = () => {let resolve; const promise = new Promise(r => {resolve = r;}); return {promise, resolve};};
 const reply = value => ({content: [{type: 'text', text: JSON.stringify(value)}]});
@@ -28,7 +32,9 @@ test('invalid RPC IDs cannot dispatch direct mutations, reads or initialization'
   assert.equal(calls, 1);
 });
 
-test('a cancellation at pending capacity stops later plan steps after settling its invoked write', async () => {
+test('a cancellation at pending capacity stops later plan steps after settling its invoked write', async t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'bridge-plan-test-'));
+  t.after(() => fs.rmSync(root, {recursive: true}));
   const entered = deferred(), release = deferred(), answered = deferred();
   const receipts = new Map(), writes = [];
   const handle = handler(async (_method, params) => {
@@ -45,7 +51,7 @@ test('a cancellation at pending capacity stops later plan steps after settling i
       attempt: {operation: name, requestId: args.requestId, gameId: args.gameId, profileId: args.profileId, parameters: args},
       completion: {...result, gameId: args.gameId, profileId: args.profileId}});
     return reply(result);
-  });
+  }, {journal: createPlanJournal({root: path.join(root, 'plans')})});
   await handle({jsonrpc: '2.0', id: 'init', method: 'initialize'});
   const input = new PassThrough(), output = new PassThrough();
   let text = '';

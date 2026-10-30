@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import credential from './credential.cjs';
-import {RUN_PLAN_TOOL} from './plan-tool.mjs';
+import {RUN_PLAN_TOOL, INSPECT_PLAN_TOOL} from './plan-tool.mjs';
 export const ENDPOINT = 'http://127.0.0.1:3701/mcp';
 function parse(text) { try { return JSON.parse(text); } catch { throw new Error('Invalid MCP JSON payload'); } }
 export const MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
@@ -124,13 +124,13 @@ const COLLECTION_DOWNLOADS_TOOL = {
   }},
   annotations: {readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false},
 };
-const LOCAL_TOOLS = [INSPECT_TOOL, COLLECTION_DOWNLOADS_TOOL, RUN_PLAN_TOOL];
+const LOCAL_TOOLS = [INSPECT_TOOL, COLLECTION_DOWNLOADS_TOOL, RUN_PLAN_TOOL, INSPECT_PLAN_TOOL];
 function localToolResult(result) {
   return {content: [{type: 'text', text: JSON.stringify(result)}], structuredContent: result, ...(['partial', 'stopped'].includes(result.status) ? {isError: true} : {})};
 }
 
 // Compose existing guarded operations; their native eligibility/receipt guards remain authoritative.
-export async function clientRemote(method, params = {}, transport = remote, {signal} = {}) {
+export async function clientRemote(method, params = {}, transport = remote, {signal, journal} = {}) {
   if (method === 'tools/list') {
     const result = await transport(method, params);
     if (!Array.isArray(result?.tools)) throw new Error('Invalid Vortex tool inventory');
@@ -163,17 +163,25 @@ export async function clientRemote(method, params = {}, transport = remote, {sig
       || args.apply !== undefined && typeof args.apply !== 'boolean')
       return localToolResult({status: 'stopped', code: 'INVALID_PLAN_REQUEST', diskDeploymentVerified: false});
     const {runPlan, createToolCaller} = await import('./session.mjs');
-    try {return localToolResult(await runPlan(args.plan, {apply: args.apply ?? false, call: createToolCaller(transport), signal}));}
+    try {return localToolResult(await runPlan(args.plan, {apply: args.apply ?? false, call: createToolCaller(transport), signal, journal}));}
     catch (error) {
       const code = /^(?:INVALID_PLAN(?:_CONTEXT|_STEPS|_STEP|_SIGNAL)?|INVALID_DEPLOY_STEP|INVALID_APPLY_FLAG|DUPLICATE_REQUEST_ID|EMPTY_PLAN)$/.test(error.message)
         ? error.message : 'PLAN_VALIDATION_FAILED';
       return localToolResult({status: 'stopped', code, diskDeploymentVerified: false});
     }
   }
+  if (method === 'tools/call' && params.name === 'inspect_mod_plan') {
+    const args = params.arguments;
+    if (!args || typeof args !== 'object' || Array.isArray(args) || Object.keys(args).length !== 1
+      || !Object.hasOwn(args, 'planId') || typeof args.planId !== 'string' || !/^[a-f0-9]{64}$/.test(args.planId))
+      return localToolResult({status: 'stopped', code: 'INVALID_PLAN_ID', diskDeploymentVerified: false});
+    const {inspectPlan, createToolCaller} = await import('./session.mjs');
+    return localToolResult(await inspectPlan(args.planId, {call: createToolCaller(transport), journal}));
+  }
   return transport(method, params);
 }
 
-export function handler(call = remote) {
+export function handler(call = remote, {journal} = {}) {
   let initialized = false;
   const plans = new Map();
   const handle = async request => {
@@ -202,9 +210,9 @@ export function handler(call = remote) {
         if (request.method === 'tools/call' && request.params?.name === 'run_mod_plan') {
           if (plans.has(request.id)) throw Error('DUPLICATE_ACTIVE_PLAN_REQUEST');
           const controller = new AbortController(); plans.set(request.id, controller);
-          try {result = await clientRemote(request.method, request.params, call, {signal: controller.signal});}
+          try {result = await clientRemote(request.method, request.params, call, {signal: controller.signal, journal});}
           finally {plans.delete(request.id);}
-        } else result = await clientRemote(request.method, request.params || {}, call);
+        } else result = await clientRemote(request.method, request.params || {}, call, {journal});
       } else return { jsonrpc: '2.0', id: request.id, error: { code: -32601, message: 'Method not found' } };
       return { jsonrpc: '2.0', id: request.id, result };
     } catch (error) { return { jsonrpc: '2.0', id: request.id, error: { code: -32000, message: error.message } }; }
