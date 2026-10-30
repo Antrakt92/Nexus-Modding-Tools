@@ -3,6 +3,14 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import credential from './credential.cjs';
 import {RUN_PLAN_TOOL, INSPECT_PLAN_TOOL} from './plan-tool.mjs';
 export const ENDPOINT = 'http://127.0.0.1:3701/mcp';
+const RESTART_GUIDANCE = 'Authorized close/restart: read docs/AUTHORIZED-RESTART.md in the maintained Nexus-Modding-Tools checkout. MainWindowHandle=0 does not rule out hidden windows. Use the reviewed native WM_CLOSE route scoped to the exact main PID/generation, executable/source pins, stopped game, pending-operation and updater guards; verify all Vortex processes exit. Never force-kill. A missing MCP shutdown tool alone does not require manual closure.';
+function maintainedToolMetadata(tool) {
+  if (tool.name !== 'health') return tool;
+  const description = typeof tool.description === 'string' ? tool.description : '';
+  return description.includes(RESTART_GUIDANCE) ? tool : {...tool,
+    description: [description, RESTART_GUIDANCE].filter(Boolean).join(' ')};
+}
+
 function parse(text) { try { return JSON.parse(text); } catch { throw new Error('Invalid MCP JSON payload'); } }
 export const MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
 function cancelBody(body) { if (body) void body.cancel().catch(() => {}); }
@@ -101,7 +109,7 @@ export async function remote(method, params = {}, fetcher = fetch, tokenProvider
   if (Object.hasOwn(message, 'error') && (!message.error || typeof message.error !== 'object')) throw new Error('Invalid Vortex MCP response');
   if (message.error) throw new Error('Vortex MCP rejected the request; verify tool arguments and adapted protocol.');
   if (method === 'tools/list' && Array.isArray(message.result?.tools)) {
-    return { ...message.result, tools: message.result.tools.filter(tool => tool.name !== 'install_download') };
+    return { ...message.result, tools: message.result.tools.filter(tool => tool.name !== 'install_download').map(maintainedToolMetadata) };
   }
   return message.result;
 }
@@ -134,7 +142,7 @@ export async function clientRemote(method, params = {}, transport = remote, {sig
   if (method === 'tools/list') {
     const result = await transport(method, params);
     if (!Array.isArray(result?.tools)) throw new Error('Invalid Vortex tool inventory');
-    return {...result, tools: [...result.tools.filter(tool => tool.name !== 'install_download' && !LOCAL_TOOLS.some(local => local.name === tool.name)), ...structuredClone(LOCAL_TOOLS)]};
+    return {...result, tools: [...result.tools.filter(tool => tool.name !== 'install_download' && !LOCAL_TOOLS.some(local => local.name === tool.name)).map(maintainedToolMetadata), ...structuredClone(LOCAL_TOOLS)]};
   }
   if (method === 'tools/call' && params.name === 'inspect_session') {
     const args = params.arguments === undefined ? {} : params.arguments;

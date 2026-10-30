@@ -6,6 +6,7 @@
 - [Build and recovery](RESTORE.md): pinned inputs, local credentials, packaging and installation.
 - [Configuration](CONFIGURATION.md): workspaces, local stores and client settings.
 - [Running-session workflows](NO-RESTART-WORKFLOW.md): inspection and reviewed download/enable/deploy plans.
+- [Authorized restart](AUTHORIZED-RESTART.md): native close for hidden Vortex windows, verified exit and maintenance readback.
 - [Collection downloads](COLLECTION-DOWNLOADS.md): exact Nexus IDs and tracked-download reuse.
 - [Collection releases](COLLECTION-RELEASES.md): early preflight, frozen candidates and separate publication/post-release boundaries.
 - [Lifecycle performance](LIFECYCLE-PERFORMANCE.md): early update/removal diagnostics, measured verification improvements and remaining native workflow gates.

@@ -36,7 +36,7 @@
     },
     {
       "path": "AGENTS.md",
-      "sha256_lf": "b18c7526276e3bcc3dbeb4aedb75246ebd39a8a74033b818094befe7ef3c6ea9"
+      "sha256_lf": "14731e73b85111e1913af9f8b7bfa98888d53a1bcf69ebde9c707a142cb30e80"
     },
     {
       "path": "CHANGELOG.md",
@@ -196,7 +196,7 @@
     },
     {
       "path": "docs/AGENT-WORKFLOW.md",
-      "sha256_lf": "bb051333fd90fabf807e321b0eb1bc9f3ae223843cb7988f5132f6db95bbe26d"
+      "sha256_lf": "f2e569faab6e099cd0cdd41e42ef9c43aabe7d933ef30933edb93084dc1c5dc0"
     },
     {
       "path": "docs/AUDIT-20261025.md",
@@ -205,6 +205,10 @@
     {
       "path": "docs/AUDIT-20261029.md",
       "sha256_lf": "8a39246322f51f5a24824a63a5fc65f7cdb64ba352b4594e5a2e272243422cc7"
+    },
+    {
+      "path": "docs/AUTHORIZED-RESTART.md",
+      "sha256_lf": "ac354074344a91ed313d91ed396b1ded8768fc45ca94f97f984fc386aed2c936"
     },
     {
       "path": "docs/COLLECTION-DOWNLOADS.md",
@@ -284,7 +288,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256_lf": "8e39a29274af8a3ef4edc32563b03c74118289ee17042d280bc6d91f722af07c"
+      "sha256_lf": "305f115685faf4e075fadf3136facdbef54f9be9264aa8e844a1fea76f97439f"
     },
     {
       "path": "docs/RESTORE.md",
@@ -531,12 +535,16 @@
       "sha256_lf": "cd70c354ff2a66d9ad11ed0b22b1343dbe3000d7fd8d1a249fae3d480bd9d60d"
     },
     {
+      "path": "tools/modding/vortex-agent/bridge-maintenance-guidance.test.mjs",
+      "sha256_lf": "7b763c842428c83c8fdf1a24438a6b9c87a3f58f9558413ed301c8031433f9a9"
+    },
+    {
       "path": "tools/modding/vortex-agent/bridge-sse.test.mjs",
       "sha256_lf": "18ccd9245a922d210a4aae9e0416db33cbc30db1b282e5ef5b593cbae169bbeb"
     },
     {
       "path": "tools/modding/vortex-agent/bridge.mjs",
-      "sha256_lf": "87dca173bf539de99d459af29fd9535a11a0ccd20512b887e3da1fd60fa8a77e"
+      "sha256_lf": "d7c9853d3eb7885d67754a68f32b6da0777323a7291b384056d7b85b50ce1141"
     },
     {
       "path": "tools/modding/vortex-agent/build.mjs",
