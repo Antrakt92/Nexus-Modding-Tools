@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "6e51f775b2210b096df3aa67eef46ced5e926bc58c53b44fc57bb61773951f13"
+      "sha256_lf": "d3a1cffa5256989ee3a2e3a03788913e23dda4ec40c55a27dad827bfc7dd4827"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -52,7 +52,7 @@
     },
     {
       "path": "README.md",
-      "sha256_lf": "dc5135e4ab660db4c21141ad898a8cea7c12421f5fc3ec743e6f9feca1498b22"
+      "sha256_lf": "93ab47a3d16077c40511c2cd7ae698ac13dff82d4ef8c5eb37455ff2c0c8f077"
     },
     {
       "path": "SUPPORT.md",
@@ -60,7 +60,7 @@
     },
     {
       "path": "VERSION",
-      "sha256_lf": "d915cc95d6ca8f47ae297713ed46d4e5c5d99ddd29fc3c61e263bdf305f2b5b0"
+      "sha256_lf": "40b8eb4000a913a7791090535f291d3d369874162a89ef3c9e3d4e887a1b9e79"
     },
     {
       "path": "dependencies/vortex-mcp/.gitattributes",
@@ -524,7 +524,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/README.md",
-      "sha256_lf": "ebf91e5f09322a6c83e215127ef1fda5cef04c94e1f4acbc719a89787afe0605"
+      "sha256_lf": "15664f162f8c23e1a0d1c3161741841fe9178576d9936e58a91075ed623f92c3"
     },
     {
       "path": "tools/modding/vortex-agent/audit-fixes.test.mjs",

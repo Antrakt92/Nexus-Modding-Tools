@@ -29,6 +29,7 @@ use the running Vortex process. Installing mod archives requires a separate scri
 | Task | What it does | Guide |
 | --- | --- | --- |
 | Inspect a mod setup | Read profiles, mods, downloads, dialogs and conflicts in a combined snapshot | [Session inspection](docs/NO-RESTART-WORKFLOW.md) |
+| Inspect mod usage | Read all-profile usage, incoming requirements and archive references for exact installed IDs | [Lifecycle preflight](docs/LIFECYCLE-PERFORMANCE.md) |
 | Prepare a collection | Match exact Nexus mod/file IDs to existing tracked downloads | [Download reuse](docs/COLLECTION-DOWNLOADS.md) |
 | Change enabled mods and deploy | Check a plan before running it, apply changes one at a time and deploy once at the end | [Plan format](docs/NO-RESTART-WORKFLOW.md#run-the-reviewed-plan-through-mcp) |
 | Check an interrupted plan | Read its saved intents and reconcile the exact operation receipts without replay | [Plan status](docs/NO-RESTART-WORKFLOW.md#inspect-a-plan-after-a-disconnect) |

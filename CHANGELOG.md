@@ -8,87 +8,104 @@ embedded Vortex adapter's 1.0.4 label.
 
 | Version | Published | Main changes |
 | --- | --- | --- |
+| [0.4.0](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/tag/v0.4.0) | 2026-10-30 | Interrupted-plan status, local helper binding, file proofs and API-cache checks |
 | [0.3.0](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/tag/v0.3.0) | 2026-10-29 | Tracked Nexus batch helpers, inventory repair, payload checks and setup guides |
 | [0.2.0](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/tag/v0.2.0) | 2026-10-29 | Offline helper preparation, installation diagnostics and development dependencies |
 | [0.1.0](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/tag/v0.1.0) | 2026-10-29 | Combined inspection, collection download reuse and coordinated plans |
 | [Recovery sources](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/tag/recovery-sources-20261025) | 2026-10-25 | Pinned upstream Git bundles for source recovery |
 
-## Unreleased
+## 0.4.0 — 2026-10-30
 
-Lifecycle work made on 30 October 2026:
+This release adds status checks for interrupted plans, prepares own-local mod
+archives for reviewed installation helpers, and adds optional background
+source-file checks. Native installation and removal remain separate guarded
+workflows; the MCP does not gain a general-purpose installer.
+Changes since [0.3.0](https://github.com/Antrakt92/Nexus-Modding-Tools/compare/v0.3.0...v0.4.0).
 
-- Add the read-only `read_mod_lifecycle` source endpoint for batches of 1–20
-  installed mod IDs: profile usage including pending removal, native incoming
-  requirements and cross-game archive references. It needs a new host bundle;
-  metadata results do not authorize installation or deletion.
-- Give the single-own helper's final payload check an independent physical
-  reader instead of clearing the whole collection cache. A generated-helper
-  benchmark halved hashed bytes while retaining every physical observation and
-  fully rehashing the new payload. Live installation speed has not been measured.
-- Stop unnecessary receipt reads when initial plan admission already failed;
-  settle started reads and preserve all successful-plan safety checks.
-- Add an own-local archive binder with ZIP/CRC, payload and source/build checks.
-  It prepares an inactive kit for the supported family; offline replacement
-  preflight does not grant native installation permission.
-- Persist stable plan IDs and step intents, and add `inspect_mod_plan` plus the
-  `plan-status` CLI to reconcile interrupted plans without replaying effects.
-- Add a bounded read-only file-proof worker and the physical `original-fs`
-  backend for the verified Vortex runtime. Exact production component probes
-  passed in Vortex 2.9.1; this is not an installation speed benchmark.
-- Add explicit `--source-proof-mode worker` preparation. It shares source checks,
-  rechecks live context next to native commands and drains pending checks before
-  final proof/cleanup. Kits remain held; the default `cached-sync` packet is
-  unchanged. Full native installer admission remains required.
-- Retain declared build inputs in a pinned keeper and verify an isolated byte/
-  archive restore. Unknown consumers and unproven native restoration still block
-  retirement; the keeper does not remove mods.
-- Add API-cache status, strict input/tool/recipe pins and immutable generation/
-  reuse receipts. Reconstruction was verified with standalone redscript CLI
-  0.5.32; installed SCC is a separate tool and is not replaced.
+### Added
 
-Fixes made on 30 October 2026:
+- `inspect_mod_plan` and the `plan-status` CLI read saved plan IDs, step intents
+  and operation receipts after a disconnect. Inspection does not replay a step,
+  resume a plan or clear an unresolved operation.
+- `read_mod_lifecycle` reads batches of 1–20 installed mod IDs, including usage
+  across profiles, pending removal, incoming requirements and archive references
+  across games. This endpoint requires a rebuilt host bundle.
+- An offline binder checks an own-local ZIP's CRCs, payload, archive hash and
+  source/build evidence before preparing an inactive helper for the supported
+  template family. Preparation does not authorize installation or replacement.
+- Optional `--source-proof-mode worker` shares pending source proofs and drains
+  checks before final verification. The read-only worker supports standalone
+  Node and the verified Vortex runtime's physical `original-fs` backend.
+  Prepared kits remain inactive until their native admission checks pass.
+- A pure own-install preflight checks a detached inventory/metadata model for
+  one new mod installed disabled, with no existing provider. Its result withholds native
+  effects; it is not proof of the native installer's final selection.
+- A keeper records declared build inputs and verifies restoration into a separate
+  directory. Unknown consumers or unproven native restoration still block
+  retirement; this tool does not remove mods.
+- API-cache inspection explains missing, stale or failed generation. Explicit
+  generation checks input, tool and recipe pins and retains immutable receipts;
+  an older reference is not used as a fallback.
+- Source-bound technical-settings comparison admits only eight reviewed tool
+  rediscovery timestamp leaves and preserves all other settings. Collection-release
+  guidance distinguishes preparation, publication and post-release work. Collection
+  submission and profile switching are not added to the MCP.
 
-- Update the locally bootstrapped pnpm from unsupported 9.15.0 to supported
-  10.34.9. Keep the dependency lockfile unchanged and run CI checks through
-  local tools instead of nested commands that can select a global pnpm.
-- Decode fragmented MCP event streams incrementally and accept CR-only line
-  endings. A synthetic 2 MiB response with 512-byte chunks took a median
-  5.6 ms instead of 1,065.7 ms to decode; this is not a live installation result.
-- Reject a native helper whose entrypoint, engine and reviewed package name,
-  archive hash or size disagree, before activation.
-- Make failed source recovery retryable by verifying a temporary checkout
-  before publishing its final path. Reject linked skill snapshot manifests.
-- Write the source-integrity manifest atomically and reject linked output
-  paths, preserving unrelated files and the previous manifest on failure.
-- Allow reviewed installer and capture configurations up to 8 MiB, including
-  copy-map verification. Large protected-file inventories could exceed the old
-  1 MiB limit. Source modules and other kit inputs retain their 1 MiB limit.
-- Fix generated tracked Nexus installers rejecting one-, three- and four-mod
-  batches because startup still required exactly two packages. Baseline checks
-  now use the reviewed batch size and reject duplicate downloads and native
-  targets through the same scope policy as the reviewed plan.
-- Add a regression that executes the generated baseline admission code for
-  batch sizes one through four, including missing, extra and changed packages.
-- Document authorized native Vortex shutdown through hidden owned windows in
-  MCP metadata and agent guidance, with exact process identities and no force
-  fallback. A missing MCP shutdown endpoint alone does not require manual Quit.
-- Allow `sync-provenance --package-root` for a verified package outside the
-  runtime workspace, preserving bundle, license, source and receipt checks.
-- Add guarded retirement of exact obsolete Rusty-hook templates while preserving
+### Improved and fixed
+
+- Decode fragmented MCP event streams incrementally, including CR-only line
+  endings. In a synthetic 2 MiB response with 512-byte chunks, median decode time
+  fell from 1,065.7 ms to 5.6 ms. This measures parsing, not live installation.
+- Avoid unnecessary receipt reads after failed initial plan admission. Started
+  reads still settle and successful plans retain their checks.
+- Give the supported own-helper payload check an independent physical reader
+  instead of clearing the entire collection cache. Its generated-helper test
+  halved hashed bytes while retaining physical observations and rehashing the new
+  payload. Live installation speed has not been measured.
+- Preserve asynchronous guard results across generated lifecycle boundaries and
+  recheck live context immediately before native commands.
+- Accept reviewed helper configurations up to 8 MiB. Individual source modules
+  retain the 1 MiB limit. Tracked Nexus helpers now admit reviewed batch sizes
+  from one through four and reject duplicate download/native targets.
+- Reject mismatched helper entrypoints, engines and reviewed package names,
+  archive hashes or sizes before activation.
+- Make failed source recovery retryable through a verified temporary checkout.
+  Reject linked skill manifests, linked inventory outputs and invalid UTF-8 in
+  maintained text; write the source inventory atomically.
+- Allow `sync-provenance --package-root` for a verified package outside the runtime
+  workspace without relaxing bundle, license, source or receipt checks.
+- Add guarded retirement of exact obsolete Rusty-hook templates, preserving
   unknown hooks, configuration and recovery evidence.
-- Reject invalid UTF-8 in maintained text before recording source-integrity pins;
-  preserve upstream snapshots' original bytes.
-- Bound HTTP audit request/body/teardown waits and stop server admission before
-  destroying connections. Production ingress is unchanged by this test repair.
-
-Documentation changes since 0.3.0, made on 29 October 2026:
-
+- Bound HTTP audit waits and close server admission before test teardown.
+  This repair changes the tests, not production request handling.
+- Document native Vortex shutdown through owned hidden windows in agent guidance
+  and MCP metadata, with process-identity checks and no force fallback.
 - Remove the README banner and simplify setup, support and release wording.
-- Center the project title, navigation and badges in the README.
-- Add the dated release index, exact initial dependency updates and clearer
-  release boundaries to this changelog; align the GitHub release descriptions.
 
-These changes do not replace the source archives already published for 0.3.0.
+### Dependencies and compatibility
+
+- Update the local pnpm bootstrap from 9.15.0 to 10.34.9. The JavaScript dependency
+  lockfile is unchanged; local verification invokes the selected tools directly.
+- The optional standalone redscript CLI used for API-reference verification was
+  updated locally from 0.5.31 to 0.5.32. It is not bundled in this source archive
+  and does not replace installed SCC.
+- The suite version is 0.4.0; the embedded adapter label remains 1.0.4. Installing
+  a source release does not update an existing Vortex extension automatically.
+
+### Verification and upgrading
+
+- Follow [Get started](docs/GETTING-STARTED.md) to build from source. Preserve the
+  existing runtime workspace, credentials and receipts when updating. Reconnect
+  an existing MCP client to load changed client-side tools and descriptions.
+- Exact production worker/coordinator components passed read-only probes inside
+  Vortex 2.9.1. This does not establish generated-installer acceptance or an
+  end-to-end installation speedup. The default `cached-sync` preparation stays
+  unchanged; generic native installation and removal remain unavailable.
+- 498 MCP/helper tests (including the separately retained pinned templates),
+  54 Python recovery/cache/version tests and 33 installer tests passed locally,
+  with no skipped tests. Source-integrity checks also passed.
+  Tests, host activation, deployed-file verification and gameplay are separate
+  evidence boundaries. No game is launched by these tools.
 
 ## 0.3.0 — 2026-10-29
 

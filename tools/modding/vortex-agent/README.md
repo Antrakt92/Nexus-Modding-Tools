@@ -148,10 +148,13 @@ resetting its quiet window for unrelated metadata. It must be copied and pinned
 in the next helper; existing frozen helpers and the live adapter are unchanged.
 
 The internal [file-proof worker foundation](../../../docs/FILE-PROOF-WORKER.md)
-checks bounded known-file lists in standalone Node, with checkpoint-local hashes,
-stale-reply rejection and parent-side metadata checks. It is not connected to the
-adapter or native helper. Electron compatibility and guard integration remain
-separate gates; current workflows must retain their existing proof route.
+checks bounded known-file lists with checkpoint-local hashes, stale-reply
+rejection and parent-side metadata checks. Exact production components passed
+read-only probes inside Vortex 2.9.1. Helper preparation can opt into shared
+source proofs with `--source-proof-mode worker`; the default remains
+`cached-sync`. Generated kits stay inactive pending their native admission checks.
+The worker is not a general-purpose adapter operation, and these component probes
+do not establish native installer acceptance or an installation speedup.
 
 ## Receipts and uncertainty
 
