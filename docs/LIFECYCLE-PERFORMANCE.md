@@ -130,5 +130,8 @@ should name the exact source/variant archives and hashes it consumes, its curren
 output and any rollback keeper. Cleanup must preserve those referenced inputs.
 An old filename or DEV suffix does not prove an archive is redundant. A reference
 cache likewise needs a matching hash, completion receipt and expected outputs
-before reuse; an incomplete cache is a miss, not an accepted source. These are
-design requirements, not newly implemented cleanup or reconstruction commands.
+before reuse; an incomplete attempt is held, not an accepted source or permission
+to retry. The [API cache helper](PRISTINE-API-CACHE.md) now implements that status
+and reconstruction boundary. The [keeper](KEEPER-RETENTION.md) retains declared
+consumer artifacts and proves an isolated byte/archive restore. It grants no
+deletion actions and does not establish native installation or exhaustive consumers.

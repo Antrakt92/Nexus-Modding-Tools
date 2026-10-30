@@ -10,10 +10,10 @@ Local verification, native acceptance and user gameplay remain separate.
 | 2 | Durable status for existing enable/deploy plans | Stable plan/step identity; receipts remain authoritative; lost response/cancellation/restart cannot replay an uncertain effect | Source verified; client reload required |
 | 3 | Read-only file-proof worker | Same proof results and freshness checks; bounded input/output; worker crash and stale replies rejected; host thread compatibility verified | Standalone foundation verified; native integration pending |
 | 4 | One deterministic native install contract | Proven no replacement/variant path, exact installer/source/identity, no auto-enable/deploy, durable effect intent and independent readback | Offline preflight verified; native invocation remains held |
-| 5 | Keeper and consumer retention | Current build inputs and rollback scope explicit; isolated restore test; unknown external consumers block deletion | Pending |
+| 5 | Keeper and consumer retention | Current build inputs and rollback scope explicit; isolated restore test; unknown external consumers block deletion | Catalog/copy/isolated archive restore verified; native restore unproven |
 | 6 | Sequential native removal | One ID at a time; all-profile/rule/owner closure; verified keeper; partial callbacks stop for reconciliation; deletion semantics explicit | Pending native contract |
 | 7 | Reference-cache status and reconstruction | Independently established input provenance, compatible pinned tool, immutable accepted output and preserved failed attempts | Source and local cache verified; full API coverage unproven |
-| 8 | Shared Git hook and current framework route | Inspect canonical owner and intended checks; preserve historical pins; fix only the active supported route | Hook migration and discovery verified; framework route audit pending |
+| 8 | Shared Git hook and current framework route | Inspect canonical owner and intended checks; preserve historical pins; fix only the active supported route | Hook migration, discovery and current verifier source gates verified |
 | 9 | Final integration audit | Affected suites, generated inventory, protocol/receipt compatibility, failure injection, measured critical path and explicit residual gates | Pending |
 
 ## Boundaries
@@ -142,6 +142,28 @@ inventory completeness, native metadata capture, context freshness and dependenc
 closure remain unverified. It supplies no permit or effects endpoint. Fresh native
 proof, durable host-wide exclusion and post-install readback are still required.
 
+## Stage 5 retention foundation — 30 October 2026
+
+The [keeper](KEEPER-RETENTION.md) verifies a pinned explicit consumer catalog,
+retains exact files and restores them into another isolated directory. It uses
+the existing ZIP/CRC/payload inspector and strict JSON parser. A permanent target
+reservation, unique owned temporary directory and Windows no-overwrite publication
+preserve partial evidence and refuse replay. Restore follows retained copies,
+never historical absolute input paths.
+
+Fourteen regressions passed, including original inputs absent during restore,
+tampering, foreign directory replacement, publication races and Windows filename
+aliases. Independent review found and repaired case-folded artifact collisions;
+source and copied-file generations are checked again after publication.
+Actual offline acceptance retained seven package/evidence artifacts and restored
+their exact bytes/payload proof without changing originals. Unknown external
+consumers and native preference/profile recovery were explicitly retained as gaps.
+
+This is a retained-byte/archive restore, not a rebuild or installation through
+Vortex. Consumer assertions are not independently proven exhaustive. Retirement
+still requires owner review and returns no deletion actions, even with an empty
+unknown-consumer list. No mod, profile or download was removed.
+
 ## Stage 7 verification — 30 October 2026
 
 The [API cache helper](PRISTINE-API-CACHE.md) now exposes read-only status before
@@ -183,3 +205,12 @@ native snapshots returned 29 skills with exact required owner/body matches.
 The earlier empty/two-item responses are consistent with asynchronous plugin
 registration; their historical startup trigger was not independently reproduced.
 No OpenCode configuration, model call or service restart was needed.
+
+The framework route audit preserved the historical 0.2.22-specific verifier.
+The current own compiler snapshot helper had a separate gap: it hashed copied
+framework files without proving the installed sources stayed stable. That owning
+source project now pins both opaque inputs before/after exclusive copy and before/
+after compilation. Eleven fake-compiler regressions passed, including concurrent
+mutation and preservation of a foreign copy destination. Installed 0.2.28 metadata
+and the two input hashes were checked read-only. No actual compiler, mod build or
+game test ran for that tooling change; its two-file scope is explicit.
