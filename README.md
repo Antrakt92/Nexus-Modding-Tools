@@ -31,11 +31,13 @@ use the running Vortex process. Installing mod archives requires a separate scri
 | Inspect a mod setup | Read profiles, mods, downloads, dialogs and conflicts in a combined snapshot | [Session inspection](docs/NO-RESTART-WORKFLOW.md) |
 | Prepare a collection | Match exact Nexus mod/file IDs to existing tracked downloads | [Download reuse](docs/COLLECTION-DOWNLOADS.md) |
 | Change enabled mods and deploy | Check a plan before running it, apply changes one at a time and deploy once at the end | [Plan format](docs/NO-RESTART-WORKFLOW.md#run-the-reviewed-plan-through-mcp) |
+| Check an interrupted plan | Read its saved intents and reconcile the exact operation receipts without replay | [Plan status](docs/NO-RESTART-WORKFLOW.md#inspect-a-plan-after-a-disconnect) |
 | Research Nexus Mods | Search public metadata and requirements through the community CLI | [Nexus CLI](tools/modding/nexus-cli/README.md) |
 | Publish your own mod | Check an archive locally and upload an update through the official Nexus uploader | [Publication runner](tools/modding/nexus-publish/README.md) |
+| Inspect a Cyberpunk API cache | Check input/tool/output pins and explain failed or incomplete generation without retrying | [Pristine API cache](docs/PRISTINE-API-CACHE.md) |
 
-The MCP bridge exposes `inspect_session`, `find_collection_downloads` and
-`run_mod_plan`. Before changing mods, the adapter checks the active profile and
+The MCP bridge exposes `inspect_session`, `find_collection_downloads`,
+`run_mod_plan` and `inspect_mod_plan`. Before changing mods, the adapter checks the active profile and
 folder identities. It records each operation so an interrupted request can be
 checked before retrying it.
 

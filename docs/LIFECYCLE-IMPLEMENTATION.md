@@ -12,7 +12,7 @@ Local verification, native acceptance and user gameplay remain separate.
 | 4 | One deterministic native install contract | Proven no replacement/variant path, exact installer/source/identity, no auto-enable/deploy, durable effect intent and independent readback | Pending native contract |
 | 5 | Keeper and consumer retention | Current build inputs and rollback scope explicit; isolated restore test; unknown external consumers block deletion | Pending |
 | 6 | Sequential native removal | One ID at a time; all-profile/rule/owner closure; verified keeper; partial callbacks stop for reconciliation; deletion semantics explicit | Pending native contract |
-| 7 | Reference-cache status and reconstruction | Independently proven pristine input, compatible pinned tool, immutable accepted output and preserved failed attempts | Pending input provenance |
+| 7 | Reference-cache status and reconstruction | Independently established input provenance, compatible pinned tool, immutable accepted output and preserved failed attempts | Source and local cache verified; full API coverage unproven |
 | 8 | Shared Git hook and current framework route | Inspect canonical owner and intended checks; preserve historical pins; fix only the active supported route | Pending |
 | 9 | Final integration audit | Affected suites, generated inventory, protocol/receipt compatibility, failure injection, measured critical path and explicit residual gates | Pending |
 
@@ -113,3 +113,27 @@ scope. A 64 MiB generated-file comparison included parent work and worker
 construction; its measured scope and limits are in the worker documentation.
 The temporary payload was recycled after verifying its hash and retained
 reconstruction recipe. No running host, mod or game files were changed.
+
+## Stage 7 verification — 30 October 2026
+
+The [API cache helper](PRISTINE-API-CACHE.md) now exposes read-only status before
+generation. Full input/tool/recipe pins and immutable acceptance receipts govern
+reuse; failed or incomplete attempts are held rather than overwritten or bypassed.
+The installed compatibility wrapper forwards to this maintained source.
+
+The current input matched its local installed Steam depot manifest. That parser
+does not authenticate Valve's signature, so local metadata agreement is the
+provenance boundary. After dependency review, standalone CLI 0.5.32 replaced
+0.5.31 in the authoring manifest; the old executable and failed log remain intact.
+One generation produced 22,728,153 bytes in an observed 844 ms helper run.
+Independent inspection and repeat calls verified receipt/output hashes and reuse
+without invoking the tool. Required declarations passed; full API coverage and
+gameplay remain unproven. Installed SCC, Vortex and game files were not changed.
+
+Twenty cache regressions and three existing compatibility-wrapper lock tests
+passed. The broader checkpoint passed 378 Node tests without skips, 41 Python
+recovery/bootstrap/cache tests and 29 synthetic installer tests.
+Skill tree/alias/link checks passed; native OpenCode discovery is being
+investigated separately under stage 8. The standalone skill validator could not
+run in the inspected Python environments because PyYAML was unavailable; no
+package was installed merely for linting.
