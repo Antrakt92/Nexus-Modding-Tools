@@ -21,6 +21,7 @@
 - [Native helper preparation](NATIVE-HELPER-PREPARATION.md) and [tracked Nexus batches](TRACKED-NEXUS-HELPER-REVIEW.md): prepare installation scripts for the supported templates, then check their source, packages and current Vortex state.
 - [Own-local binder](OWN-LOCAL-BINDER.md): bind the supported reviewed template to one package without inheriting live approvals.
 - [Native lifecycle gates](NATIVE-LIFECYCLE-GATES.md): offline install preflight and source-reviewed replacement/removal limits.
+- [Keeper and retention](KEEPER-RETENTION.md): pinned consumer catalogs, retained copies and isolated restore without deletion.
 - [File-proof worker](FILE-PROOF-WORKER.md): standalone foundation; native guard integration is pending.
 - [Technical settings comparison](TECHNICAL-SETTINGS.md): source-bound handling of known discovery timestamp changes while retaining strict preference comparisons.
 - [Agent workflow](AGENT-WORKFLOW.md), [licenses](LICENSES.md) and [maintenance](MAINTENANCE.md).

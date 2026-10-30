@@ -239,6 +239,10 @@
       "sha256_lf": "bacfdfc9042f0647408699197e90cf934b5855e7be473f208f1e97b91c69505c"
     },
     {
+      "path": "docs/KEEPER-RETENTION.md",
+      "sha256_lf": "045248b421ec5aaa8f392beef4947aad4a97f84e09834261eff493f45cb7fac6"
+    },
+    {
       "path": "docs/LEGACY-GIT-HOOKS.md",
       "sha256_lf": "1c731dd86fb46c1e1cd08440fd986a9aa8340b72d5d89d23e152f99f3afb85eb"
     },
@@ -248,11 +252,11 @@
     },
     {
       "path": "docs/LIFECYCLE-IMPLEMENTATION.md",
-      "sha256_lf": "6d5d70df88941030aa640879f864c1b421cce7160904dad5cf2f69705b934910"
+      "sha256_lf": "36e81c8d8976a76c7875b4b649afa31fb22ae2aa1d83276bc6130bfbaf8edd46"
     },
     {
       "path": "docs/LIFECYCLE-PERFORMANCE.md",
-      "sha256_lf": "02551a5c8e982360495f88401adc2d5452e79a48e5ef045fbaf16b53512b4eb3"
+      "sha256_lf": "b9878a2172d8612b7a365a097ecb7a108446cfe3bb76e424ce17e7bf1ef0e511"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -280,7 +284,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256_lf": "a92611b3df525a69a481e2c69b97f00e50de173566cb6e165e1f0faf0658e03a"
+      "sha256_lf": "8e39a29274af8a3ef4edc32563b03c74118289ee17042d280bc6d91f722af07c"
     },
     {
       "path": "docs/RESTORE.md",
@@ -605,6 +609,14 @@
     {
       "path": "tools/modding/vortex-agent/install.test.py",
       "sha256_lf": "fd65b6d3a4dee912bd9e739ac2cff8d8040f26e93050d973c7682e2348412c82"
+    },
+    {
+      "path": "tools/modding/vortex-agent/keeper.mjs",
+      "sha256_lf": "b990bfa0548156573e1c63cda793f0a0c20497a732127d8d62978b781029c5af"
+    },
+    {
+      "path": "tools/modding/vortex-agent/keeper.test.mjs",
+      "sha256_lf": "185265a33454049e8b7fd8713039e6c0bee8f72f2a4fca03ddbe0fef0084f0fa"
     },
     {
       "path": "tools/modding/vortex-agent/lifecycle-inspection.cjs",
