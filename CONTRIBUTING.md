@@ -1,10 +1,10 @@
-# Contributing to Nexus Modding Tools
+# Contributing to Vortex Nexus Modding MCP
 
 [Overview](README.md) · [Setup](docs/GETTING-STARTED.md) · [Tool routes](docs/AGENT-WORKFLOW.md)
 
 ## Report a problem
 
-Use the [bug report or feature request form](https://github.com/Antrakt92/Nexus-Modding-Tools/issues/new/choose).
+Use the [bug report or feature request form](https://github.com/Antrakt92/vortex-nexus-modding-mcp/issues/new/choose).
 Include the tool, version, exact command, reproduction steps and expected result.
 Remove keys, bearer tokens, signed URLs, account state and private paths from
 reports. Do not attach Vortex databases, mod archives or credential stores.

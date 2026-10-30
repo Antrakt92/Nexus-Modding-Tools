@@ -31,5 +31,5 @@ test('packaged entrypoint and source/lockfile provenance match verified isolated
     assert.equal(await sha(path.join(plugin, name)), hash);
     assert.equal(await sha(path.join(ROOT, 'upstream', name)), hash);
   }
-  assert.equal(provenance.sourceOffer.repository, 'https://github.com/Antrakt92/Nexus-Modding-Tools');
+  assert.equal(provenance.sourceOffer.repository, 'https://github.com/Antrakt92/vortex-nexus-modding-mcp');
 });

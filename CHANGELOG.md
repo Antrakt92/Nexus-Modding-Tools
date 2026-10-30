@@ -1,6 +1,6 @@
 # Changelog
 
-Source-release history for [Nexus Modding Tools](https://github.com/Antrakt92/Nexus-Modding-Tools).
+Source-release history for [Vortex Nexus Modding MCP](https://github.com/Antrakt92/vortex-nexus-modding-mcp).
 Dates are the original GitHub publication dates, in UTC. Each section describes
 the code and verification available at that version; historical limitations are
 not a statement about the latest release. The suite version is separate from the
@@ -8,11 +8,18 @@ embedded Vortex adapter's 1.0.4 label.
 
 | Version | Published | Main changes |
 | --- | --- | --- |
-| [0.4.0](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/tag/v0.4.0) | 2026-10-30 | Interrupted-plan status, local helper binding, file proofs and API-cache checks |
-| [0.3.0](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/tag/v0.3.0) | 2026-10-29 | Tracked Nexus batch helpers, inventory repair, payload checks and setup guides |
-| [0.2.0](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/tag/v0.2.0) | 2026-10-29 | Offline helper preparation, installation diagnostics and development dependencies |
-| [0.1.0](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/tag/v0.1.0) | 2026-10-29 | Combined inspection, collection download reuse and coordinated plans |
-| [Recovery sources](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/tag/recovery-sources-20261025) | 2026-10-25 | Pinned upstream Git bundles for source recovery |
+| [0.4.0](https://github.com/Antrakt92/vortex-nexus-modding-mcp/releases/tag/v0.4.0) | 2026-10-30 | Interrupted-plan status, local helper binding, file proofs and API-cache checks |
+| [0.3.0](https://github.com/Antrakt92/vortex-nexus-modding-mcp/releases/tag/v0.3.0) | 2026-10-29 | Tracked Nexus batch helpers, inventory repair, payload checks and setup guides |
+| [0.2.0](https://github.com/Antrakt92/vortex-nexus-modding-mcp/releases/tag/v0.2.0) | 2026-10-29 | Offline helper preparation, installation diagnostics and development dependencies |
+| [0.1.0](https://github.com/Antrakt92/vortex-nexus-modding-mcp/releases/tag/v0.1.0) | 2026-10-29 | Combined inspection, collection download reuse and coordinated plans |
+| [Recovery sources](https://github.com/Antrakt92/vortex-nexus-modding-mcp/releases/tag/recovery-sources-20261025) | 2026-10-25 | Pinned upstream Git bundles for source recovery |
+
+## Unreleased
+
+- Rename the project to Vortex Nexus Modding MCP and move the repository to
+  `Antrakt92/vortex-nexus-modding-mcp`. Update current source/recovery links while
+  accepting the previous repository URL in existing packages. Published tags,
+  archive names, bundle pins and adapter identity are unchanged.
 
 ## 0.4.0 — 2026-10-30
 
@@ -20,7 +27,7 @@ This release adds status checks for interrupted plans, prepares own-local mod
 archives for reviewed installation helpers, and adds optional background
 source-file checks. Native installation and removal remain separate guarded
 workflows; the MCP does not gain a general-purpose installer.
-Changes since [0.3.0](https://github.com/Antrakt92/Nexus-Modding-Tools/compare/v0.3.0...v0.4.0).
+Changes since [0.3.0](https://github.com/Antrakt92/vortex-nexus-modding-mcp/compare/v0.3.0...v0.4.0).
 
 ### Added
 
@@ -111,7 +118,7 @@ Changes since [0.3.0](https://github.com/Antrakt92/Nexus-Modding-Tools/compare/v
 
 This release adds tools for preparing installation scripts from tracked Nexus
 downloads and fixes full mod-list reads when a mod has an empty version.
-Changes since [0.2.0](https://github.com/Antrakt92/Nexus-Modding-Tools/compare/v0.2.0...v0.3.0).
+Changes since [0.2.0](https://github.com/Antrakt92/vortex-nexus-modding-mcp/compare/v0.2.0...v0.3.0).
 
 ### Added
 
@@ -153,8 +160,8 @@ Changes since [0.2.0](https://github.com/Antrakt92/Nexus-Modding-Tools/compare/v
   not included in the download.
 - After upgrading the Vortex extension, all 433 mod records could be read.
   File, hardlink, preference and operation-record comparisons passed.
-  See [the test report](https://github.com/Antrakt92/Nexus-Modding-Tools/blob/v0.3.0/docs/AUDIT-20261029.md#subsequent-live-upgrade-and-acceptance--2026-10-29).
-- Build the extension from source using [Get started](https://github.com/Antrakt92/Nexus-Modding-Tools/blob/main/docs/GETTING-STARTED.md).
+  See [the test report](https://github.com/Antrakt92/vortex-nexus-modding-mcp/blob/v0.3.0/docs/AUDIT-20261029.md#subsequent-live-upgrade-and-acceptance--2026-10-29).
+- Build the extension from source using [Get started](https://github.com/Antrakt92/vortex-nexus-modding-mcp/blob/main/docs/GETTING-STARTED.md).
   The MCP itself does not install mod archives. Existing installation scripts
   and operation records must be checked before retrying a failed operation.
 
@@ -162,7 +169,7 @@ Changes since [0.2.0](https://github.com/Antrakt92/Nexus-Modding-Tools/compare/v
 
 Reusable native-helper preparation, clearer installation diagnostics and an
 updated development toolchain. This source release includes all changes since
-[0.1.0](https://github.com/Antrakt92/Nexus-Modding-Tools/compare/v0.1.0...v0.2.0).
+[0.1.0](https://github.com/Antrakt92/vortex-nexus-modding-mcp/compare/v0.1.0...v0.2.0).
 The embedded Vortex adapter label remains 1.0.4.
 
 ### Added
@@ -320,7 +327,7 @@ earlier upstream-to-recovery changes, attribution and compatibility checks.
 - Publishing this source release does not install the new adapter into Vortex,
   reconnect clients, prove deployed bytes or establish gameplay acceptance.
 
-[Changes since the recovery snapshot](https://github.com/Antrakt92/Nexus-Modding-Tools/compare/recovery-sources-20261025...v0.1.0).
+[Changes since the recovery snapshot](https://github.com/Antrakt92/vortex-nexus-modding-mcp/compare/recovery-sources-20261025...v0.1.0).
 
 ## Recovery sources — 2026-10-25
 

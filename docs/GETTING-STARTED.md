@@ -34,7 +34,7 @@ writes stop with
 ## Install the adapter
 
 1. Download the source ZIP and `SHA256SUMS` from the
-   [latest release](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/latest).
+   [latest release](https://github.com/Antrakt92/vortex-nexus-modding-mcp/releases/latest).
    Compare the ZIP's `Get-FileHash -Algorithm SHA256` result with `SHA256SUMS`,
    then extract it to your chosen source directory. A development checkout of
    `main` can contain changes not yet in a release.

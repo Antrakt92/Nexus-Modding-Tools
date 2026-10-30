@@ -1,5 +1,18 @@
 # Maintenance and releases
 
+## Repository rename
+
+The project was previously called Nexus Modding Tools. Existing installations
+keep their adapter ID, credentials, receipts and local directories. To update
+an existing Git checkout, run:
+
+```powershell
+git remote set-url origin https://github.com/Antrakt92/vortex-nexus-modding-mcp.git
+```
+
+Old GitHub repository links redirect. Existing release archives retain their
+original names and checksums; do not rename or republish immutable assets.
+
 ## Branches and dependency proposals
 
 `main` is the integration and resting branch. Review work on short-lived branches
@@ -14,10 +27,10 @@ The four earlier PRs remain closed with their original diffs retained. The
 
 | Earlier proposal | Current decision |
 | --- | --- |
-| [#11](https://github.com/Antrakt92/Nexus-Modding-Tools/pull/11): oxfmt 0.74.0 / oxlint 1.89.0 | Superseded by tested oxfmt 0.75.0 / oxlint 1.90.0. |
-| [#12](https://github.com/Antrakt92/Nexus-Modding-Tools/pull/12): Redux 5.0.1 | Not adopted: Vortex API 2.9.1 declares the exact peer Redux 4.2.1. Keep that contract until the host API supports a migration. |
-| [#13](https://github.com/Antrakt92/Nexus-Modding-Tools/pull/13): Vite 8.3.5 | Adopted with typecheck, test, lint, format and build verification. |
-| [#14](https://github.com/Antrakt92/Nexus-Modding-Tools/pull/14): Node declarations 26.6.5 | Use current Node 24 declarations 24.19.2 for the Node 24 build/runtime; newer API declarations do not upgrade the runtime. |
+| [#11](https://github.com/Antrakt92/vortex-nexus-modding-mcp/pull/11): oxfmt 0.74.0 / oxlint 1.89.0 | Superseded by tested oxfmt 0.75.0 / oxlint 1.90.0. |
+| [#12](https://github.com/Antrakt92/vortex-nexus-modding-mcp/pull/12): Redux 5.0.1 | Not adopted: Vortex API 2.9.1 declares the exact peer Redux 4.2.1. Keep that contract until the host API supports a migration. |
+| [#13](https://github.com/Antrakt92/vortex-nexus-modding-mcp/pull/13): Vite 8.3.5 | Adopted with typecheck, test, lint, format and build verification. |
+| [#14](https://github.com/Antrakt92/vortex-nexus-modding-mcp/pull/14): Node declarations 26.6.5 | Use current Node 24 declarations 24.19.2 for the Node 24 build/runtime; newer API declarations do not upgrade the runtime. |
 
 TypeScript advances from 5.9.3 to 7.0.2. Tinypool advances from 2.1.2 to 2.2.0,
 matching the formatter's current direct requirement. Production MCP, Zod and HTTP
@@ -53,7 +66,7 @@ These changes are included in **0.2.0**, dated 29 October 2026. The new helper
 preparation capability makes this a minor release. No incompatible public
 API/schema migration was identified in this range. The embedded adapter's 1.0.4
 label is independent. See the [changelog](../CHANGELOG.md) and
-[release](https://github.com/Antrakt92/Nexus-Modding-Tools/releases/tag/v0.2.0).
+[release](https://github.com/Antrakt92/vortex-nexus-modding-mcp/releases/tag/v0.2.0).
 
 ## Release readiness
 

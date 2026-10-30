@@ -1,21 +1,21 @@
-<h1 align="center">Nexus Modding Tools</h1>
+<h1 align="center">Vortex Nexus Modding MCP</h1>
 
-<p align="center">Nexus research and Vortex automation through MCP or the command line.</p>
+<p align="center">Connect AI agents to Vortex and Nexus Mods through MCP and the command line.</p>
 
 <p align="center">
   <a href="docs/GETTING-STARTED.md"><strong>Get started</strong></a>
-  · <a href="https://github.com/Antrakt92/Nexus-Modding-Tools/releases/latest"><strong>Download source</strong></a>
+  · <a href="https://github.com/Antrakt92/vortex-nexus-modding-mcp/releases/latest"><strong>Download source</strong></a>
   · <a href="CHANGELOG.md">Changelog</a>
-  · <a href="https://github.com/Antrakt92/Nexus-Modding-Tools/issues/new/choose">Report a problem</a>
+  · <a href="https://github.com/Antrakt92/vortex-nexus-modding-mcp/issues/new/choose">Report a problem</a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/Antrakt92/Nexus-Modding-Tools/releases/latest"><img src="https://img.shields.io/github/v/release/Antrakt92/Nexus-Modding-Tools?label=source%20release&amp;color=0f766e" alt="Latest source release"></a>
+  <a href="https://github.com/Antrakt92/vortex-nexus-modding-mcp/releases/latest"><img src="https://img.shields.io/github/v/release/Antrakt92/vortex-nexus-modding-mcp?label=source%20release&amp;color=0f766e" alt="Latest source release"></a>
   <a href="docs/GETTING-STARTED.md"><img src="https://img.shields.io/badge/platform-Windows-0078D4" alt="Windows"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--only-2563EB" alt="GPL-3.0-only license"></a>
 </p>
 
-Nexus Modding Tools connects a running **Vortex** session to an MCP-compatible
+Vortex Nexus Modding MCP connects a running **Vortex** session to an MCP-compatible
 AI client or the command line. You can inspect mods and conflicts, find existing
 downloads, enable or disable mods, and deploy them. Separate tools handle Nexus
 Mods metadata searches and uploads.
