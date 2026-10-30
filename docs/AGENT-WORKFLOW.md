@@ -27,6 +27,7 @@ missing capabilities rather than inventing another implementation.
 | Nexus upload preparation or authorized publication | `nexus-publication` | [Guarded publisher](../tools/modding/nexus-publish/README.md); offline by default |
 | Release a collection revision | `nexus-collection-release`, `nexus-publication` | [Collection workflow](COLLECTION-RELEASES.md); owning collection's frozen plan and guard, early preflight, separate publication and post-release work |
 | Original game-mod implementation | `nexus-mod-workflow`, then the matching engine skill | Follow the owning mod project's source/provenance handoff; this tools repo is not mod source |
+| Inspect or generate a pristine Cyberpunk API reference | `redengine-mod-development` | [Cache status](PRISTINE-API-CACHE.md); default read-only, independently established input pin required for explicit generation; no older-cache fallback |
 | Build or restore the tools | `project-intake`, `verification-matrix` | [Restore](RESTORE.md), [configuration](CONFIGURATION.md), source/package pins and local checks |
 | Dependency changes or a new tool | `dependency-gate` | Reuse verified inputs; review identity, lock impact and relevant local checks before installation |
 

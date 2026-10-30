@@ -52,7 +52,7 @@
     },
     {
       "path": "README.md",
-      "sha256_lf": "e062d9267e02e827ec7a31063b23848b0344f062fb9db8ae27f292a62d08dae2"
+      "sha256_lf": "dc5135e4ab660db4c21141ad898a8cea7c12421f5fc3ec743e6f9feca1498b22"
     },
     {
       "path": "SUPPORT.md",
@@ -196,7 +196,7 @@
     },
     {
       "path": "docs/AGENT-WORKFLOW.md",
-      "sha256_lf": "30da0f42235ff878043a64a4f6899f3c28ac63cd63a6b5522a44dcdcc3ce18fa"
+      "sha256_lf": "bb051333fd90fabf807e321b0eb1bc9f3ae223843cb7988f5132f6db95bbe26d"
     },
     {
       "path": "docs/AUDIT-20261025.md",
@@ -220,7 +220,7 @@
     },
     {
       "path": "docs/DEPENDENCY-AUDIT.md",
-      "sha256_lf": "6e495c8c1ac3efd5c551d45d505dc750c01d7939e0144f8656a26532196d30a0"
+      "sha256_lf": "b9f9a927190e0638ee44599bf8d7d6ec45f4a67e254903a88fa157d5e837e668"
     },
     {
       "path": "docs/FILE-PROOF-WORKER.md",
@@ -244,7 +244,7 @@
     },
     {
       "path": "docs/LIFECYCLE-IMPLEMENTATION.md",
-      "sha256_lf": "16c1d05e6fb2e2cb68413316c89aea2441208efafd1b218dd9945dee5f05a737"
+      "sha256_lf": "eedee872c55d4602525652772708b949d15aec1d599f781434ca1203dce29b58"
     },
     {
       "path": "docs/LIFECYCLE-PERFORMANCE.md",
@@ -267,8 +267,12 @@
       "sha256_lf": "51d95712d1ad976e44de0af7f944b118c38700313407ffa3c56afaa073bec3ae"
     },
     {
+      "path": "docs/PRISTINE-API-CACHE.md",
+      "sha256_lf": "d1063dde754876d39c8d90196815e7f725f7a5daf00cdf94bc81053f16f395e2"
+    },
+    {
       "path": "docs/README.md",
-      "sha256_lf": "4683081f9c61606569d980ef6805edf1ec3fffb76c5f8e2b7be3c906d60c1de1"
+      "sha256_lf": "8b7a64de355308f8d252319dea99ae78f5c0a7de7b922fa6262c089ead5f044c"
     },
     {
       "path": "docs/RESTORE.md",
@@ -363,6 +367,10 @@
       "sha256_lf": "3fb202fc47b3bbfd147a9a0bb1aa9a4c94ef66a5819fea4fb8cf11e95241bf3d"
     },
     {
+      "path": "tests/test_pristine_cache.py",
+      "sha256_lf": "7e71b551603590933643a3fb4af5d4d2c558e3f1acebcbc642154347199d074f"
+    },
+    {
       "path": "tests/test_recovery.py",
       "sha256_lf": "f5dd50448c7708beaf9a77a452541fcec1c45b5494709506c9f9c32b0110d110"
     },
@@ -377,6 +385,10 @@
     {
       "path": "tools/modding/AGENT-TOOLS.md",
       "sha256_lf": "c5f5fb18b3719558401b8eee29a95560f16c3e95bb560322f5018795bd02d0fd"
+    },
+    {
+      "path": "tools/modding/decompile_pristine.py",
+      "sha256_lf": "61e62f96bd8968e560c7f97e7637a5c3bf9091e6bf58dd4ebe4d068ea9209136"
     },
     {
       "path": "tools/modding/nexus-cli/README.md",

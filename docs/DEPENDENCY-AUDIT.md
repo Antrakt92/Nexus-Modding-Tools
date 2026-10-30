@@ -182,3 +182,42 @@ warning and the existing Vite configuration warning remain visible.
 
 See the [source and performance audit](TOOLING-AUDIT-20261030.md) for the maintained
 adapter, recovery and helper checks. No live Vortex upgrade is included.
+
+## 30 October standalone redscript CLI
+
+The optional authoring/decompiler CLI was updated from **0.5.31 to 0.5.32** in a
+versioned local tool directory. The old executable remains available. This does
+not replace installed SCC or change Vortex, game files, PATH or the JavaScript
+dependency lockfile. The update is needed for
+[Cyberpunk 2.5 bundle parsing](https://github.com/jac3km4/redscript/releases/tag/v0.5.32).
+
+The official Windows `redscript-cli.exe` asset is 1,859,584 bytes, SHA-256
+`c8665c40199fb784a78b980db3a304a7f0b14a9494b3b59a125ff5618bf13f6c`.
+Downloaded bytes matched the
+[release API](https://api.github.com/repos/jac3km4/redscript/releases/tags/v0.5.32).
+Source commit is `f73003ac55fe41c10a9eecd61352343a3741ddd5`, under MIT. The tag and
+executable are unsigned. Static PE imports include Windows/UCRT/VCRUNTIME140;
+main/decompile help and the actual isolated decompile ran successfully here.
+The binary does not support `--version`; identify it by release and digest.
+
+This is a broader dependency refresh as well as a parser fix. The
+[tag comparison](https://api.github.com/repos/jac3km4/redscript/compare/v0.5.31...v0.5.32)
+has 235 Cargo lock entries instead of 246; version sets changed for 117 external
+crate names. Three names were added and seven removed. The CLI closure includes
+0.x updates to hashbrown, itertools, strum, enum-as-inner and modular-bitfield.
+No Cargo build or global Rust install was performed.
+
+A timestamped OSV batch lookup of 226 registry entries found the unchanged
+[glib advisory](https://rustsec.org/advisories/RUSTSEC-2024-0429.html) and
+[proc-macro-error notice](https://rustsec.org/advisories/RUSTSEC-2024-0370.html).
+Neither appears in the conservative 104-entry standalone CLI dependency closure;
+they belong to the separate optional GTK/SCC branch. No other registry match
+was returned at this checkpoint. Git dependencies, disabled/platform branches,
+unknown vulnerabilities and unsigned-binary provenance remain coverage limits;
+this is not a whole-project security clearance.
+
+The exact Steam-matched input, output/receipt validation and preserved failure
+evidence are described in the [API cache record](PRISTINE-API-CACHE.md).
+Detailed provenance and dependency reports remain private under ignored
+`local-state/pristine-api-refresh-20261030/`; no CDPR source or tool binary is
+included in this public repository.

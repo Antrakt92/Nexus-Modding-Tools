@@ -16,7 +16,10 @@
 - [Vortex adapter](../tools/modding/vortex-agent/README.md).
 - [Community Nexus CLI](../tools/modding/nexus-cli/README.md).
 - [Publication runner](../tools/modding/nexus-publish/README.md).
+- [Pristine API cache](PRISTINE-API-CACHE.md): read-only status, exact reference pins and explicit generation.
 - [Native helper preparation](NATIVE-HELPER-PREPARATION.md) and [tracked Nexus batches](TRACKED-NEXUS-HELPER-REVIEW.md): prepare installation scripts for the supported templates, then check their source, packages and current Vortex state.
+- [Own-local binder](OWN-LOCAL-BINDER.md): bind the supported reviewed template to one package without inheriting live approvals.
+- [File-proof worker](FILE-PROOF-WORKER.md): standalone foundation; native guard integration is pending.
 - [Technical settings comparison](TECHNICAL-SETTINGS.md): source-bound handling of known discovery timestamp changes while retaining strict preference comparisons.
 - [Agent workflow](AGENT-WORKFLOW.md), [licenses](LICENSES.md) and [maintenance](MAINTENANCE.md).
 
@@ -25,6 +28,7 @@
 Each report lists what was checked and what still needs testing.
 
 - [30 October tooling and performance audit](TOOLING-AUDIT-20261030.md).
+- [Lifecycle implementation](LIFECYCLE-IMPLEMENTATION.md): verified stages and remaining native/provenance gates.
 - [29 October full source audit](FULL-AUDIT-20261029.md).
 - [29 October follow-up and live upgrade](AUDIT-20261029.md).
 - [Dependency pins and checks](DEPENDENCY-AUDIT.md).
