@@ -28,6 +28,9 @@ docs/AGENT-WORKFLOW.md for skill selection, entrypoints and verification boundar
 - Keep credentials local to the operating-system credential store. A restored
   computer must initialize its own local bearer and Nexus authentication.
 - Check dependencies before changes; prefer pinned verified upstream inputs.
+- After verified releases and completed tasks, apply docs/LOCAL-CLEANUP.md to
+  confirmed scratch output. Preserve required paths, tracked files and fixtures;
+  equal hashes alone never authorize source-file deduplication.
   Keep public output portable and defaults dry-run/offline. Restoration must not
   overwrite unrelated existing files or configure clients without an explicit flag.
 - Match runtime verification to the affected layer. Unit tests do not prove live

@@ -59,6 +59,10 @@ to query metadata never authorizes restricted implementation sources.
 
 ## Verify and hand off
 
+After a verified release or completed task, follow [local cleanup](LOCAL-CLEANUP.md)
+before reporting completion. Recycle only confirmed task scratch; keep source,
+licenses and pinned fixtures at their required paths even when bytes are duplicated.
+
 Use the repository's local tests for changed paths and broader affected contracts.
 Keep modeled tests, source integrity, native host loading, deployment byte/owner/
 hardlink proof and gameplay acceptance separate. A fulfilled callback or

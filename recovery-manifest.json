@@ -36,7 +36,7 @@
     },
     {
       "path": "AGENTS.md",
-      "sha256_lf": "14731e73b85111e1913af9f8b7bfa98888d53a1bcf69ebde9c707a142cb30e80"
+      "sha256_lf": "67ffdd1fcd2be30f272413959e8c8ddb5a7d492eac18f2bb078b131bcce9300d"
     },
     {
       "path": "CHANGELOG.md",
@@ -196,7 +196,7 @@
     },
     {
       "path": "docs/AGENT-WORKFLOW.md",
-      "sha256_lf": "f2e569faab6e099cd0cdd41e42ef9c43aabe7d933ef30933edb93084dc1c5dc0"
+      "sha256_lf": "501840e4d972c0af23e621ece2449c13c27ae0304aed792de89e66b75f3728a1"
     },
     {
       "path": "docs/AUDIT-20261025.md",
@@ -263,6 +263,10 @@
       "sha256_lf": "1af55d4fc9cb29d27b766aa9f48b579a149a9eeda44d3a6809f6e5e307afb694"
     },
     {
+      "path": "docs/LOCAL-CLEANUP.md",
+      "sha256_lf": "8431c868a47201e48473c8b8b0f650125fa9d15a859f087a8d17b500f939314c"
+    },
+    {
       "path": "docs/MAINTENANCE.md",
       "sha256_lf": "2099b19c6fc9a5e0dfd224fbf5694bdafdebc1b45f44bb545a43be1da1e05312"
     },
@@ -288,7 +292,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256_lf": "305f115685faf4e075fadf3136facdbef54f9be9264aa8e844a1fea76f97439f"
+      "sha256_lf": "eb4f6a120365686ce3d48d060d4a29590780d974afa82530666b05c8c2b6c148"
     },
     {
       "path": "docs/RESTORE.md",

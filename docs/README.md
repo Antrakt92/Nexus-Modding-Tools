@@ -9,6 +9,7 @@
 - [Authorized restart](AUTHORIZED-RESTART.md): native close for hidden Vortex windows, verified exit and maintenance readback.
 - [Collection downloads](COLLECTION-DOWNLOADS.md): exact Nexus IDs and tracked-download reuse.
 - [Collection releases](COLLECTION-RELEASES.md): early preflight, frozen candidates and separate publication/post-release boundaries.
+- [Local cleanup](LOCAL-CLEANUP.md): post-release scratch retirement, required-input protection and bounded scheduled maintenance through Recycle Bin.
 - [Lifecycle performance](LIFECYCLE-PERFORMANCE.md): early update/removal diagnostics, measured verification improvements and remaining native workflow gates.
 - [Support](../SUPPORT.md) and [contributing](../CONTRIBUTING.md).
 
