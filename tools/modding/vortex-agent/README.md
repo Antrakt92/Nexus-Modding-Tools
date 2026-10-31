@@ -142,6 +142,12 @@ Old approvals, baselines, attempts and completions are never inherited.
 See the [input and output contract](../../../docs/OWN-LOCAL-BINDER.md) and
 [implementation checklist](../../../docs/LIFECYCLE-IMPLEMENTATION.md).
 
+For a native read capture without packages, use the separate
+[read-capture preparer](../../../docs/READ-CAPTURE-PREPARATION.md). It reconstructs
+one pinned read-only family, omits historical optional diagnostics and leaves
+current-session bindings empty. It does not install an extension or capture a
+running host; code verification is separate from native execution approval.
+
 For reviewed task-owned one-shots, the [installation settlement observer](install-settlement.md)
 provides pinned record/flag checks and specific waiting diagnostics without
 resetting its quiet window for unrelated metadata. It must be copied and pinned
