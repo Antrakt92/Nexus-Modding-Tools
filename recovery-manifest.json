@@ -196,7 +196,7 @@
     },
     {
       "path": "docs/AGENT-WORKFLOW.md",
-      "sha256_lf": "a277793796e0a7b625b948c0114294ff4aac2706fb4a4caa56b7b9520b7058f2"
+      "sha256_lf": "f4bad8a3e9fae0e856c853c02dba68680f1389276539a0dbaf2ad8b0e56e02d6"
     },
     {
       "path": "docs/ARCHIVE-TEMP-CUSTODY.md",
@@ -276,7 +276,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "71e3814f731aacae3b34650fbaa794cc129d40ae48c8d0d6152ca719ae99012d"
+      "sha256_lf": "f54e084ec7d3a67b82b65567cd43f786a82959e2b52326e3b951cc452dbfa469"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -344,11 +344,11 @@
     },
     {
       "path": "docs/NATIVE-SOURCE-ASSEMBLY.md",
-      "sha256_lf": "fd6e473512071f644ea9c40e57605051d223acb4be842e3a7b5da24ce893d93c"
+      "sha256_lf": "1bb9e8efb06d0669d452191dc7883bfc51b37b1806e1aceef804425078e3300d"
     },
     {
       "path": "docs/NATIVE-STAGING-TRANSFER.md",
-      "sha256_lf": "5d029f66775f461f2b8691c078b77d68f93bfe4f66649630dbd8ba1a3fc36504"
+      "sha256_lf": "c738fb9204a6468cd448a71362717d6292f2e7e24d4c4e9c77be486008e09da9"
     },
     {
       "path": "docs/NATIVE-STARTUP-CLEANUP.md",
@@ -951,6 +951,10 @@
       "sha256_lf": "0bbf90ee78730e325c0985002c0bb634313fd4ef09566b40929028fdd7bf76df"
     },
     {
+      "path": "tools/modding/vortex-agent/native-download-settings-patch.test.mjs",
+      "sha256_lf": "16726a11e246bf9fb94e29ef3e1bfa07ba3d98291cb95fa8b77920a4801f2d05"
+    },
+    {
       "path": "tools/modding/vortex-agent/native-download-transfer-cleanup-patch.test.mjs",
       "sha256_lf": "c11efc2729c8278e8be3b002851a8b6d26186e261e81fe32e893dfd7a73e24a8"
     },
@@ -1125,6 +1129,14 @@
     {
       "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/download-pending-transfer-hold.patch",
       "sha256_lf": "cea6745f10bfa18fb0042a624a24cae029dcc8fa57f579c81a6836fc2b330ee9"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/download-settings-ownership.json",
+      "sha256_lf": "0c6024c24488124c30a3ee63d1e49b49d4fc9cbd4a700bb04aa48b30f0978b4f"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/download-settings-ownership.patch",
+      "sha256_lf": "a4d93c88955c680ad18b0697517eaf296d5ca0c168bbd3d41d654b37c5d31ed9"
     },
     {
       "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/download-transfer-cleanup-hold.json",
@@ -1428,15 +1440,15 @@
     },
     {
       "path": "tools/modding/vortex-agent/native-source-series.json",
-      "sha256_lf": "10bdad2475070b457c7c53783aa19aeeead1c4197b98c9ae26aa633819e6eb65"
+      "sha256_lf": "bc9df63da69248276f52fcb198b825aa357c4a4ee9bc6fb161c81c5d8b6d85f2"
     },
     {
       "path": "tools/modding/vortex-agent/native-source-series.mjs",
-      "sha256_lf": "1e8f10835e08cb9116e971f9183fbc35c07b8204b519167415fcdb92e2b9824c"
+      "sha256_lf": "b5d0cfc11a3d91db9a3becd50725d65ef5f1bbbffbba04039eda478b0536570d"
     },
     {
       "path": "tools/modding/vortex-agent/native-source-series.test.mjs",
-      "sha256_lf": "339642beed0239acdafb4c7f07a3d0cb7a4f0d4cacbec5f8ae28e415d3d3d291"
+      "sha256_lf": "c6010626d231d9646c6400b180ad8a5b6ffb8ec056ac484c8970f27d7e85f49f"
     },
     {
       "path": "tools/modding/vortex-agent/native-staging-pending-transfer-patch.test.mjs",

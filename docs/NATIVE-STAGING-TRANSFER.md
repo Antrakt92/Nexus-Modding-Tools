@@ -17,28 +17,34 @@ collisions fail rather than being overwritten or counted as success. This does
 not reserve path ancestors, reject every alias or prove physical file custody.
 Cleanup logging cannot replace the original cleanup failure.
 
-Staging Settings captures the selected paths and active context under the shared
-lifecycle owner before normalization. It rechecks that tuple across awaited
-stages, joins confirmation/reporting dialogs and preserves primary rejection.
+Staging and Downloads Settings capture selected paths and active context under
+the shared lifecycle owner before normalization. They recheck that tuple across
+awaited stages, join confirmation/reporting dialogs and preserve primary rejection.
 These observations cannot prevent an independent writer from changing context
 between checks or undo an already-started transfer.
 
 On a copy failure or cancellation before transfer completion, both Settings
 paths preserve the partial target and pending marker. A copy-complete transfer
 whose source cleanup fails retains the existing policy: commit the new path and
-clear the marker; this is not rollback. The staging and download interrupted-transfer warnings no
-longer offer an automatic whole-folder deletion. Reconciliation is required; no
-new cleanup or marker-reset permission follows from these warnings.
+clear the marker; the failed operation remains held without a rollback claim.
+The staging and download interrupted-transfer warnings no longer offer automatic
+whole-folder deletion. Reconciliation is required; no new cleanup or marker-reset
+permission follows from these warnings.
 
 ## Remaining gates
 
-The download cleanup patch does not add whole-operation ownership to Downloads
-Settings. Its normalization/apply tail and mutable selected path still require a
-separate captured-context/ownership change. Neither Settings patch establishes a
-durable renderer/main persistence acknowledgement. Native admission must also
-reject unresolved transfer markers.
+The new Downloads Settings owner covers the global download pattern, without
+appending an active-game directory. It refuses an existing transfer marker before
+starting, checks dispatch readback, joins tag/elevation/dialog completion and
+retains its own work promise across telemetry failures. Successful copy followed
+by source-cleanup failure commits only the captured destination, clears the
+marker and rejects conservatively.
 
-The runtime packet contains 28 patches for ten original sources. Its exact-file
+Neither Settings owner establishes a durable renderer/main persistence
+acknowledgement, an elevated child terminal or admission for background download
+writers. Native admission must also reject unresolved transfer markers.
+
+The runtime packet contains 29 patches for ten original sources. Its exact-file
 inventory rejects extra files, including the separately pinned upstream test
 adapter. Exact assembly and modeled callback regressions do not prove the full
 renderer build, native filesystem completion, crash recovery or installation.
@@ -49,7 +55,8 @@ The installed application remains separate.
 The five source-backed suites cover joined tails, cancellation, collision refusal,
 staging context/dispatch reentrancy, retained data/markers and read-only warnings.
 They execute pinned source with test-owned filesystem/native facades. All 55
-cases passed, along with 14 graph checks and two test-adapter checks.
+cases and 18 additional Downloads Settings cases passed, along with 14 graph
+checks and two test-adapter checks.
 
 The actual renderer TypeScript and webpack targets also passed. All ten source
 hashes matched the actual Program and bundle source map, with the original
