@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "e8b91b8d7ec36e728d7988e8aa759b22a076b7852a7ed8ee38a5c07d102cde71"
+      "sha256_lf": "5515c19334778cd5cb13217d9b4f5f03cb1c88b74754b0051de45b6e96078702"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -211,6 +211,10 @@
       "sha256_lf": "ac354074344a91ed313d91ed396b1ded8768fc45ca94f97f984fc386aed2c936"
     },
     {
+      "path": "docs/CHILD-TERMINAL-OBSERVER.md",
+      "sha256_lf": "b34967e5b35625e3855debaa614e328dc139ebee34fbf1b5f672cec64222a8fa"
+    },
+    {
       "path": "docs/COLLECTION-DOWNLOADS.md",
       "sha256_lf": "8287bcb9a2d235e20e1341319d049df405786b525aa6c5d11a8c8810e0816ba9"
     },
@@ -268,7 +272,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "527a0a682fcb15578df54b28266c307ccd7c99bcdae5b215731297f9fd0975d3"
+      "sha256_lf": "b738a75e4b763aa481089539cece8da9406baf6d27d2951351b54708922887b9"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -629,6 +633,14 @@
     {
       "path": "tools/modding/vortex-agent/catalog-snapshot.test.mjs",
       "sha256_lf": "def5203c351f16e11cfa9e5df88f2f5e83f34227bc65a17d644b68c238f735c5"
+    },
+    {
+      "path": "tools/modding/vortex-agent/child-terminal-observer.cjs",
+      "sha256_lf": "bb5aa0b3f219b62a0398d60f1c4d52f4768e1deeba2c3bf256cfd0a2143a0e67"
+    },
+    {
+      "path": "tools/modding/vortex-agent/child-terminal-observer.test.cjs",
+      "sha256_lf": "aea526ed07a85cb9920b601fb7980cc1d8fd713aa177e33821d95e94d140b9b9"
     },
     {
       "path": "tools/modding/vortex-agent/collection-downloads.mjs",
