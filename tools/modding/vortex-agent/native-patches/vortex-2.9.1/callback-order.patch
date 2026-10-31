@@ -1,0 +1,145 @@
+--- a/src/renderer/src/extensions/mod_management/InstallManager.ts
++++ b/src/renderer/src/extensions/mod_management/InstallManager.ts
+@@ -995,9 +995,14 @@
+       }
+     });
+ 
+-    // Force cleanup of stuck installations
++    // A prior callback may replace another entry collected in this snapshot.
++    let cleanedCount = 0;
+     stuckInstalls.forEach((install) => {
+       const { installId, modId, callback } = install;
++      if (this.mActiveInstalls.get(installId) !== install) {
++        return;
++      }
++      cleanedCount++;
+       this.mActiveInstalls.delete(installId);
+       try {
+         const timeoutError = new Error(`Installation timed out after ${maxAgeMinutes} minutes`);
+@@ -1027,7 +1032,7 @@
+       }
+     });
+ 
+-    return stuckInstalls.length;
++    return cleanedCount;
+   }
+ 
+   /**
+@@ -1224,29 +1229,52 @@
+     };
+     this.mActiveInstalls.set(installId, installInfo);
+ 
+-    // Wrap callback to ensure proper cleanup and tracking
++    // Notification and bookkeeping failures must not become installer errors.
++    // This callback may outlive its map entry; never modify a replacement job.
++    let callbackDelivered = false;
++    const callbackDiagnostic = (message: string) => {
++      try {
++        log("error", message, { installId });
++      } catch {
++        // Diagnostics must not re-enter destructive install cleanup.
++      }
++    };
+     const trackedCallback = (err: Error, id: string) => {
+-      const activeInstall = this.mActiveInstalls.get(installId);
+-      if (activeInstall) {
+-        activeInstall.modId = id || activeInstall.modId;
+-        if (!err) {
+-          log("info", "Installation completed successfully", {
+-            installId,
+-            modId: id,
+-            duration: Date.now() - activeInstall.startTime,
+-          });
+-          if (id) {
+-            this.markRecentInstall(id, activeInstall.gameId);
++      if (callbackDelivered) {
++        return;
++      }
++      callbackDelivered = true;
++      try {
++        try {
++          const activeInstall = this.mActiveInstalls.get(installId);
++          if (activeInstall === installInfo) {
++            activeInstall.modId = id || activeInstall.modId;
++            if (!err) {
++              log("info", "Installation completed successfully", {
++                installId,
++                modId: id,
++                duration: Date.now() - activeInstall.startTime,
++              });
++              if (id) {
++                this.markRecentInstall(id, activeInstall.gameId);
++              }
++            }
+           }
++        } catch {
++          callbackDiagnostic("InstallManager: completion bookkeeping failed");
+         }
+-      }
+-
+-      // Call the original callback
+-      callback?.(err, id);
+-
+-      // Clean up tracking
+-      this.mActiveInstalls.delete(installId);
++        try {
++          callback?.(err, id);
++        } catch {
++          callbackDiagnostic("InstallManager: completion callback threw");
++        }
++      } finally {
++        if (this.mActiveInstalls.get(installId) === installInfo) {
++          this.mActiveInstalls.delete(installId);
++        }
++      }
+     };
++    installInfo.callback = trackedCallback;
+ 
+     if (archiveId != null) {
+       const download = api.getState().persistent.downloads.files[archiveId];
+@@ -1284,7 +1312,7 @@
+           let tempPath: string;
+           // Use the already-created installation tracking
+           const activeInstall = this.mActiveInstalls.get(installId);
+-          if (!activeInstall) {
++          if (activeInstall !== installInfo) {
+             const error = new Error("Installation tracking lost");
+             trackedCallback(error, undefined);
+             reject(error);
+@@ -1303,7 +1331,7 @@
+           const promiseCallback = (err: Error, id: string) => {
+             // Update the installation info with final details before calling tracked callback
+             const activeInstall = this.mActiveInstalls.get(installId);
+-            if (activeInstall) {
++            if (activeInstall === installInfo) {
+               activeInstall.modId = id || modId;
+               activeInstall.gameId = installGameId || "";
+             }
+@@ -1876,8 +1904,8 @@
+                     }
+                   }
+                   this.setModSize(api, modId, installGameId);
++                  api.events.emit("did-install-mod", installGameId, archiveId, modId, modInfo);
+                   promiseCallback?.(null, modId);
+-                  api.events.emit("did-install-mod", installGameId, archiveId, modId, modInfo);
+                   return null;
+                 })
+                 .catch((err) => {
+@@ -2117,7 +2145,7 @@
+             .then(() => {
+               // Installation completed successfully - the callback should have been called
+               // If we reach here without the callback being called, something went wrong
+-              if (this.mActiveInstalls.has(installId)) {
++              if (this.mActiveInstalls.get(installId) === installInfo) {
+                 log("warn", "Installation completed but callback was not called", {
+                   installId,
+                   modId,
+@@ -2156,7 +2184,7 @@
+             })
+             .catch((unknownErr) => {
+               const installError = unknownToError(unknownErr);
+-              if (this.mActiveInstalls.has(installId)) {
++              if (this.mActiveInstalls.get(installId) === installInfo) {
+                 log("warn", "Installation failed", {
+                   installId,
+                   error: installError.message,

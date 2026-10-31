@@ -16,6 +16,11 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Prepare a Vortex callback patch that prevents callback/bookkeeping exceptions
+  from entering destructive install cleanup, reports success after synchronous
+  event handlers, and preserves replacement tracking entries. Forced timeout
+  cleanup uses the same one-shot notification. This source patch is not installed.
+
 - Prepare an exact-source Vortex 2.9.1 patch for ordinary installation tracking
   collisions and active-source cleanup, with source-backed regression tests.
   The patch is not installed and does not enable MCP installation.

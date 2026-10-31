@@ -16,6 +16,7 @@ is a fallback after an uncertain tracked operation.
 | Archive seal | Nine Windows sharing checks passed; the exact installed extractor binary also extracted the sealed test ZIP with matching payload | Mechanics/binary fixture only; node-7z wrapper, ancestor handoff and crash lifetime remain unproved |
 | Operation data model | Strict tracked-new-disabled plan, canonical identity and bounded event replay | Pure data; no journal writes, native dispatch or installation permission |
 | Ordinary tracking | [Pinned source patch](NATIVE-TRACKING-PATCH.md) and eight source-backed regressions | Prepared only; ordinary tracking separated, dependency keys retained; application/native acceptance pending |
+| Callback safety | [Ordered callback patch](NATIVE-CALLBACK-PATCH.md), one-shot notification and exact tracking ownership | Prepared only; forced debug cleanup is not native termination |
 | Native ownership | No replacement, exclusive owner/path reservation and owned cleanup | Missing from the reviewed ordinary host contract |
 | Native terminal | Callback separated from mandatory hook/cleanup completion | Missing from the reviewed ordinary host contract |
 | Durable executor | One server-owned operation and durable per-effect intents | Not implemented by the data model |
@@ -86,10 +87,9 @@ that no external/native effect occurred. This is not a permit or a liveness API.
 Prepare small independent upstream fixes against the exact source, keeping the
 ordinary MCP install refusal until the combined contract passes native tests:
 
-- Separate ordinary install tracking IDs without breaking collection dependency
-  placeholders, phase accounting or exact-source cleanup.
-- Avoid success-before-hook failure and callback exceptions triggering destructive
-  cleanup. A changed callback order alone still does not prove extractor exit.
+- Validate the prepared ordinary tracking and callback patches in the full
+  application. Their source-derived tests do not prove extractor exit or
+  dependency queue integration.
 - Make final owner/path reservation apply after legacy retargeting too; exclusively
   acquire new directories and refuse cleanup when physical ownership changes.
 - Enforce new-only selection before dependency-ignore, enable and removal paths.

@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "a843b8e57a76da15f8fbf442d2e33a6122fa3175abcda15e4593051ee027be58"
+      "sha256_lf": "6e8bc9165f79acb5f9d2d04468a069788cd09de1ef212499f4dbeed4e92f27c4"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -268,11 +268,15 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "6393c01ee2ba9c356b2b49e01bd5a01fec5c311442e7e3642246f84090bd4bff"
+      "sha256_lf": "2e0b502add0896a58366ed30bedd2eeba02c99c48f6ca5c2f78f94e8f0bfcf11"
     },
     {
       "path": "docs/MAINTENANCE.md",
       "sha256_lf": "690a2a257e3c88efa64e039118d843b2fe161079e0a32b9622da518458a36a7e"
+    },
+    {
+      "path": "docs/NATIVE-CALLBACK-PATCH.md",
+      "sha256_lf": "9410bf3d5fd0fc59dfb1b1ea068494f8b8d4bae8f10ad47fc606e28702a13a29"
     },
     {
       "path": "docs/NATIVE-HELPER-PREPARATION.md",
@@ -300,7 +304,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256_lf": "8ce22509e11cd301ddb49776289df1d39ba68ba84618bd4e01e5a5df913791c0"
+      "sha256_lf": "a4c045d6c389173981c30d59d41f137a728f4cd8167ecbe1bdab619ad4697db0"
     },
     {
       "path": "docs/RESTORE.md",
@@ -735,6 +739,10 @@
       "sha256_lf": "667ee6ab13b120ab01102b69b017ffb5c8dd5d10592f4c8433eb2a5e94fa9d19"
     },
     {
+      "path": "tools/modding/vortex-agent/native-callback-patch.test.mjs",
+      "sha256_lf": "056b6301fc8d478e7d8df8f8f08d86dd37a996eda4fa4b3cafac115980cdead0"
+    },
+    {
       "path": "tools/modding/vortex-agent/native-conflicts.test.mjs",
       "sha256_lf": "9c50555d82f0699ee8926f155cd28d5bf2e49efb3a6b4debbc8fa2f27512ccb6"
     },
@@ -771,6 +779,18 @@
       "sha256_lf": "6b5c4075de0d3075dad391acb817a4a5f9bf68107ba51e1561ff6b53725b88dc"
     },
     {
+      "path": "tools/modding/vortex-agent/native-patch-test-fixture.mjs",
+      "sha256_lf": "7187fff854ba3c4dd1c54e7f6a2c7826d01c9236388975dc3abe63f9bb73a3db"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/callback-order.json",
+      "sha256_lf": "4cf07ecebdb120cd491eca85e5d299452ab29a06e06cb734221fcf043b1ab395"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/callback-order.patch",
+      "sha256_lf": "1b71e5d6c03180f70efda2e9658759c784fd817fac709c054fc6503984cd6f02"
+    },
+    {
       "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/ordinary-tracking.json",
       "sha256_lf": "13c4fc09d1705c922360736f64f6b16caf2d780dd876a8f80ea0581d12448874"
     },
@@ -780,7 +800,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/native-tracking-patch.test.mjs",
-      "sha256_lf": "e0e0f6b83c6a99d659deb42efdbec5bab0a72bcb70e9907794a6c7fb228cf1b1"
+      "sha256_lf": "24fdd187bb413687757db7675c605413a1e77133e015bed03709f018c460883d"
     },
     {
       "path": "tools/modding/vortex-agent/own-helper-binder.mjs",

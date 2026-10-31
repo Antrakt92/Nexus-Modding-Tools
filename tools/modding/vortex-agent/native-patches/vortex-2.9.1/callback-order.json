@@ -1,0 +1,31 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/extensions/mod_management/InstallManager.ts",
+  "originalSourceSHA256": "577d56a8728052069f850face9bb57437dbf2886bd41409fe6a66cfefc08ed33",
+  "prerequisitePatch": "ordinary-tracking.patch",
+  "prerequisitePatchSHA256": "c9d5711ac1c5ce3e8c01aebc9f4ffcc0c5fa5640da189753b34e3178e9205af3",
+  "inputSHA256": "3a82d810f47409332262b204f4cde3ff11e7cbf0acbc9036715048a25594a050",
+  "outputSHA256": "aa5ddf4543ca55d235eb235e9aec7e467aebf8dbff89e0ec03bf52c3d3b583bb",
+  "patchSHA256": "1b71e5d6c03180f70efda2e9658759c784fd817fac709c054fc6503984cd6f02",
+  "scope": "Deliver one synchronous completion callback after synchronous did-install-mod; isolate notification/bookkeeping errors; preserve tracking-entry ownership and route forced-clean notifications through the same one-shot callback.",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "nativeTerminalGuarantee": false,
+  "noReplacementGuarantee": false,
+  "importNoClobberGuarantee": false,
+  "ownerReservationGuarantee": false,
+  "testSourceEnvironment": "VORTEX_NATIVE_INSTALL_MANAGER",
+  "limitations": [
+    "Must follow the exact ordinary-tracking prerequisite; no installed application or upstream cache is modified.",
+    "Success callback follows synchronous did-install-mod emission, not asynchronous event work or the native pipeline finally.",
+    "Legacy callback arguments and native-error promise settlement are unchanged; asynchronous callback return values are not awaited.",
+    "ArchiveBroken/FOMOD missing-callback recovery for the exact owned tracking entry is unchanged and is not a terminal or success proof.",
+    "No constructor, extraction, native install dispatch, filesystem deletion, or full dependency pipeline is executed by the isolated source-derived tests.",
+    "Destination/temp ownership, no replacement, import collision, and full native terminal contracts remain unproven.",
+    "Forced cleanup only removes the exact tracking record and delivers a timeout notification; native work may still run and complete afterward."
+  ]
+}
