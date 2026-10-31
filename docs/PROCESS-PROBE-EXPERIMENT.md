@@ -11,7 +11,8 @@ enumeration. No process names are written to the report.
    invocation. Keep startup observations, subprocess wall and complete iteration
    wall separate. The latter includes executable generation checks and parsing.
 2. Define an independent bounded process-only request/reply contract.
-3. Build and test a separate Rust CLI, then compare alternating backend calls.
+3. Build and test the [separate Rust CLI](../tools/modding/native-process-probe/README.md),
+   then compare alternating backend calls.
 4. Review faults, packaging, native acceptance and rollout before any opt-in
    adapter integration. No current command selects a new guard backend.
 5. Consider a separate observational file-inspector only after this experiment;

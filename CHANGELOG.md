@@ -16,6 +16,10 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Add an isolated Rust process-snapshot prototype with pinned build inputs,
+  bounded request/output and independent native contract tests. It is not
+  packaged with Vortex or selected by the resident guard.
+
 - Add an explicit read-only process-guard benchmark and a bounded native snapshot
   data contract. Keep startup, full invocation and batch-control measurements
   separate; the resident guard and supported operations are unchanged.
