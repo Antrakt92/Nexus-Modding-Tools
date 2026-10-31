@@ -276,7 +276,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "abb8e37cc5b0635fb674f430a02bfdb7a6bbd36c6c9f2807143e0d54f22e2394"
+      "sha256_lf": "f7494bc8c0358050e0bc86cfec5c25d921e9ccbf683bf93f5b4d8ad08ca7352e"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -288,7 +288,7 @@
     },
     {
       "path": "docs/NATIVE-ADOPTION-BOUNDARY.md",
-      "sha256_lf": "00ccec2792b3147caefccb006d448fa435472f11d72523ebdc998b43b1841c8c"
+      "sha256_lf": "cca605ba1466e4985b26b7853c7027714437e311e85e214838686b0b45db28df"
     },
     {
       "path": "docs/NATIVE-CALLBACK-PATCH.md",
@@ -336,7 +336,7 @@
     },
     {
       "path": "docs/NATIVE-PERSISTENCE-BARRIER.md",
-      "sha256_lf": "f30d3bdec7d34324e48bb0e8936953dd2699732c2c980042e6cc082a868ab8e0"
+      "sha256_lf": "e6e3269d76ad85cdecd39b25e6973a511bfaf76ef325a57b6edf07bd9ed66851"
     },
     {
       "path": "docs/NATIVE-PREFLIGHT.md",
@@ -911,6 +911,14 @@
       "sha256_lf": "667ee6ab13b120ab01102b69b017ffb5c8dd5d10592f4c8433eb2a5e94fa9d19"
     },
     {
+      "path": "tools/modding/vortex-agent/native-backend-reservation-admission.test.mjs",
+      "sha256_lf": "99381b9e6a68477454f143a9b62eebf57a3ab05323405dce4922c701ea8c300a"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-backend-write-admission.test.mjs",
+      "sha256_lf": "4fa5d6448467062984cda2975f9890114325b835eefb33cacca1642df31d5ea3"
+    },
+    {
       "path": "tools/modding/vortex-agent/native-callback-patch.test.mjs",
       "sha256_lf": "bf12b7fd8e1e06d9278f3eebad026c65fef3de6cc93d84e21b4442789e7e841a"
     },
@@ -1345,6 +1353,22 @@
     {
       "path": "tools/modding/vortex-agent/native-patches/vortex-persistence-2.9.1/acknowledged-packet.patch",
       "sha256_lf": "879ad8234776f01f7128da73953b4de911df2f0c22765df8c33384f0ede68a70"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-persistence-2.9.1/backend-reservation-admission.json",
+      "sha256_lf": "e3b0ef9c6b412caa23fb0eb8800e2fa8087bd7cc62c7c169c022ade9dbf741d2"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-persistence-2.9.1/backend-reservation-admission.patch",
+      "sha256_lf": "c44d679ade390fef8cec0ce7d5438ef72243e499d9ccc7cdca1f21d255a2a59c"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-persistence-2.9.1/backend-write-admission.json",
+      "sha256_lf": "086cab156be71f0a85fcc1114cbd9aa99683ea972b88a109025d23cfc2de3ada"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-persistence-2.9.1/backend-write-admission.patch",
+      "sha256_lf": "9cdf70626318a53bb92dc467e056274efa83a60dcec65ea3d7067de403dedca3"
     },
     {
       "path": "tools/modding/vortex-agent/native-patches/vortex-persistence-2.9.1/batch-acknowledgement.json",

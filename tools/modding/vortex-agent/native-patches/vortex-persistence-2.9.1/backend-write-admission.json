@@ -1,0 +1,26 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/main/src/store/LevelPersist.ts",
+  "prerequisitePatch": "new-mod-conflict-query.patch",
+  "prerequisitePatchSHA256": "5c77c9092b375508450d5a783518b7fb1006d5352af68054227536ab7d2b765f",
+  "inputSHA256": "789e8cc72682d65def311535ce20d36d4fc992cd01cdb0f9b58084696848f7e0",
+  "outputSHA256": "f26dc362445ea63ad6df32a9c6c1cd67a8c8490005b161c0e4186bd157b38487",
+  "patchSHA256": "9cdf70626318a53bb92dc467e056274efa83a60dcec65ea3d7067de403dedca3",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "globalSQLIsolationVerified": false,
+  "powerLossPersistenceVerified": false,
+  "releaseSupported": false,
+  "limitations": [
+    "Lifetime hold blocks all KV writes on this LevelPersist, including unrelated keys; no release or registration.",
+    "Already-started intents drain; active or pending transactions refuse admission while legacy COMMIT/ROLLBACK may settle.",
+    "Any prior raw connection exposure refuses permanently; cached Table/View capabilities are not revoked.",
+    "QueryRegistry, other DuckDBSingleton connections and raw SQL capabilities outside this instance remain separate gates.",
+    "No OS/power-loss durability, native host, global SQL isolation or installation permit."
+  ]
+}

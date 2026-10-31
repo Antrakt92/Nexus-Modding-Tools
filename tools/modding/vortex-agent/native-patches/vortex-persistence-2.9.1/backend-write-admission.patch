@@ -1,0 +1,324 @@
+--- a/src/main/src/store/LevelPersist.ts
++++ b/src/main/src/store/LevelPersist.ts
+@@ -112,2 +112,9 @@
+   #mInTransaction: boolean = false;
++  #mNativeWriteHold: { owner: object; phase: "pending" | "reserved" | "held" } | undefined;
++  #mNativeActive = 0;
++  #mNativeTransactionPending = 0;
++  #mNativeWriteFailed = false;
++  #mNativeCloseAttempted = false;
++  #mNativeRawExposed = false;
++  #mNativeDrain: (() => void) | undefined;
+ 
+@@ -123,2 +130,8 @@
+   public get connection(): DuckDBConnection {
++    if (this.#mNativeWriteHold !== undefined) {
++      this.#mNativeWriteHold.phase = "held";
++      throw new Error("NATIVE_BACKEND_WRITE_HELD");
++    }
++    // Cached Table/View/raw SQL capabilities cannot subsequently be revoked.
++    this.#mNativeRawExposed = true;
+     return this.#mConnection;
+@@ -128,2 +141,80 @@
+     return this.#mInTransaction;
++  }
++
++  /** Internal lifetime hold of this connection's writers, never a SQL permit. */
++  public reserveNativeBackendWrites(): Promise<object> {
++    if (this.#mNativeWriteHold !== undefined) return Promise.reject(new Error("NATIVE_BACKEND_WRITE_REFUSED"));
++    const hold = { owner: Object.freeze({}), phase: "pending" as "pending" | "reserved" | "held" };
++    this.#mNativeWriteHold = hold;
++    if (this.#mNativeWriteFailed || this.#mNativeRawExposed || this.#mNativeCloseAttempted
++        || this.#mInTransaction || this.#mNativeTransactionPending !== 0) hold.phase = "held";
++    const drained = this.#mNativeActive === 0 ? Promise.resolve() : new Promise<void>((resolve) => {
++      this.#mNativeDrain = resolve;
++    });
++    return drained.then(() => {
++      if (hold.phase !== "pending" || this.#mNativeActive !== 0 || this.#mNativeIneligible()) {
++        hold.phase = "held";
++        throw new Error("NATIVE_BACKEND_WRITE_HELD");
++      }
++      hold.phase = "reserved";
++      return hold.owner;
++    }, (err) => {
++      hold.phase = "held";
++      throw err;
++    });
++  }
++
++  public checkNativeBackendWriteOwner(owner: object): void {
++    const hold = this.#mNativeWriteHold;
++    if (hold === undefined || owner !== hold.owner || hold.phase !== "reserved") {
++      throw new Error("NATIVE_BACKEND_WRITE_REFUSED");
++    }
++    if (this.#mNativeActive !== 0 || this.#mNativeIneligible()) {
++      hold.phase = "held";
++      throw new Error("NATIVE_BACKEND_WRITE_HELD");
++    }
++  }
++
++  public getNativeBackendWriteStatus() {
++    return Object.freeze({ phase: this.#mNativeWriteHold?.phase ?? "not_reserved",
++      activeIntents: this.#mNativeActive, transactionPending: this.#mNativeTransactionPending,
++      inTransaction: this.#mInTransaction, writeFailureObserved: this.#mNativeWriteFailed,
++      closeAttempted: this.#mNativeCloseAttempted, rawConnectionExposed: this.#mNativeRawExposed,
++      effectsAllowed: false, installationPermit: false, globalSQLIsolationVerified: false,
++      releaseSupported: false });
++  }
++
++  #mNativeIneligible(): boolean {
++    return this.#mNativeWriteFailed || this.#mNativeRawExposed || this.#mNativeCloseAttempted
++      || this.#mInTransaction || this.#mNativeTransactionPending !== 0;
++  }
++
++  private async nativeBackendIntent<T>(
++    kind: "write" | "begin" | "terminal" | "close", operation: () => Promise<T>,
++  ): Promise<T> {
++    const hold = this.#mNativeWriteHold;
++    if (hold !== undefined) {
++      // Existing transactions must still be allowed to COMMIT/ROLLBACK. This is
++      // cleanup only: transaction activity has already permanently held admission.
++      hold.phase = "held";
++      if (kind !== "terminal" || !this.#mInTransaction) throw new Error("NATIVE_BACKEND_WRITE_HELD");
++    }
++    this.#mNativeActive++;
++    if (kind === "begin" || kind === "terminal") this.#mNativeTransactionPending++;
++    if (kind === "close") this.#mNativeCloseAttempted = true;
++    try {
++      return await operation();
++    } catch (err) {
++      this.#mNativeWriteFailed = true;
++      if (this.#mNativeWriteHold !== undefined) this.#mNativeWriteHold.phase = "held";
++      throw err;
++    } finally {
++      if (kind === "begin" || kind === "terminal") this.#mNativeTransactionPending--;
++      this.#mNativeActive--;
++      if (this.#mNativeActive === 0 && this.#mNativeDrain !== undefined) {
++        const resolve = this.#mNativeDrain;
++        this.#mNativeDrain = undefined;
++        resolve();
++      }
++    }
+   }
+@@ -146,20 +237,28 @@
+     }
++    let operationFailed = false;
+     try {
+       return await op();
++    } catch (err) {
++      operationFailed = true;
++      throw err;
+     } finally {
+-      const elapsedMs = Date.now() - start;
+-      if (trace) {
+-        log("debug", "level_pivot Write exit", {
+-          method,
+-          alias: this.#mAlias,
+-          count,
+-          elapsedMs,
+-        });
+-      } else if (elapsedMs > SLOW_WRITE_THRESHOLD_MS) {
+-        log("warn", "level_pivot slow Write", {
+-          method,
+-          alias: this.#mAlias,
+-          count,
+-          elapsedMs,
+-        });
++      try {
++        const elapsedMs = Date.now() - start;
++        if (trace) {
++          log("debug", "level_pivot Write exit", {
++            method,
++            alias: this.#mAlias,
++            count,
++            elapsedMs,
++          });
++        } else if (elapsedMs > SLOW_WRITE_THRESHOLD_MS) {
++          log("warn", "level_pivot slow Write", {
++            method,
++            alias: this.#mAlias,
++            count,
++            elapsedMs,
++          });
++        }
++      } catch (reportError) {
++        if (!operationFailed) throw reportError;
+       }
+@@ -169,3 +268,5 @@
+   public async close(): Promise<void> {
+-    await DuckDBSingleton.getInstance().detachDatabase(this.#mAlias);
++    return this.nativeBackendIntent("close", async () => {
++      await DuckDBSingleton.getInstance().detachDatabase(this.#mAlias);
++    });
+   }
+@@ -266,20 +367,22 @@
+   public async setItem(statePath: string[], newState: string | null): Promise<void> {
+-    // No internal BEGIN/COMMIT here. The previous implementation issued
+-    // three statements (SELECT-then-UPDATE-or-INSERT) and self-wrapped in a
+-    // transaction to keep them atomic against concurrent writers to the
+-    // same key. The new shape is a single statement - raw-mode level_pivot
+-    // tables have no UNIQUE constraint and the Sink unconditionally calls
+-    // batch.put, so plain INSERT already overwrites an existing row, and
+-    // DuckDB's auto-commit makes a one-statement INSERT atomic on its own.
+-    // Pinned by the upsert tests in the level_pivot extension's
+-    // level_pivot.test. Callers that need to batch multiple setItem /
+-    // removeItem calls atomically wrap them in beginTransaction /
+-    // commitTransaction explicitly (see ReduxPersistorIPC.processOperations
+-    // and Application.importBackup).
+-    await this.timedWrite("setItem", 1, () =>
+-      this.#mConnection.run(`INSERT INTO ${this.#mAlias}.kv VALUES ($1, $2)`, [
+-        statePath.join(SEPARATOR),
+-        newState,
+-      ]),
+-    );
++    return this.nativeBackendIntent("write", async () => {
++      // No internal BEGIN/COMMIT here. The previous implementation issued
++      // three statements (SELECT-then-UPDATE-or-INSERT) and self-wrapped in a
++      // transaction to keep them atomic against concurrent writers to the
++      // same key. The new shape is a single statement - raw-mode level_pivot
++      // tables have no UNIQUE constraint and the Sink unconditionally calls
++      // batch.put, so plain INSERT already overwrites an existing row, and
++      // DuckDB's auto-commit makes a one-statement INSERT atomic on its own.
++      // Pinned by the upsert tests in the level_pivot extension's
++      // level_pivot.test. Callers that need to batch multiple setItem /
++      // removeItem calls atomically wrap them in beginTransaction /
++      // commitTransaction explicitly (see ReduxPersistorIPC.processOperations
++      // and Application.importBackup).
++      await this.timedWrite("setItem", 1, () =>
++        this.#mConnection.run(`INSERT INTO ${this.#mAlias}.kv VALUES ($1, $2)`, [
++          statePath.join(SEPARATOR),
++          newState,
++        ]),
++      );
++    });
+   }
+@@ -296,9 +399,11 @@
+   public async removeItem(statePath: string[]): Promise<void> {
+-    const key = statePath.join(SEPARATOR);
+-    await this.timedWrite("removeItem", 1, () =>
+-      this.#mConnection.run(
+-        `DELETE FROM ${this.#mAlias}.kv WHERE key = $1 OR starts_with(key, $2)`,
+-        [key, `${key}${SEPARATOR}`],
+-      ),
+-    );
++    return this.nativeBackendIntent("write", async () => {
++      const key = statePath.join(SEPARATOR);
++      await this.timedWrite("removeItem", 1, () =>
++        this.#mConnection.run(
++          `DELETE FROM ${this.#mAlias}.kv WHERE key = $1 OR starts_with(key, $2)`,
++          [key, `${key}${SEPARATOR}`],
++        ),
++      );
++    });
+   }
+@@ -312,18 +417,20 @@
+   public async bulkSetItem(items: ReadonlyArray<{ key: string[]; value: string }>): Promise<void> {
+-    if (items.length === 0) {
+-      return;
+-    }
+-    // Build "VALUES ($1, $2), ($3, $4), ..." with positional params.
+-    const placeholders: string[] = [];
+-    const params: string[] = [];
+-    for (const [i, item] of items.entries()) {
+-      placeholders.push(`($${2 * i + 1}, $${2 * i + 2})`);
+-      params.push(item.key.join(SEPARATOR), item.value);
+-    }
+-    await this.timedWrite("bulkSetItem", items.length, () =>
+-      this.#mConnection.run(
+-        `INSERT INTO ${this.#mAlias}.kv VALUES ${placeholders.join(", ")}`,
+-        params,
+-      ),
+-    );
++    return this.nativeBackendIntent("write", async () => {
++      if (items.length === 0) {
++        return;
++      }
++      // Build "VALUES ($1, $2), ($3, $4), ..." with positional params.
++      const placeholders: string[] = [];
++      const params: string[] = [];
++      for (const [i, item] of items.entries()) {
++        placeholders.push(`($${2 * i + 1}, $${2 * i + 2})`);
++        params.push(item.key.join(SEPARATOR), item.value);
++      }
++      await this.timedWrite("bulkSetItem", items.length, () =>
++        this.#mConnection.run(
++          `INSERT INTO ${this.#mAlias}.kv VALUES ${placeholders.join(", ")}`,
++          params,
++        ),
++      );
++    });
+   }
+@@ -338,17 +445,19 @@
+   public async bulkRemoveItem(keys: ReadonlyArray<string[]>): Promise<void> {
+-    if (keys.length === 0) {
+-      return;
+-    }
+-    const clauses: string[] = [];
+-    const params: string[] = [];
+-    for (const [i, keyParts] of keys.entries()) {
+-      const exact = 2 * i + 1;
+-      const prefix = 2 * i + 2;
+-      clauses.push(`key = $${exact} OR starts_with(key, $${prefix})`);
+-      const key = keyParts.join(SEPARATOR);
+-      params.push(key, `${key}${SEPARATOR}`);
+-    }
+-    await this.timedWrite("bulkRemoveItem", keys.length, () =>
+-      this.#mConnection.run(`DELETE FROM ${this.#mAlias}.kv WHERE ${clauses.join(" OR ")}`, params),
+-    );
++    return this.nativeBackendIntent("write", async () => {
++      if (keys.length === 0) {
++        return;
++      }
++      const clauses: string[] = [];
++      const params: string[] = [];
++      for (const [i, keyParts] of keys.entries()) {
++        const exact = 2 * i + 1;
++        const prefix = 2 * i + 2;
++        clauses.push(`key = $${exact} OR starts_with(key, $${prefix})`);
++        const key = keyParts.join(SEPARATOR);
++        params.push(key, `${key}${SEPARATOR}`);
++      }
++      await this.timedWrite("bulkRemoveItem", keys.length, () =>
++        this.#mConnection.run(`DELETE FROM ${this.#mAlias}.kv WHERE ${clauses.join(" OR ")}`, params),
++      );
++    });
+   }
+@@ -360,4 +469,6 @@
+   public async beginTransaction(): Promise<void> {
+-    await this.#mConnection.run("BEGIN TRANSACTION");
+-    this.#mInTransaction = true;
++    return this.nativeBackendIntent("begin", async () => {
++      await this.#mConnection.run("BEGIN TRANSACTION");
++      this.#mInTransaction = true;
++    });
+   }
+@@ -368,7 +479,9 @@
+   public async commitTransaction(): Promise<void> {
+-    try {
+-      await this.#mConnection.run("COMMIT");
+-    } finally {
+-      this.#mInTransaction = false;
+-    }
++    return this.nativeBackendIntent("terminal", async () => {
++      try {
++        await this.#mConnection.run("COMMIT");
++      } finally {
++        this.#mInTransaction = false;
++      }
++    });
+   }
+@@ -379,7 +492,9 @@
+   public async rollbackTransaction(): Promise<void> {
+-    try {
+-      await this.#mConnection.run("ROLLBACK");
+-    } finally {
+-      this.#mInTransaction = false;
+-    }
++    return this.nativeBackendIntent("terminal", async () => {
++      try {
++        await this.#mConnection.run("ROLLBACK");
++      } finally {
++        this.#mInTransaction = false;
++      }
++    });
+   }
