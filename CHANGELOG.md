@@ -17,6 +17,10 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Add an internal passive child-resource observer with status independent of
+  caller promises. It waits for consistent child and pipe close observations;
+  cancellation or a timeout cannot manufacture completion. Native installation
+  and cleanup permissions remain unavailable.
 - Prepare an extractor error-settlement patch that retains the first failure
   and waits for the exact child to close before rejecting, including stream
   errors and asynchronous cancel failures. Failed kill requests cannot report
