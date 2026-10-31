@@ -1,0 +1,19 @@
+[package]
+name = "vortex-native-process-probe"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.99"
+publish = false
+license = "GPL-3.0-only"
+description = "Isolated read-only Windows process snapshot experiment"
+
+[dependencies]
+serde = { version = "=1.0.229", default-features = false, features = ["std"] }
+serde_json = "=1.0.154"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_System_Diagnostics_ToolHelp"] }
+
+[profile.release]
+panic = "abort"
+strip = true

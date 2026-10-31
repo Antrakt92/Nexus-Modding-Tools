@@ -13,6 +13,7 @@ MIT-licensed replacement for the upstream Vortex MCP project.
 | MCP core/server/Node runtime packages | Model Context Protocol maintainers | Apache-2.0; full terms and attribution retained in runtime notices |
 | Hono, Node server adapter and Zod | Their respective maintainers | MIT; copyright and permission notices retained in runtime notices |
 | pnpm build tool | pnpm contributors | MIT; bootstrap source, exact integrity and local-only use recorded in `PNPM-BOOTSTRAP.json` |
+| Experimental Rust process probe | Own source; Microsoft windows-rs and serde-rs dependencies | Own GPL-3.0-only source; dependency pins/licenses in [the prototype review](../tools/modding/native-process-probe/DEPENDENCIES.md); no binary distributed by this source change |
 
 The adapter's runtime notices are in
 [THIRD-PARTY-NOTICES.md](../dependencies/vortex-mcp/THIRD-PARTY-NOTICES.md).

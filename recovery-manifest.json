@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "db51270a33fa4df008008fb82db9d5e9cd00c10c8ef33d11c2fe377e8af1fa61"
+      "sha256_lf": "00329c187e46a9b8a86b76edf0d7e92a907f6a029c15e41cf9f656237b4cd1f0"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -252,7 +252,7 @@
     },
     {
       "path": "docs/LICENSES.md",
-      "sha256_lf": "6a88d991908f3391430e955c5b6194e8ce2cf32199c679e36dd454ec3962ae2b"
+      "sha256_lf": "e4d84ea2c0fe55bd3b00a1e401959b2a60b0f6626bc7cd8cd7e284bd5d519090"
     },
     {
       "path": "docs/LIFECYCLE-IMPLEMENTATION.md",
@@ -312,7 +312,7 @@
     },
     {
       "path": "docs/PROCESS-PROBE-EXPERIMENT.md",
-      "sha256_lf": "d0f876f22a49d33c8b1c212e46d4501fd6caf0df857caae978a01620799aafa6"
+      "sha256_lf": "f4565e763a2e13448df6a100a6a7b6f94b0a91561e70fc55c96177171305b383"
     },
     {
       "path": "docs/README.md",
@@ -437,6 +437,30 @@
     {
       "path": "tools/modding/decompile_pristine.py",
       "sha256_lf": "61e62f96bd8968e560c7f97e7637a5c3bf9091e6bf58dd4ebe4d068ea9209136"
+    },
+    {
+      "path": "tools/modding/native-process-probe/Cargo.lock",
+      "sha256_lf": "54898355caee129a1db22e509fe3679587204c7befce1c3d96d5fddcd96fe9c7"
+    },
+    {
+      "path": "tools/modding/native-process-probe/Cargo.toml",
+      "sha256_lf": "a0b91418997635485c5cbe58372fbc0bc474acdebecb18fdbebb3f334ac00004"
+    },
+    {
+      "path": "tools/modding/native-process-probe/DEPENDENCIES.md",
+      "sha256_lf": "1cc220f036339643e4e80679b3f184cc7eb71e75c78ea07381d39deb1b35543c"
+    },
+    {
+      "path": "tools/modding/native-process-probe/README.md",
+      "sha256_lf": "787cd18666768cbd06eadb862f9c0b06e4842fd5a59c3ad0ced611e151397fbc"
+    },
+    {
+      "path": "tools/modding/native-process-probe/rust-toolchain.toml",
+      "sha256_lf": "1b11060bf806dd545f55d7fa552d43ef4b12225d07ec404197d2912c4ae71821"
+    },
+    {
+      "path": "tools/modding/native-process-probe/src/main.rs",
+      "sha256_lf": "a1a2d26a4eef097e183c3598c9d92f4f0f04b85eb7eb4d00e507fbd1ab99b082"
     },
     {
       "path": "tools/modding/nexus-cli/README.md",
@@ -929,6 +953,10 @@
     {
       "path": "tools/modding/vortex-agent/process-probe-contract.test.cjs",
       "sha256_lf": "822331329dc3e373ed1c73072a6ec5c00d389a6458ee7a0d7e02ae987498b467"
+    },
+    {
+      "path": "tools/modding/vortex-agent/process-probe-native.test.mjs",
+      "sha256_lf": "6623babca0edcc97dabaa92aeab1c2c3e8a9b1177966b29b366c939d917cb8a3"
     },
     {
       "path": "tools/modding/vortex-agent/receipts.cjs",
