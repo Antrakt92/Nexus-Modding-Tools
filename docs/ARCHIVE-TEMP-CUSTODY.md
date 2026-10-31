@@ -19,9 +19,17 @@ size, hash and metadata, then exclusively creates the temporary root. An
 existing root is refused. Compressed input is bounded to 64 MiB. This component
 checks bytes and custody, not ZIP format or admissible archive contents.
 
-The trusted caller must separately seal its actual extractor owner and observe
-the actual child and pipes before calling `begin_transfer(destination_parent,
-parent_identity, new_leaf)`. That method rechecks archive custody and returns an
+The lease can create one [fixed 7z process owner](OWNED-EXTRACTOR-PROCESS.md) or
+one [ZIP decoder](OWNED-ZIP-EXTRACTOR.md). The factories share a single attempt:
+failure or cancellation cannot switch backends or fall back to external work.
+Handoff requires that original owner's verified completion and explicit close.
+The ZIP decoder keeps its created output handles in the parent lease through
+transfer; its completion does not claim a child process or pipe observations.
+
+Only legacy callers that never attempt a factory retain the separate obligation
+to seal their actual extractor and observe its child and pipes before calling
+`begin_transfer(destination_parent, parent_identity, new_leaf)`.
+That method rechecks archive custody and returns an
 already acquired `OwnedFileTransfer`. It borrows the original temporary-root
 handle without closing or reopening its path. Only one borrow is allowed.
 It does not accept JSON terminal assertions or export raw handles.

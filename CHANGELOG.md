@@ -17,6 +17,9 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Add an internal ZIP backend that creates outputs exclusively and keeps their
+  original handles through transfer. Unsupported archives and existing outputs
+  refuse without an overwrite or extractor fallback; MCP installation stays disabled.
 - Add an internal fixed extractor process owner with shared handle custody,
   sticky cancellation, bounded pipe polling and terminal-gated handoff. It is
   not connected to the MCP installation operation.
