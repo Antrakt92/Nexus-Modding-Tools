@@ -16,6 +16,10 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Add an alternating PowerShell/native process-probe comparison with full-call
+  timings and strict reply/exit checks. Record local component measurements
+  without claiming a live installation or renderer speedup.
+
 - Add an isolated Rust process-snapshot prototype with pinned build inputs,
   bounded request/output and independent native contract tests. It is not
   packaged with Vortex or selected by the resident guard.

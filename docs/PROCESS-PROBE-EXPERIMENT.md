@@ -80,6 +80,52 @@ parsed JSON document cannot establish that the helper exited or the game stopped
 Two sequential live snapshots can differ; tests must compare known controlled
 processes and guard decisions rather than demand identical complete lists.
 
+## Alternating native comparison
+
+Build the isolated CLI first, then supply its reviewed absolute path and raw pin:
+
+```powershell
+node tools/modding/vortex-agent/process-probe-compare.mjs --binary 'F:/YourWorkspace/local-state/native-process-probe-target/release/vortex-native-process-probe.exe' --sha256 'REVIEWED_64_HEX_SHA256' --samples 40
+# Add --run only after reviewing the plan and the actual local build.
+```
+
+The literal pin placeholder must be replaced; it is deliberately invalid. The
+default command plans without launching a process. `--run` performs alternating
+PowerShell/native then native/PowerShell pairs. Both initial pairs are retained
+separately. Each call verifies executable generation, binds the native request
+ID, checks exit/EOF/stderr and parses the complete bounded response. No process
+names are retained. Both initial executable SHA admissions are reported separately
+and included in total comparison time, not individual iteration times.
+
+### Sequential local run — 31 October 2026
+
+One 40-pair run on Windows x64/Node 24.20.0, without another root-agent test suite
+running concurrently, observed:
+
+| Full iteration | PowerShell | Rust Toolhelp prototype |
+| --- | ---: | ---: |
+| Median | 293.85 ms | 50.88 ms |
+| Empirical p95 | 310.16 ms | 72.68 ms |
+| Maximum | 321.01 ms | 80.15 ms |
+| First observed call in this comparison | 671.69 ms | 58.43 ms |
+
+The complete comparison launched 84 read-only processes and took 15.07 seconds.
+The local release binary was 238,080 bytes, raw SHA-256
+`dd079e5998a3d0098e2db02f0a72aa82beb24f0b776680506e82003bd6a40a07`.
+It is not a published asset. An earlier exploratory run overlapped tests during
+part of its window; the table uses the subsequent sequential run instead.
+
+This supports a repeatable component improvement over the current one-shot
+PowerShell route on this host. It does not isolate language from API/startup
+differences or establish total installation speed, renderer frame latency, peak
+RSS, clean-machine acceptance or the best persistent-worker design. First
+observed calls here follow prior tests and executable hashing; they are not cold
+OS-cache or first-download measurements. Background host activity was not disabled.
+
+The current Rust executable still imports `VCRUNTIME140.dll`. Distribution and
+runtime integration remain separate gates. The existing batch control also shows
+that interpreter reuse deserves comparison before selecting a permanent backend.
+
 ## Acceptance before integration
 
 Require repeatable full-call improvement beyond measured variability, all
