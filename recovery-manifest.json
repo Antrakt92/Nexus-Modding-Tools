@@ -268,7 +268,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "b914d77a939305930cc383d31fecf9032443aca7b7af3ff2559cf44ed11acd15"
+      "sha256_lf": "5117f23d59cf1ad56d28a434abdf091762615254ef7a3bb9e9f464549e4782df"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -281,6 +281,10 @@
     {
       "path": "docs/NATIVE-CALLBACK-PATCH.md",
       "sha256_lf": "23b9e8128d7f88e8d67ec050117b172e28b4911c323c13ff67aead8dd0ab6b85"
+    },
+    {
+      "path": "docs/NATIVE-DISPATCH-CONTRACT.md",
+      "sha256_lf": "8d5f7b9875326c5079e16eba0a05e6f6d5317705bffce170ab156a025c1f8d81"
     },
     {
       "path": "docs/NATIVE-HELPER-PREPARATION.md",
@@ -308,7 +312,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256_lf": "a6313878c13c37e09074586269db09c1a53827b8944d49384b8b9466a876226c"
+      "sha256_lf": "374afd222b4450b0c673f43c42076ff302adf62a03a54833c368a1951fd9d63d"
     },
     {
       "path": "docs/RESTORE.md",
