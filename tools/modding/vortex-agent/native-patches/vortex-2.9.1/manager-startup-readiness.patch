@@ -1,0 +1,102 @@
+--- a/src/renderer/src/extensions/mod_management/index.ts
++++ b/src/renderer/src/extensions/mod_management/index.ts
+@@ -164,4 +164,69 @@
+ let installManager: InstallManager;
+ 
++interface NativeManagerStartupAttempt {
++  owner: object;
++  api: IExtensionApi;
++  store?: Redux.Store<IState>;
++  manager?: InstallManager;
++  completion: Promise<void>;
++  settle: () => void;
++  held: boolean;
++  ready: boolean;
++}
++let nativeManagerStartup: NativeManagerStartupAttempt | undefined;
++
++function holdNativeManagerStartup(attempt: NativeManagerStartupAttempt): void {
++  attempt.held = true;
++  attempt.settle();
++}
++
++function checkNativeManagerStartup(attempt: NativeManagerStartupAttempt): void {
++  // context.api is the legitimate ExtensionManager APIProxyHandler proxy.
++  const store = attempt.api.store;
++  if (nativeManagerStartup !== attempt || attempt.held || store !== attempt.store
++      || (attempt.manager !== undefined && installManager !== attempt.manager)) {
++    holdNativeManagerStartup(attempt);
++    throw new Error("NATIVE_MANAGER_STARTUP_UNAVAILABLE");
++  }
++}
++
++function beginNativeManagerStartup(api: IExtensionApi): NativeManagerStartupAttempt {
++  if (nativeManagerStartup !== undefined) {
++    holdNativeManagerStartup(nativeManagerStartup);
++    return nativeManagerStartup;
++  }
++  let settle = () => {};
++  const completion = new Promise<void>((resolve) => { settle = resolve; });
++  const attempt: NativeManagerStartupAttempt = { owner: Object.freeze({}), api, completion, settle, held: false, ready: false };
++  nativeManagerStartup = attempt;
++  try {
++    attempt.store = api.store;
++    if (attempt.store === undefined || attempt.store === null) throw new Error();
++    checkNativeManagerStartup(attempt);
++  } catch { holdNativeManagerStartup(attempt); }
++  return attempt;
++}
++
++export async function waitForNativeManagerStartupReady(store: Redux.Store<IState>): Promise<object> {
++  const attempt = nativeManagerStartup;
++  if (attempt === undefined || attempt.store !== store) throw new Error("NATIVE_MANAGER_STARTUP_UNAVAILABLE");
++  await attempt.completion;
++  checkNativeManagerStartupReady(attempt.owner, store);
++  return attempt.owner;
++}
++
++export function checkNativeManagerStartupReady(owner: object, store: Redux.Store<IState>): void {
++  const attempt = nativeManagerStartup;
++  if (attempt === undefined || attempt.owner !== owner) throw new Error("NATIVE_MANAGER_STARTUP_UNAVAILABLE");
++  try {
++    checkNativeManagerStartup(attempt);
++    if (!attempt.ready || attempt.manager === undefined || attempt.store !== store) throw new Error();
++  } catch {
++    holdNativeManagerStartup(attempt);
++    throw new Error("NATIVE_MANAGER_STARTUP_UNAVAILABLE");
++  }
++}
++
++
+ interface IInstaller {
+   id: string;
+@@ -2438,10 +2503,24 @@
+ 
+   context.once(() => {
+-    once(context.api);
+-
+-    Object.assign(context.api.ext, extendApi(context.api, installManager));
+-
+-    history.init();
++    const attempt = beginNativeManagerStartup(context.api);
++    let initializedManager: InstallManager | undefined;
++    try {
++      once(context.api);
++      initializedManager = installManager;
++      Object.assign(context.api.ext, extendApi(context.api, initializedManager));
++      history.init();
++    } catch (err) {
++      holdNativeManagerStartup(attempt);
++      throw err;
++    }
++    // Native unavailability must not turn successful ordinary initialization into failure.
++    try {
++      checkNativeManagerStartup(attempt);
++      if (initializedManager === undefined || installManager !== initializedManager) throw new Error();
++      attempt.manager = initializedManager;
++      attempt.ready = true;
++      attempt.settle();
++    } catch { holdNativeManagerStartup(attempt); }
+   });
+ 
+   return true;
