@@ -17,6 +17,10 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Prepare a private new-disabled Vortex selection patch that rejects provider,
+  owner/path and all-profile conflicts before legacy replacement branches. Public
+  installation remains unavailable; the patch is uninstalled and does not prove
+  physical ownership, safe cleanup or complete native acceptance.
 - Add an immutable full-request install-intent journal with exact digest-bound
   readback and process-exit/failure tests. It grants no native effects or replay;
   power-loss persistence and the durable executor remain unproved.

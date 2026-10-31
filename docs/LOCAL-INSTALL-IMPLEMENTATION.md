@@ -17,6 +17,7 @@ is a fallback after an uncertain tracked operation.
 | Operation data model | Strict tracked-new-disabled plan, canonical identity and bounded event replay | Pure data; no journal writes, native dispatch or installation permission |
 | Ordinary tracking | [Pinned source patch](NATIVE-TRACKING-PATCH.md) and eight source-backed regressions | Prepared only; ordinary tracking separated, dependency keys retained; application/native acceptance pending |
 | Callback safety | [Ordered callback patch](NATIVE-CALLBACK-PATCH.md), one-shot notification and exact tracking ownership | Prepared only; forced debug cleanup is not native termination |
+| Strict selection | [Private new-disabled selection patch](NATIVE-STRICT-SELECTION.md), fresh metadata/context and all-profile conflict checks before registration | Prepared only; legacy entrypoint unchanged; no path reservation or native permit |
 | Native ownership | No replacement, exclusive owner/path reservation and owned cleanup | Missing from the reviewed ordinary host contract |
 | Native activity | [Core-tail diagnostic patch](NATIVE-ACTIVITY-PATCH.md), separate IDs and joined error cleanup | Prepared only; no extractor/process exit proof or native dispatch acknowledgement |
 | Native terminal | Exact intent/job binding and proven extractor/mandatory cleanup completion | Not accepted by the reviewed ordinary host contract |

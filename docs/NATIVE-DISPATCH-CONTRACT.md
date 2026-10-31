@@ -196,6 +196,11 @@ Those contracts and full host acceptance remain mandatory before enabling MCP
 installation. A separate inert reservation protocol would add another lifecycle
 without removing these gates; it is not needed merely to allocate an ID.
 
+The prepared [private strict-selection patch](NATIVE-STRICT-SELECTION.md) refuses
+legacy metadata/replacement routes for its internal branch. It does not connect
+this protocol to a native listener or establish physical ownership, safe cleanup
+or a complete no-replacement installation guarantee.
+
 The reviewed `create-mod` handler registers state before asynchronously ensuring
 its directory. Folder-drop copies after registration, and failure does not undo
 that registration. Preparing a directory first does not turn either route into
