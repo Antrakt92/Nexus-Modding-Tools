@@ -2,3 +2,6 @@
 # Provenance pins describe original bytes, including the few CRLF metadata files.
 dependencies/vortex-mcp/** -text
 recovery/accepted-adapter/** -text whitespace=cr-at-eol
+# A unified diff represents an empty context line with one required space.
+# Native patch tests separately reject trailing whitespace in added source lines.
+tools/modding/vortex-agent/native-patches/**/*.patch whitespace=-blank-at-eol

@@ -1,0 +1,53 @@
+--- a/src/renderer/src/extensions/mod_management/InstallManager.ts
++++ b/src/renderer/src/extensions/mod_management/InstallManager.ts
+@@ -219,6 +219,7 @@
+ // Interface for tracking active installation information
+ interface IActiveInstallation {
+   installId: string;
++  sourceModId?: string;
+   archiveId: string;
+   archivePath: string;
+   modId: string;
+@@ -1199,10 +1200,20 @@
+     modReference?: IModReference,
+   ): void {
+     const baseName = path.basename(archivePath, path.extname(archivePath)).trim() || "EMPTY_NAME";
+-    const installId = this.generateDependencyInstallKey(sourceModId, archiveId);
++    const installId =
++      sourceModId != null
++        ? this.generateDependencyInstallKey(sourceModId, archiveId)
++        : `ordinary-${shortid()}`;
++    // Ordinary tracking IDs are separate from dependency deduplication keys.
++    // Refuse an allocation collision before touching the existing entry.
++    if (sourceModId == null && this.mActiveInstalls.has(installId)) {
++      callback?.(new ProcessCanceled("Installation tracking ID collision"), undefined);
++      return;
++    }
+     const dummyArchiveId = archiveId || "direct-install-" + shortid();
+     const installInfo: IActiveInstallation = {
+       installId,
++      sourceModId,
+       archiveId: archiveId || dummyArchiveId,
+       archivePath,
+       modId: baseName, // Will be updated when final modId is determined
+@@ -2339,9 +2350,9 @@
+     pendingKeysToRemove.forEach((key) => this.mPendingInstalls.delete(key));
+ 
+     // Clean up active installs (for dependencies that might be installing for this source mod)
+-    const activeKeysToRemove = Array.from(this.mActiveInstalls.keys()).filter((key) =>
+-      key.includes(sourceModId),
+-    );
++    const activeKeysToRemove = Array.from(this.mActiveInstalls.entries())
++      .filter(([, install]) => install.sourceModId === sourceModId)
++      .map(([installId]) => installId);
+     activeKeysToRemove.forEach((key) => this.mActiveInstalls.delete(key));
+ 
+     // Clean up retry counters for this source mod
+@@ -2478,6 +2489,7 @@
+         // Track this dependency installation
+         const depInstallInfo: IActiveInstallation = {
+           installId: installKey,
++          sourceModId,
+           archiveId: downloadId,
+           archivePath: "", // Will be updated when known
+           modId: renderModReference(dep.reference),

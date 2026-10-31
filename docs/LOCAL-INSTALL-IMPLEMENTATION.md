@@ -13,8 +13,9 @@ is a fallback after an uncertain tracked operation.
 | Stage | Evidence or deliverable | Current boundary |
 | --- | --- | --- |
 | Native source | Vortex tag `v2.9.1`, commit `c80326367cbe6d96621ad6cf4a5488ef49bac110`; five reviewed installed renderer entries byte-identical to upstream | Source identity, not new native safety APIs |
-| Archive seal | Nine isolated Windows sharing checks passed: compatible read succeeds, competing write/truncate/delete/rename refuse, access returns after release | Mechanics only; actual extractor compatibility, ancestor handoff and crash lifetime remain unproved |
+| Archive seal | Nine Windows sharing checks passed; the exact installed extractor binary also extracted the sealed test ZIP with matching payload | Mechanics/binary fixture only; node-7z wrapper, ancestor handoff and crash lifetime remain unproved |
 | Operation data model | Strict tracked-new-disabled plan, canonical identity and bounded event replay | Pure data; no journal writes, native dispatch or installation permission |
+| Ordinary tracking | [Pinned source patch](NATIVE-TRACKING-PATCH.md) and eight source-backed regressions | Prepared only; ordinary tracking separated, dependency keys retained; application/native acceptance pending |
 | Native ownership | No replacement, exclusive owner/path reservation and owned cleanup | Missing from the reviewed ordinary host contract |
 | Native terminal | Callback separated from mandatory hook/cleanup completion | Missing from the reviewed ordinary host contract |
 | Durable executor | One server-owned operation and durable per-effect intents | Not implemented by the data model |

@@ -1,0 +1,24 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/extensions/mod_management/InstallManager.ts",
+  "inputSHA256": "577d56a8728052069f850face9bb57437dbf2886bd41409fe6a66cfefc08ed33",
+  "outputSHA256": "3a82d810f47409332262b204f4cde3ff11e7cbf0acbc9036715048a25594a050",
+  "patchSHA256": "c9d5711ac1c5ce3e8c01aebc9f4ffcc0c5fa5640da189753b34e3178e9205af3",
+  "scope": "Unique ordinary/manual install tracking; dependency composite tracking and placeholders unchanged; active-install cleanup uses exact sourceModId.",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "noReplacementGuarantee": false,
+  "importNoClobberGuarantee": false,
+  "ownerReservationGuarantee": false,
+  "testSourceEnvironment": "VORTEX_NATIVE_INSTALL_MANAGER",
+  "limitations": [
+    "No native dispatch, extraction, installer pipeline or constructor is executed by the isolated tests.",
+    "Dependency tracking remains composite-key based; this is not complete per-job identity separation.",
+    "Pending dependency and retry-counter cleanup remain unchanged; exact source filtering applies only to active-install records.",
+    "Callback terminal ordering, destination/temp ownership, no-replacement and import collision contracts remain unchanged."
+  ]
+}
