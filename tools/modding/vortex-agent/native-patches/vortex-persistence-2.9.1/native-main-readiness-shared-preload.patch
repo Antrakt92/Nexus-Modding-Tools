@@ -1,0 +1,19 @@
+--- a/src/shared/src/types/preload.ts
++++ b/src/shared/src/types/preload.ts
+@@ -22,6 +22,7 @@
+ import type {
+   DiffOperation,
+   PersistenceBatch,
++  NativeMainReadinessObservation,
+   AppInitMetadata,
+   HashAlgorithm,
+   Serializable,
+@@ -383,6 +384,8 @@
+   /** Reject on any failed batch; this is not a power-loss durability guarantee. */
+   sendDiffAcknowledged(batches: PersistenceBatch[]): Promise<void>;
+ 
++  observeMainReadiness(requestId: string): Promise<NativeMainReadinessObservation>;
++
+   /**
+    * Synchronously send diff operations to main, blocking until they are queued.
+    * Used only on quit (from a beforeunload handler) so the final debounced batch

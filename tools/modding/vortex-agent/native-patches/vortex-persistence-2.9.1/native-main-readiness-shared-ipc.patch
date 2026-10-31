@@ -1,0 +1,33 @@
+--- a/src/shared/src/types/ipc.ts
++++ b/src/shared/src/types/ipc.ts
+@@ -46,6 +46,22 @@
+   operations: DiffOperation[];
+ }
+ 
++/** Read-only main observation; never a registration or installation permit. */
++export interface NativeMainReadinessObservation {
++  schema: "native-main-readiness/1";
++  requestId: string;
++  mainProcessId: number;
++  webContentsId: number;
++  rendererProcessId: number;
++  frameProcessId: number;
++  frameRoutingId: number;
++  frameEpoch: number;
++  mainReadinessObserved: true;
++  effectsAllowed: false;
++  installationPermit: false;
++  nativeAdmission: false;
++}
++
+ export interface AppInitMetadata {
+   /** Command line arguments */
+   commandLine: Record<string, unknown>;
+@@ -401,6 +417,7 @@
+ 
+   /** Wait for the exact submitted batches and earlier accepted persistence work. */
+   "persist:diffs-acknowledged": (batches: PersistenceBatch[]) => Promise<void>;
++  "persist:native-main-readiness": (requestId: string) => Promise<NativeMainReadinessObservation>;
+ 
+   // Updater: the renderer polls this (pull, like downloads and uploads). With
+   // `since`, the reply also lists every snapshot recorded after that sequence

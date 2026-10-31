@@ -1,0 +1,23 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/ExtensionManager.ts",
+  "originalSourceSHA256": "5d0de2194cf413938e61a398494196af07677dc6d0d014216ba3b25b5a211b95",
+  "inputSHA256": "fb39e4270de69b2529872b624e16499a9a25517ba3fe6a739750b8f7473757af",
+  "outputSHA256": "551ddd8fbbcc1ee1e74a87a33b3b561bf7bf9dca815756f3f96ff440e0b83b3c",
+  "patchSHA256": "efd45f2c3a7354faa0c3e7aa1d30166c3e605efc908689080f84268dbea65ce7",
+  "prerequisitePatch": "renderer-extension-readiness.patch",
+  "prerequisitePatchSHA256": "83bf53f8a597466d6f18a79cf6d66fea98853d129c76a91bd2872412bc61be0b",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "powerLossPersistenceVerified": false,
+  "releaseSupported": false,
+  "limitations": [
+    "Existing fixed static module namespace and source-owned readiness observation only; no IPC owners, hold, dispatch or installation permit.",
+    "Trusted source integration, not arbitrary privileged JavaScript isolation; main observation is not native admission."
+  ]
+}

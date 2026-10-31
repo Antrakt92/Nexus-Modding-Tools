@@ -12,7 +12,7 @@
     {
       "path": "src/renderer/src/extensions/mod_management/index.ts",
       "originalSHA256": "d895c7614a692242e1921fa0d9fba1a52743bcd9aed5b1bcac9a539d393b2400",
-      "finalSHA256": "8debec02b20f08f1a2294e17b9ad6d8e03e1b39c5792149eaf2cb6a285d06c0f"
+      "finalSHA256": "8a4ce258658ad2c9c64ae4b3e70c908c923e3c6d142e75bd67218dcce273f157"
     },
     {
       "path": "src/renderer/src/extensions/mod_management/InstallManager.ts",
@@ -87,12 +87,12 @@
     {
       "path": "src/main/src/store/persistenceIPC.ts",
       "originalSHA256": "a570597ae00396259d1ebbb37c7fe7ddb0a01ff3dcecd231cabde1059e9723ae",
-      "finalSHA256": "c95c67ceabcdcbff52f5893965abd06943a132b8cf3e681f5cbcea6f07fc29b6"
+      "finalSHA256": "f76b01348408684f9515ff549e7d45e5ea7f2dfe6053aa992ccbf6f8ee41affd"
     },
     {
       "path": "src/preload/src/index.ts",
       "originalSHA256": "9f49d7900fedc1aaeac771711644bc2e1fcd71f77640bb43c4959a52f2093e42",
-      "finalSHA256": "b4dd5f70c4f98d1589111a7e2cda20cbb4afd1f7473469c0ffd2cfdc806d8b51"
+      "finalSHA256": "ed99e62583470203c36824b986d5cb587ad9104b2fb3ab763b5680dde113c5ce"
     },
     {
       "path": "src/renderer/src/reducers/index.ts",
@@ -107,12 +107,12 @@
     {
       "path": "src/shared/src/types/ipc.ts",
       "originalSHA256": "cb34be45e8b87cca3480ad1805a358b8e2604ac8938b71e4a0594f7f6885521d",
-      "finalSHA256": "66575ffc3b71c3e4f7617b2ff445f7c678d212bddf92c83c937c6cb0c3fb6dbe"
+      "finalSHA256": "d3474309d186d9909b4056f54ebdf079f765e96d2832249cb83ef196bb6d6e9a"
     },
     {
       "path": "src/shared/src/types/preload.ts",
       "originalSHA256": "06493d6bfd8db9ed898fbadcd565f4881566984969a6f0fbb300ea70fd8ba45a",
-      "finalSHA256": "3ef95ee06161d43796a73b4221207321164924243d6ca72fbb58d13803dfc469"
+      "finalSHA256": "25df90ae322ef579ef7ffcef9ae9892d01704e0fa53faa2605b65b4bd2ad9171"
     },
     {
       "path": "src/renderer/src/renderer.tsx",
@@ -122,7 +122,7 @@
     {
       "path": "src/renderer/src/ExtensionManager.ts",
       "originalSHA256": "5d0de2194cf413938e61a398494196af07677dc6d0d014216ba3b25b5a211b95",
-      "finalSHA256": "fb39e4270de69b2529872b624e16499a9a25517ba3fe6a739750b8f7473757af"
+      "finalSHA256": "551ddd8fbbcc1ee1e74a87a33b3b561bf7bf9dca815756f3f96ff440e0b83b3c"
     }
   ],
   "patches": [
@@ -946,6 +946,96 @@
       "outputSHA256": "8debec02b20f08f1a2294e17b9ad6d8e03e1b39c5792149eaf2cb6a285d06c0f",
       "prerequisitePatch": "staging-pending-transfer-hold.patch",
       "prerequisitePatchSHA256": "c2f07109e654a3c9f2dec5b86518992e575bc95399b84536125262fe5a66b10b",
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "native-main-readiness-shared-ipc",
+      "packet": "persistence",
+      "path": "src/shared/src/types/ipc.ts",
+      "manifestSHA256": "410bb18a9669251c76f61c4dd1c42bd0c326239796b678a4010717793a1a0468",
+      "patchSHA256": "b5d9c3cc260796e8a2432afacd3566fda59db1c093aae28fdc2a03128da65135",
+      "inputSHA256": "66575ffc3b71c3e4f7617b2ff445f7c678d212bddf92c83c937c6cb0c3fb6dbe",
+      "outputSHA256": "d3474309d186d9909b4056f54ebdf079f765e96d2832249cb83ef196bb6d6e9a",
+      "prerequisitePatch": "ack-shared-ipc.patch",
+      "prerequisitePatchSHA256": "797c91a7ccef9943be9059298867daa235b1afb3c35c2731c6cdade481a6110b",
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "native-main-readiness-shared-preload",
+      "packet": "persistence",
+      "path": "src/shared/src/types/preload.ts",
+      "manifestSHA256": "b423fb3d6028d3a4854b7ee9d17c21914ed46544f23b65f5264bd46318bb41c7",
+      "patchSHA256": "483b5128c1717974c8d5d3a36432a413bb5c8a928cd03448e89c390f0d3ca84c",
+      "inputSHA256": "3ef95ee06161d43796a73b4221207321164924243d6ca72fbb58d13803dfc469",
+      "outputSHA256": "25df90ae322ef579ef7ffcef9ae9892d01704e0fa53faa2605b65b4bd2ad9171",
+      "prerequisitePatch": "ack-shared-preload.patch",
+      "prerequisitePatchSHA256": "ac5286f03a513cad6b92091a9fc52a15ae910b3ae8888c8f36a889c8e8a44a0e",
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": "native-main-readiness-shared-ipc.patch",
+      "requiredCompanionPatchSHA256": "b5d9c3cc260796e8a2432afacd3566fda59db1c093aae28fdc2a03128da65135",
+      "requiredCompanionOutputSHA256": "d3474309d186d9909b4056f54ebdf079f765e96d2832249cb83ef196bb6d6e9a"
+    },
+    {
+      "name": "native-main-readiness-preload",
+      "packet": "persistence",
+      "path": "src/preload/src/index.ts",
+      "manifestSHA256": "74a66c715b5729901fca4154aff183ed2b269b40c4cfb2640ea6dc58380cffa9",
+      "patchSHA256": "381adbb2ae25484428a4d1df6bdecf1897e81e0ea54db6d0d8ccc9b9b0cf22dd",
+      "inputSHA256": "b4dd5f70c4f98d1589111a7e2cda20cbb4afd1f7473469c0ffd2cfdc806d8b51",
+      "outputSHA256": "ed99e62583470203c36824b986d5cb587ad9104b2fb3ab763b5680dde113c5ce",
+      "prerequisitePatch": "ack-preload.patch",
+      "prerequisitePatchSHA256": "4e318063b3c1261df649743f9225b4f5626f41b5b31c8286abb00738754938b6",
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": "native-main-readiness-shared-preload.patch",
+      "requiredCompanionPatchSHA256": "483b5128c1717974c8d5d3a36432a413bb5c8a928cd03448e89c390f0d3ca84c",
+      "requiredCompanionOutputSHA256": "25df90ae322ef579ef7ffcef9ae9892d01704e0fa53faa2605b65b4bd2ad9171"
+    },
+    {
+      "name": "native-main-readiness-ipc",
+      "packet": "persistence",
+      "path": "src/main/src/store/persistenceIPC.ts",
+      "manifestSHA256": "62e4b4897c3c095e32923f9414d66ea8790c3de8c609c1b3d618da8b202f19b4",
+      "patchSHA256": "e6b508973519730f56ef40c1988c4b95f148831b524813c368d5bc69f0d221b1",
+      "inputSHA256": "c95c67ceabcdcbff52f5893965abd06943a132b8cf3e681f5cbcea6f07fc29b6",
+      "outputSHA256": "f76b01348408684f9515ff549e7d45e5ea7f2dfe6053aa992ccbf6f8ee41affd",
+      "prerequisitePatch": "ack-main-ipc.patch",
+      "prerequisitePatchSHA256": "cad4f7bbedbad42f03207e8cb7e59e97303acc0a2fd576c5601efd78a1457fa7",
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": "native-main-readiness.patch",
+      "requiredCompanionPatchSHA256": "eb482bec5663042300dfdb3b6897e11dfee28a30306974ba42295aa7ebafe53d",
+      "requiredCompanionOutputSHA256": "90e5a0c97eb1d02360de088a9ebe897021b825bf2cb0a6888bdac8f94c01b904"
+    },
+    {
+      "name": "native-manager-instance-access",
+      "packet": "lifecycle",
+      "path": "src/renderer/src/extensions/mod_management/index.ts",
+      "manifestSHA256": "1fa80794537fbef5dc67e45b88c6be30fd4d3d5340c121cdfcc397bf64d483a0",
+      "patchSHA256": "e1725d7308577fbf003ba55bbc3067b9a4f15cbc9d92d6cc5bb7c9706596b731",
+      "inputSHA256": "8debec02b20f08f1a2294e17b9ad6d8e03e1b39c5792149eaf2cb6a285d06c0f",
+      "outputSHA256": "8a4ce258658ad2c9c64ae4b3e70c908c923e3c6d142e75bd67218dcce273f157",
+      "prerequisitePatch": "manager-startup-readiness.patch",
+      "prerequisitePatchSHA256": "6ee00d64c0a140e340a3668fcaa3a04c5d4fb56f99b2e48514bd2afc2cc66113",
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "native-static-manager-binding",
+      "packet": "persistence",
+      "path": "src/renderer/src/ExtensionManager.ts",
+      "manifestSHA256": "8c5862e34d6bcd0be7121fcd5fcea1ddc2150c0f3bef29bce35e5c5890669b25",
+      "patchSHA256": "efd45f2c3a7354faa0c3e7aa1d30166c3e605efc908689080f84268dbea65ce7",
+      "inputSHA256": "fb39e4270de69b2529872b624e16499a9a25517ba3fe6a739750b8f7473757af",
+      "outputSHA256": "551ddd8fbbcc1ee1e74a87a33b3b561bf7bf9dca815756f3f96ff440e0b83b3c",
+      "prerequisitePatch": "renderer-extension-readiness.patch",
+      "prerequisitePatchSHA256": "83bf53f8a597466d6f18a79cf6d66fea98853d129c76a91bd2872412bc61be0b",
       "requiredManagerPatchSHA256": null,
       "requiredCompanionPatch": null,
       "requiredCompanionPatchSHA256": null,

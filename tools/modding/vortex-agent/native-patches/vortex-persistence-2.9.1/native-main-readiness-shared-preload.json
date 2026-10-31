@@ -1,0 +1,26 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/shared/src/types/preload.ts",
+  "prerequisitePatch": "ack-shared-preload.patch",
+  "prerequisitePatchSHA256": "ac5286f03a513cad6b92091a9fc52a15ae910b3ae8888c8f36a889c8e8a44a0e",
+  "inputSHA256": "3ef95ee06161d43796a73b4221207321164924243d6ca72fbb58d13803dfc469",
+  "outputSHA256": "25df90ae322ef579ef7ffcef9ae9892d01704e0fa53faa2605b65b4bd2ad9171",
+  "patchSHA256": "483b5128c1717974c8d5d3a36432a413bb5c8a928cd03448e89c390f0d3ca84c",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "nativeAdmission": false,
+  "effectsAllowed": false,
+  "powerLossPersistenceVerified": false,
+  "limitations": [
+    "Fixed read-only readiness observation only; no queue flush, ownership hold, registration or installation authority.",
+    "Source/facade qualification does not establish an installed Electron or native window acceptance."
+  ],
+  "requiredCompanionPatch": "native-main-readiness-shared-ipc.patch",
+  "requiredCompanionPatchSHA256": "b5d9c3cc260796e8a2432afacd3566fda59db1c093aae28fdc2a03128da65135",
+  "requiredCompanionOutputSHA256": "d3474309d186d9909b4056f54ebdf079f765e96d2832249cb83ef196bb6d6e9a"
+}

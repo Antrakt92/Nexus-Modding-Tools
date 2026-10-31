@@ -1,0 +1,19 @@
+--- a/src/renderer/src/extensions/mod_management/index.ts
++++ b/src/renderer/src/extensions/mod_management/index.ts
+@@ -1953,4 +1953,16 @@
+ }
+ 
++export function getNativeManagerStartupInstance(owner: object, store: Redux.Store<IState>): InstallManager {
++  checkNativeManagerStartupReady(owner, store);
++  const manager = installManager;
++  if (manager === undefined) throw new Error("NATIVE_MANAGER_STARTUP_UNAVAILABLE");
++  checkNativeManagerStartupReady(owner, store);
++  if (installManager !== manager) {
++    if (nativeManagerStartup !== undefined) holdNativeManagerStartup(nativeManagerStartup);
++    throw new Error("NATIVE_MANAGER_STARTUP_UNAVAILABLE");
++  }
++  return manager;
++}
++
+ function checkPendingTransfer(api: IExtensionApi): Promise<ITestResult> {
+   let result: ITestResult;

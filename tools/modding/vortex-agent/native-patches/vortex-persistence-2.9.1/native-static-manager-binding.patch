@@ -1,0 +1,289 @@
+--- a/src/renderer/src/ExtensionManager.ts
++++ b/src/renderer/src/ExtensionManager.ts
+@@ -8,4 +8,8 @@
+ import { getErrorCode, getErrorMessageOrDefault, unknownToError } from "@vortex/shared";
+ import type { DiffOperation } from "@vortex/shared/ipc";
++import { types as nativeReadinessTypes } from "util";
++import { performance as nativeReadinessClock } from "perf_hooks";
++import type { NativeMainReadinessObservation } from "@vortex/shared/ipc";
++import type InstallManager from "./extensions/mod_management/InstallManager";
+ import type { PreloadWindow } from "@vortex/shared/preload";
+ import PromiseBB from "bluebird";
+@@ -701,8 +705,267 @@
+ }
+ 
++interface NativeStaticManagerBinding {
++  module: unknown;
++  initializer?: ExtensionInit;
++  wait?: (store: unknown) => Promise<object>;
++  check?: (owner: object, store: unknown) => void;
++  instance?: (owner: object, store: unknown) => InstallManager;
++  held: boolean;
++  checking: boolean;
++}
++interface NativeRendererManagerAttempt {
++  owner: object;
++  store: unknown;
++  binding: NativeStaticManagerBinding;
++  loadOwner?: object;
++  managerOwner?: object;
++  manager?: InstallManager;
++  completion: Promise<void>;
++  result: Promise<object>;
++  settle: () => void;
++  held: boolean;
++  ready: boolean;
++}
++
+ class ExtensionManager {
++  private mNativeStaticManager: NativeStaticManagerBinding | undefined;
++  private mNativeRendererManager: NativeRendererManagerAttempt | undefined;
++  private mNativeManagerChecking = false;
++  private mNativeObservationActive = false;
++
++  private holdNativeRendererManager(): void {
++    if (this.mNativeRendererManager !== undefined) {
++      this.mNativeRendererManager.held = true;
++      this.mNativeRendererManager.settle();
++    }
++  }
++
++  private holdNativeStaticManager(binding: NativeStaticManagerBinding): void {
++    binding.held = true;
++    this.holdNativeRendererManager();
++  }
++
++  private nativeManagerExport(module: unknown, key: string): unknown {
++    if (module === null || (typeof module !== "object" && typeof module !== "function")) throw new Error();
++    if (Object.getOwnPropertyDescriptor(module, key) === undefined) throw new Error();
++    // Trusted webpack namespaces have own export getters; never re-load the module.
++    return (module as Record<string, unknown>)[key];
++  }
++
++  private checkNativeStaticManager(binding: NativeStaticManagerBinding): void {
++    if (this.mNativeStaticManager !== binding || binding.held || binding.checking) {
++      this.holdNativeStaticManager(binding);
++      throw new Error("NATIVE_STATIC_MANAGER_UNAVAILABLE");
++    }
++    binding.checking = true;
++    try {
++      if (ExtensionManager.getExtensionInitFunc(binding.module) !== binding.initializer
++          || this.nativeManagerExport(binding.module, "waitForNativeManagerStartupReady") !== binding.wait
++          || this.nativeManagerExport(binding.module, "checkNativeManagerStartupReady") !== binding.check
++          || this.nativeManagerExport(binding.module, "getNativeManagerStartupInstance") !== binding.instance
++          || this.mNativeStaticManager !== binding || binding.held) throw new Error();
++    } catch {
++      this.holdNativeStaticManager(binding);
++      throw new Error("NATIVE_STATIC_MANAGER_UNAVAILABLE");
++    } finally { binding.checking = false; }
++  }
++
++  private captureNativeStaticManager(module: unknown): ExtensionInit | undefined {
++    const previous = this.mNativeStaticManager;
++    if (previous !== undefined) {
++      this.holdNativeStaticManager(previous);
++      return ExtensionManager.getExtensionInitFunc(module);
++    }
++    const binding: NativeStaticManagerBinding = { module, held: false, checking: true };
++    this.mNativeStaticManager = binding;
++    let initializer: ExtensionInit | undefined;
++    try { initializer = ExtensionManager.getExtensionInitFunc(module); }
++    catch (err) { this.holdNativeStaticManager(binding); throw err; }
++    try {
++      binding.initializer = initializer;
++      const wait = this.nativeManagerExport(module, "waitForNativeManagerStartupReady");
++      const check = this.nativeManagerExport(module, "checkNativeManagerStartupReady");
++      const instance = this.nativeManagerExport(module, "getNativeManagerStartupInstance");
++      if (initializer === undefined || typeof wait !== "function" || typeof check !== "function" || typeof instance !== "function" || binding.held) throw new Error();
++      binding.wait = wait as NativeStaticManagerBinding["wait"];
++      binding.check = check as NativeStaticManagerBinding["check"];
++      binding.instance = instance as NativeStaticManagerBinding["instance"];
++      binding.checking = false;
++      this.checkNativeStaticManager(binding);
++    } catch { this.holdNativeStaticManager(binding); }
++    finally { binding.checking = false; }
++    return initializer;
++  }
++
++  public waitForNativeRendererManagerReady(store: unknown): Promise<object> {
++    if (this.mNativeManagerChecking || this.mNativeStaticManager?.checking) {
++      this.holdNativeRendererManager();
++      if (this.mNativeStaticManager !== undefined) this.holdNativeStaticManager(this.mNativeStaticManager);
++      return Promise.reject(new Error("NATIVE_RENDERER_MANAGER_UNAVAILABLE"));
++    }
++    const previous = this.mNativeRendererManager;
++    if (previous !== undefined) {
++      if (previous.store !== store || previous.held) {
++        this.holdNativeRendererManager();
++        return Promise.reject(new Error("NATIVE_RENDERER_MANAGER_UNAVAILABLE"));
++      }
++      try {
++        this.checkNativeStaticManager(previous.binding);
++        const load = this.mNativeRendererLoad;
++        if (load === undefined || load.store !== store) throw new Error();
++        this.checkNativeRendererLoadAttempt(load);
++        if (previous.ready) this.checkNativeRendererManagerReady(previous.owner, store);
++      } catch {
++        this.holdNativeRendererManager();
++        return Promise.reject(new Error("NATIVE_RENDERER_MANAGER_UNAVAILABLE"));
++      }
++      return previous.result;
++    }
++    const binding = this.mNativeStaticManager;
++    if (binding === undefined) return Promise.reject(new Error("NATIVE_RENDERER_MANAGER_UNAVAILABLE"));
++    let settle = () => {};
++    const completion = new Promise<void>((resolve) => { settle = resolve; });
++    const owner = Object.freeze({});
++    const result = completion.then(() => { this.checkNativeRendererManagerReady(owner, store); return owner; });
++    const attempt: NativeRendererManagerAttempt = { owner, store, binding, completion, result, settle, held: false, ready: false };
++    this.mNativeRendererManager = attempt;
++    void (async () => {
++      try {
++        this.checkNativeStaticManager(binding);
++        const load = this.mNativeRendererLoad;
++        if (load === undefined || load.store !== store) throw new Error();
++        this.checkNativeRendererLoadAttempt(load);
++        attempt.loadOwner = await this.waitForNativeRendererLoadReady();
++        this.checkNativeRendererLoadReady(attempt.loadOwner, store);
++        this.checkNativeStaticManager(binding);
++        if (attempt.held || binding.wait === undefined) throw new Error();
++        attempt.managerOwner = await binding.wait(store);
++        this.checkNativeRendererLoadReady(attempt.loadOwner, store);
++        this.checkNativeStaticManager(binding);
++        if (attempt.held || binding.check === undefined || binding.instance === undefined) throw new Error();
++        binding.check(attempt.managerOwner, store);
++        attempt.manager = binding.instance(attempt.managerOwner, store);
++        this.checkNativeStaticManager(binding);
++        if (attempt.held || attempt.manager === undefined || attempt.manager === null) throw new Error();
++        attempt.ready = true;
++      } catch { this.holdNativeRendererManager(); }
++      attempt.settle();
++    })();
++    return result;
++  }
++
++  public checkNativeRendererManagerReady(owner: object, store: unknown): void {
++    const attempt = this.mNativeRendererManager;
++    if (attempt === undefined || attempt.owner !== owner) throw new Error("NATIVE_RENDERER_MANAGER_UNAVAILABLE");
++    if (this.mNativeManagerChecking) {
++      this.holdNativeRendererManager();
++      throw new Error("NATIVE_RENDERER_MANAGER_UNAVAILABLE");
++    }
++    this.mNativeManagerChecking = true;
++    try {
++      const binding = attempt.binding;
++      if (attempt.held || !attempt.ready || attempt.store !== store || attempt.loadOwner === undefined || attempt.managerOwner === undefined || attempt.manager === undefined) throw new Error();
++      this.checkNativeRendererLoadReady(attempt.loadOwner, store);
++      this.checkNativeStaticManager(binding);
++      if (binding.check === undefined || binding.instance === undefined) throw new Error();
++      binding.check(attempt.managerOwner, store);
++      if (binding.instance(attempt.managerOwner, store) !== attempt.manager) throw new Error();
++      this.checkNativeRendererLoadReady(attempt.loadOwner, store);
++      this.checkNativeStaticManager(binding);
++      if (attempt.held || this.mNativeRendererManager !== attempt) throw new Error();
++    } catch {
++      this.holdNativeRendererManager();
++      throw new Error("NATIVE_RENDERER_MANAGER_UNAVAILABLE");
++    } finally { this.mNativeManagerChecking = false; }
++  }
++
++  public getNativeRendererManagerInstance(owner: object, store: unknown): InstallManager {
++    this.checkNativeRendererManagerReady(owner, store);
++    const manager = this.mNativeRendererManager?.manager;
++    if (manager === undefined) throw new Error("NATIVE_RENDERER_MANAGER_UNAVAILABLE");
++    return manager;
++  }
++
++  private copyNativeMainObservation(value: unknown, requestId: string): NativeMainReadinessObservation {
++    const keys = ["schema", "requestId", "mainProcessId", "webContentsId", "rendererProcessId", "frameProcessId", "frameRoutingId", "frameEpoch", "mainReadinessObserved", "effectsAllowed", "installationPermit", "nativeAdmission"];
++    if (value === null || typeof value !== "object" || Array.isArray(value) || nativeReadinessTypes.isProxy(value)) throw new Error("NATIVE_CORE_READINESS_UNAVAILABLE");
++    const own = Reflect.ownKeys(value);
++    if (own.length !== keys.length || own.some((key) => typeof key !== "string" || !keys.includes(key))) throw new Error("NATIVE_CORE_READINESS_UNAVAILABLE");
++    const data: Record<string, unknown> = Object.create(null);
++    for (const key of keys) {
++      const descriptor = Object.getOwnPropertyDescriptor(value, key);
++      if (descriptor === undefined || !("value" in descriptor) || !descriptor.enumerable) throw new Error("NATIVE_CORE_READINESS_UNAVAILABLE");
++      data[key] = descriptor.value;
++    }
++    if (data.schema !== "native-main-readiness/1" || data.requestId !== requestId || data.mainReadinessObserved !== true
++        || data.effectsAllowed !== false || data.installationPermit !== false || data.nativeAdmission !== false) throw new Error("NATIVE_CORE_READINESS_UNAVAILABLE");
++    const id = (key: string, minimum: number): number => {
++      const number = data[key];
++      if (typeof number !== "number" || !Number.isSafeInteger(number) || number < minimum) throw new Error("NATIVE_CORE_READINESS_UNAVAILABLE");
++      return number;
++    };
++    return Object.freeze({ schema: "native-main-readiness/1", requestId,
++      mainProcessId: id("mainProcessId", 1), webContentsId: id("webContentsId", 1), rendererProcessId: id("rendererProcessId", 1),
++      frameProcessId: id("frameProcessId", 0), frameRoutingId: id("frameRoutingId", 0), frameEpoch: id("frameEpoch", 0),
++      mainReadinessObserved: true, effectsAllowed: false, installationPermit: false, nativeAdmission: false });
++  }
++
++  public observeNativeCoreReadiness(requestId: string): Promise<NativeMainReadinessObservation> {
++    if (typeof requestId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9_-]{7,95}$/.test(requestId)) return Promise.reject(new Error("NATIVE_CORE_READINESS_UNAVAILABLE"));
++    if (this.mNativeObservationActive) return Promise.reject(new Error("NATIVE_CORE_READINESS_BUSY"));
++    this.mNativeObservationActive = true;
++    let expired = false;
++    const expiresAt = nativeReadinessClock.now() + 5000;
++    const deadlinePassed = () => expired || nativeReadinessClock.now() >= expiresAt;
++    let rejectDeadline: (error: Error) => void = () => {};
++    const deadline = new Promise<never>((_resolve, reject) => { rejectDeadline = reject; });
++    let timer: ReturnType<typeof setTimeout>;
++    try {
++      timer = setTimeout(() => { expired = true; rejectDeadline(new Error("NATIVE_CORE_READINESS_TIMEOUT")); }, 5000);
++    } catch {
++      this.mNativeObservationActive = false;
++      return Promise.reject(new Error("NATIVE_CORE_READINESS_UNAVAILABLE"));
++    }
++    const work = (async (): Promise<NativeMainReadinessObservation> => {
++      try {
++        const load = this.mNativeRendererLoad;
++        if (load === undefined) throw new Error("NATIVE_CORE_READINESS_UNAVAILABLE");
++        this.checkNativeRendererLoadAttempt(load);
++        const store = load.store;
++        const owner = await this.waitForNativeRendererManagerReady(store);
++        this.checkNativeRendererManagerReady(owner, store);
++        if (deadlinePassed()) throw new Error("NATIVE_CORE_READINESS_TIMEOUT");
++        let reply: unknown;
++        try {
++          const persist = window.api.persist;
++          const observe = persist.observeMainReadiness;
++          this.checkNativeRendererManagerReady(owner, store);
++          if (deadlinePassed()) throw new Error("NATIVE_CORE_READINESS_TIMEOUT");
++          reply = await observe.call(persist, requestId);
++        } catch {
++          this.checkNativeRendererManagerReady(owner, store);
++          throw new Error("NATIVE_CORE_READINESS_UNAVAILABLE");
++        }
++        this.checkNativeRendererManagerReady(owner, store);
++        if (deadlinePassed()) throw new Error("NATIVE_CORE_READINESS_TIMEOUT");
++        const observation = this.copyNativeMainObservation(reply, requestId);
++        if (deadlinePassed()) throw new Error("NATIVE_CORE_READINESS_TIMEOUT");
++        this.checkNativeRendererManagerReady(owner, store);
++        if (deadlinePassed()) throw new Error("NATIVE_CORE_READINESS_TIMEOUT");
++        return observation;
++      } finally {
++        // Timeout does not mean terminal: keep the slot until THIS work settles.
++        try { clearTimeout(timer); } catch { /* Secondary timer cleanup only. */ }
++        this.mNativeObservationActive = false;
++      }
++    })();
++    return Promise.race([work, deadline]);
++  }
++
++
+   private mNativeRendererLoad: NativeRendererLoadAttempt | undefined;
+ 
+   private holdNativeRendererLoad(attempt: NativeRendererLoadAttempt): void {
++    this.holdNativeRendererManager();
+     attempt.held = true;
+     attempt.settle();
+@@ -3190,5 +3453,8 @@
+       initFunc: () => {
+         const f = staticExtensions[name];
+-        return ExtensionManager.getExtensionInitFunc(f());
++        const module = f();
++        return name === "mod_management"
++          ? this.captureNativeStaticManager(module)
++          : ExtensionManager.getExtensionInitFunc(module);
+       },
+       dynamic: false,

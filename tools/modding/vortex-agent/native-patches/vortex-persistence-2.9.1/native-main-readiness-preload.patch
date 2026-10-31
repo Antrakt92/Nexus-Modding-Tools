@@ -1,0 +1,12 @@
+--- a/src/preload/src/index.ts
++++ b/src/preload/src/index.ts
+@@ -48,6 +48,9 @@
+     },
+ 
+     persist: {
++      observeMainReadiness: (requestId) =>
++        betterIpcRenderer.invoke("persist:native-main-readiness", requestId),
++
+       sendDiff: (hive, operations) => betterIpcRenderer.send("persist:diff", hive, operations),
+ 
+       sendDiffAcknowledged: (batches) =>
