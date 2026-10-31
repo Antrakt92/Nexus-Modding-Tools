@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "8a388ece24126ebb1a88b0b671892ac24db3899e7b510bf042d83c30fca4d499"
+      "sha256_lf": "fb31ab37a3db6dd477ff175163ceed7c44dcb9edda6a2657dd6cb2b2b12fee23"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -200,7 +200,7 @@
     },
     {
       "path": "docs/ARCHIVE-TEMP-CUSTODY.md",
-      "sha256_lf": "e23df40b8a46e4640001a5c079aa28df49419bd3642f5d8f11a159535d883754"
+      "sha256_lf": "9822fb398321d36ca0cbedf4fd226f5ba58fa37c4f964edd30df5cb0d17b83ec"
     },
     {
       "path": "docs/AUDIT-20261025.md",
@@ -276,7 +276,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "cd1d929f00cdca11e468cf94b8ff91cc19563d88bbb9dee1b955367075ebe850"
+      "sha256_lf": "9f647a87f22ea03f5cf3d450e971faa812a84e0a41098c0001b9d368f82c8334"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -345,6 +345,10 @@
     {
       "path": "docs/OWNED-FILE-TRANSFER.md",
       "sha256_lf": "ad7f77fb96723a1fe013d8374af24d40729ec68fa6805c142e327e89f850c461"
+    },
+    {
+      "path": "docs/OWNED-ZIP-EXTRACTOR.md",
+      "sha256_lf": "c31d9e3c6983cdfb4ee5604b1ebfb1ac9aeeac8aeda2e8a6c683862f186e622c"
     },
     {
       "path": "docs/PRISTINE-API-CACHE.md",
@@ -1056,11 +1060,19 @@
     },
     {
       "path": "tools/modding/vortex-agent/owned-file-transfer.py",
-      "sha256_lf": "65e89606998bd13113bca5d57503568f736b659ba2643ffcd38ab50b4f57df3c"
+      "sha256_lf": "e8fb285d99966e341c8462e4d87645e377eb597f072839420ebc8db896b6ce2d"
     },
     {
       "path": "tools/modding/vortex-agent/owned-file-transfer.test.py",
       "sha256_lf": "c4a1ad8b1dc8124d4465fae0a33f59795eff5029f31a2596e474f19a5e72fa33"
+    },
+    {
+      "path": "tools/modding/vortex-agent/owned-zip-extractor.py",
+      "sha256_lf": "0b2bb825d95f928262afa570724d5ebac04257db119375f2f3ce0c8c2bf5ed59"
+    },
+    {
+      "path": "tools/modding/vortex-agent/owned-zip-extractor.test.py",
+      "sha256_lf": "6f8d46bd08e4ce135e9f159dab2f9e0b43d6afcd4eacaebefaaebdd5f482db57"
     },
     {
       "path": "tools/modding/vortex-agent/package.test.mjs",

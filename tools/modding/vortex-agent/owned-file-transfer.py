@@ -32,6 +32,7 @@ MAX_HANDLES = 16384
 CHUNK_BYTES = 65536
 IDENTITY_SCHEMA = 'win-file-id128/1'
 _EXTRACTOR_FACTORY = None
+_ZIP_EXTRACTOR_FACTORY = None
 
 
 class OwnedTransferError(Exception):
@@ -155,8 +156,13 @@ def _abi():
                 (_Status, 16), (_Identity, 24), (_Basic, 40), (_Standard, 24)))
 
 
+def _seek_at(handle, offset):
+    _need(type(offset) is int and 0 <= offset <= MAX_TOTAL_BYTES, 'INVALID_OFFSET')
+    _need(_K.SetFilePointerEx(handle, offset, None, 0), 'SEEK_FAILED')
+
+
 def _seek(handle):
-    _need(_K.SetFilePointerEx(handle, 0, None, 0), 'SEEK_FAILED')
+    _seek_at(handle, 0)
 
 
 def _read(handle, limit):
@@ -199,8 +205,11 @@ class _HandleCustody:
         self._pool.owners.append(self)
         self._lock, self._thread = self._pool.lock, self._pool.thread
 
+    def _remaining_handles(self):
+        return MAX_HANDLES - sum(len(owner._handles) for owner in self._pool.owners)
+
     def _reserve_handle(self, cell=None):
-        _need(sum(len(owner._handles) for owner in self._pool.owners) < MAX_HANDLES, 'HANDLE_LIMIT')
+        _need(self._remaining_handles() > 0, 'HANDLE_LIMIT')
         entry = _HandleEntry()
         if cell is not None:
             entry.cell = cell
@@ -329,6 +338,7 @@ class OwnedFileTransfer(_HandleCustody):
         self._init_custody()
         self._source_dirs, self._destination_dirs = {}, {}
         self._borrow_parent = None
+        self._zip_source_owner = None
         self._attempted = self._acquired = self._poisoned = self._closed = False
         self._files = self._total = 0
         self._destinations = set()
@@ -389,8 +399,11 @@ class OwnedFileTransfer(_HandleCustody):
             self._files += 1
             self._total += expected_size
             self._destinations.add(folded)
-            source_parent = self._directory(source_parts[:-1], True)
-            source, before = self._open(source_parent, source_parts[-1], False)
+            if self._zip_source_owner is None:
+                source_parent = self._directory(source_parts[:-1], True)
+                source, before = self._open(source_parent, source_parts[-1], False)
+            else:
+                source, before = self._zip_source_owner._source_locked(source_parts, expected_size, expected_sha256)
             _need(before[1] == expected_size and _hash(source, expected_size) == expected_sha256
                   and _snapshot(source, False) == before, 'SOURCE_MISMATCH')
             destination_parent = self._directory(destination_parts[:-1], False)
@@ -491,6 +504,30 @@ class ArchiveTempLease(_HandleCustody):
                 error.owner = self._extractor
                 raise
 
+    def create_zip_extractor(self, expected_payload, expected_total):
+        """Inert fixed ZIP factory; mutually exclusive with the process backend."""
+        global _ZIP_EXTRACTOR_FACTORY
+        with self._operation():
+            _need(not self._extractor_attempted and not self._borrow_attempted, 'EXTRACTOR_ALREADY_ATTEMPTED')
+            self._extractor_attempted = True
+            try:
+                if _ZIP_EXTRACTOR_FACTORY is None:
+                    source = Path(__file__).absolute().with_name('owned-zip-extractor.py')
+                    for path in (source, *source.parents):
+                        _need(not path.lstat().st_file_attributes & 0x400, 'UNSAFE_EXTRACTOR_SOURCE')
+                    spec = importlib.util.spec_from_file_location('_owned_zip_extractor_fixed', source)
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+                    _ZIP_EXTRACTOR_FACTORY = module._bind(ArchiveTempLease, _snapshot, _hash, _seek_at,
+                                                          _read, _write, _relative, OwnedTransferError)
+                owner = _ZIP_EXTRACTOR_FACTORY(self, expected_payload, expected_total)
+                self._extractor = owner
+                return owner
+            except BaseException as error:
+                self._poisoned = True
+                error.lease, error.owner = self, self._extractor
+                raise
+
     def acquire(self):
         with self._operation():
             _need(not self._attempted, 'ALREADY_ATTEMPTED')
@@ -535,6 +572,8 @@ class ArchiveTempLease(_HandleCustody):
                 self._pool.owners.append(borrow)
                 borrow._lock, borrow._thread = self._lock, self._thread
                 borrow._borrow_parent = self
+                if getattr(self._extractor, '_backend', None) == 'zip':
+                    borrow._zip_source_owner = self._extractor
                 borrow._acquire()
                 return borrow
             except BaseException as error:
