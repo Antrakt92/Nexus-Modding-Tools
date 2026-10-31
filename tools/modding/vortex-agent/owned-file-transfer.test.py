@@ -318,11 +318,11 @@ class OwnedFileTransferTests(unittest.TestCase):
         entry = module._HandleEntry()
         entry.cell.value = 101
         lease._handles = [entry]
-        lines, start = inspect.getsourcelines(module.OwnedFileTransfer._close)
+        lines, start = inspect.getsourcelines(module.OwnedFileTransfer._release_handle)
         target = start + next(n for n, line in enumerate(lines) if 'if success:' in line)
         calls = []
         def trace(frame, event, _arg):
-            if frame.f_code is module.OwnedFileTransfer._close.__code__ and event == 'line' and frame.f_lineno == target:
+            if frame.f_code is module.OwnedFileTransfer._release_handle.__code__ and event == 'line' and frame.f_lineno == target:
                 raise KeyboardInterrupt()
             return trace
         try:

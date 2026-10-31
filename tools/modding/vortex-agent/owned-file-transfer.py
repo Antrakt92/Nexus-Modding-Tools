@@ -18,6 +18,8 @@ import ctypes as C
 from ctypes import wintypes as W
 from contextlib import contextmanager
 import hashlib
+import importlib.util
+from pathlib import Path
 import ntpath
 import os
 import re
@@ -29,6 +31,7 @@ MAX_FILE_BYTES = MAX_TOTAL_BYTES
 MAX_HANDLES = 16384
 CHUNK_BYTES = 65536
 IDENTITY_SCHEMA = 'win-file-id128/1'
+_EXTRACTOR_FACTORY = None
 
 
 class OwnedTransferError(Exception):
@@ -196,19 +199,41 @@ class _HandleCustody:
         self._pool.owners.append(self)
         self._lock, self._thread = self._pool.lock, self._pool.thread
 
-    def _open(self, parent, name, directory, create=False, writable=False):
+    def _reserve_handle(self, cell=None):
         _need(sum(len(owner._handles) for owner in self._pool.owners) < MAX_HANDLES, 'HANDLE_LIMIT')
+        entry = _HandleEntry()
+        if cell is not None:
+            entry.cell = cell
+        self._handles.append(entry)
+        return entry
+
+    def _release_handle(self, entry):
+        _need(entry in self._handles, 'HANDLE_NOT_OWNED')
+        handle = entry.cell.value
+        if handle in (None, C.c_void_p(-1).value):
+            self._handles.remove(entry)
+            return True
+        if entry.phase == 'close-uncertain':
+            return False
+        entry.phase = 'close-uncertain'  # Before crossing native close/interrupt boundary.
+        success = _K.CloseHandle(handle)
+        if success:
+            self._handles.remove(entry)
+        else:
+            entry.phase = 'open'
+        return bool(success)
+
+    def _open(self, parent, name, directory, create=False, writable=False):
         storage = C.create_unicode_buffer(name)
         text = _Unicode(len(name.encode('utf-16-le')), (len(name) + 1) * 2, C.cast(storage, W.LPWSTR))
         # OBJ_DONT_REPARSE + OBJ_CASE_INSENSITIVE, including the drive open.
         attrs = _Attributes(C.sizeof(_Attributes), parent, C.pointer(text), 0x1040, None, None)
-        entry, status = _HandleEntry(), _Status()
+        entry, status = self._reserve_handle(), _Status()
         access = 0x100081 if directory else (0xC0100000 if writable else 0x80100000)
         options = (0x1 if directory else 0x40) | 0x20 | 0x00200000
         sharing = 3 if directory else 1
         # The output cell is retained BEFORE crossing ctypes/kernel boundaries.
         # An interrupt after kernel creation must not lose the returned handle.
-        self._handles.append(entry)
         code = _N.NtCreateFile(C.byref(entry.cell), access, C.byref(attrs), C.byref(status), None,
                                0x10 if directory else 0x80, sharing, 2 if create else 1, options, None, 0)
         _need(code >= 0, 'CREATE_REFUSED' if create else 'OPEN_REFUSED')
@@ -217,7 +242,7 @@ class _HandleCustody:
         snapshot = _snapshot(entry.cell.value, directory)
         return entry.cell.value, snapshot
 
-    def _existing_root(self, value, pin):
+    def _root_handle(self, value):
         _need(_K.GetDriveTypeW(value[:3]) == 3, 'UNSUPPORTED_DRIVE')
         mapping = C.create_unicode_buffer(2048)
         _need(_K.QueryDosDeviceW(value[:2], mapping, len(mapping))
@@ -228,6 +253,10 @@ class _HandleCustody:
               and filesystem.value == 'NTFS', 'UNSUPPORTED_FILESYSTEM')
         for component in value[3:].split('\\') if len(value) > 3 else []:
             handle, _ = self._open(handle, component, True)
+        return handle
+
+    def _existing_root(self, value, pin):
+        handle = self._root_handle(value)
         _need(_snapshot(handle, True)[0] == pin, 'ROOT_IDENTITY_MISMATCH')
         return handle
 
@@ -250,6 +279,8 @@ class _HandleCustody:
 
     def close(self):
         with self._operation(closing=True):
+            extractor = getattr(self, '_extractor', None)
+            _need(extractor is None or extractor._closed, 'EXTRACTOR_ACTIVE')
             borrow = getattr(self, '_borrow', None)
             _need(borrow is None or (borrow._closed and not borrow._handles), 'BORROW_ACTIVE')
             return self._close()
@@ -257,23 +288,8 @@ class _HandleCustody:
     def _close(self):
         failed = False
         try:
-            for index in range(len(self._handles)-1, -1, -1):
-                entry = self._handles[index]
-                handle = entry.cell.value
-                if handle in (None, C.c_void_p(-1).value):
-                    self._handles.pop(index)
-                    continue
-                if entry.phase == 'close-uncertain':
-                    failed = True
-                    continue
-                # Premark BEFORE the native call. An interrupt anywhere between
-                # native close and forgetting the entry can never cause an ABA retry.
-                entry.phase = 'close-uncertain'
-                success = _K.CloseHandle(handle)
-                if success:
-                    self._handles.pop(index)
-                else:
-                    entry.phase = 'open'
+            for entry in list(reversed(self._handles)):
+                if not self._release_handle(entry):
                     failed = True
             if failed:
                 self._poisoned = True
@@ -411,10 +427,12 @@ class OwnedFileTransfer(_HandleCustody):
 
 
 class ArchiveTempLease(_HandleCustody):
-    """Physical custody only; no child-terminal, installation or cleanup authority.
+    """Physical custody, optionally bound to one fixed extractor process owner.
 
-    The trusted caller must independently seal its actual extractor owner and
-    observe every child/pipe before begin_transfer. No JSON proof is accepted.
+    Without a factory attempt, legacy trusted callers remain responsible for an
+    independent extraction barrier. Once create_extractor is attempted, transfer
+    requires that same owner's normal terminal/EOF/explicit-close facts; no
+    fallback or JSON proof is accepted. This never admits native installation.
     Root handles cannot fence descendant insertion or 7z's overwrite policy.
     """
     def __init__(self, binding, archive_parent, archive_parent_identity, archive_leaf,
@@ -446,6 +464,32 @@ class ArchiveTempLease(_HandleCustody):
         self._archive_snapshot = self._temp_pin = None
         self._borrow = None
         self._borrow_attempted = False
+        self._extractor_attempted = False
+        self._extractor = None
+
+    def create_extractor(self):
+        """Inert one-shot factory; start() separately requires acquired custody."""
+        global _EXTRACTOR_FACTORY
+        with self._operation():
+            _need(not self._extractor_attempted and not self._borrow_attempted, 'EXTRACTOR_ALREADY_ATTEMPTED')
+            self._extractor_attempted = True
+            try:
+                if _EXTRACTOR_FACTORY is None:
+                    source = Path(__file__).absolute().with_name('owned-extractor-process.py')
+                    for path in (source, *source.parents):
+                        _need(not path.lstat().st_file_attributes & 0x400, 'UNSAFE_EXTRACTOR_SOURCE')
+                    spec = importlib.util.spec_from_file_location('_owned_extractor_process_fixed', source)
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+                    _EXTRACTOR_FACTORY = module._bind(_HandleCustody, ArchiveTempLease, _snapshot, _hash, OwnedTransferError)
+                owner = _EXTRACTOR_FACTORY(self)
+                self._extractor = owner  # Published BEFORE any process-owner kernel effects.
+                return owner
+            except BaseException as error:
+                self._poisoned = True
+                error.lease = self
+                error.owner = self._extractor
+                raise
 
     def acquire(self):
         with self._operation():
@@ -474,6 +518,8 @@ class ArchiveTempLease(_HandleCustody):
     def begin_transfer(self, destination_parent, parent_identity, new_leaf):
         with self._operation():
             _need(self._acquired and not self._borrow_attempted, 'BORROW_UNAVAILABLE')
+            if self._extractor_attempted:
+                _need(self._extractor is not None and self._extractor._handoff_ready_locked(), 'EXTRACTOR_NOT_READY')
             try:
                 _need(_snapshot(self._archive_handle, False) == self._archive_snapshot
                       and _hash(self._archive_handle, self._size) == self._sha
