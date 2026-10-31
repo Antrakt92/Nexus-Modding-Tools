@@ -400,6 +400,16 @@ appear there). All 24 graph outputs and six runtime output/map hashes matched,
 with configuration/lockfile/test adapters unchanged. Electron's npm package
 remained cold. No application, game or native window was started by these checks.
 
+A subsequent isolated SDK check exercised the actual main handler, upstream wire
+wrapper/preload exposure and reply validator through Electron 44.2.0 native IPC.
+Three fresh apps passed: primary-window reply, foreign-window refusal and same-URL
+reload invalidation. The main-side refusal was recorded before releasing backend
+readiness in the reload case; a renderer transport rejection alone would not
+prove that guard. Each app exited normally and its entire owned process job was
+joined. See the [fixture scope](NATIVE-SOURCE-ASSEMBLY.md#isolated-electron-ipc-check--31-october-2026).
+This does not execute full ExtensionManager construction, real persistence or the
+installed Vortex runtime. It grants no target reservation or installation permit.
+
 ## Renderer and manager startup readiness
 
 The prepared startup layer observes two separate production boundaries. The

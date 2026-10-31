@@ -288,7 +288,7 @@
     },
     {
       "path": "docs/NATIVE-ADOPTION-BOUNDARY.md",
-      "sha256_lf": "53903d860d81376b631bb7fd8c17d9ecc06819fd3421360c5fa88854b3df3c40"
+      "sha256_lf": "2112230c537e98380e3988ccc154173e8df9df3f94cb7f492fadd614f211d83b"
     },
     {
       "path": "docs/NATIVE-CALLBACK-PATCH.md",
@@ -344,7 +344,7 @@
     },
     {
       "path": "docs/NATIVE-SOURCE-ASSEMBLY.md",
-      "sha256_lf": "3523751ea69520177b9b2113baf1b8414f2b3b59b888d6e942e058cf1e9bc6e5"
+      "sha256_lf": "938befa34d2cb77076b87520e5bcde0ff9b0ecb4804f41cd44db370851952dfe"
     },
     {
       "path": "docs/NATIVE-STAGING-TRANSFER.md",
