@@ -288,7 +288,7 @@
     },
     {
       "path": "docs/NATIVE-ADOPTION-BOUNDARY.md",
-      "sha256_lf": "9f0e15390c9ff5c0e901e165590bc935c28097c02d9f90a4faf1b5e94e99b551"
+      "sha256_lf": "98182885f8f244f66feb8f093fac863076e6e77278bae8995a92be5836401dc7"
     },
     {
       "path": "docs/NATIVE-CALLBACK-PATCH.md",
@@ -979,6 +979,10 @@
       "sha256_lf": "0d446becc32448a177c8408f62c174af28bd783950ece55165f8d2cb3b744073"
     },
     {
+      "path": "tools/modding/vortex-agent/native-new-mod-conflict-query.test.mjs",
+      "sha256_lf": "6579d70270f33221a6443b0db2ed17deec496159f2e64a8628a822f75351a4e7"
+    },
+    {
       "path": "tools/modding/vortex-agent/native-patch-test-fixture.mjs",
       "sha256_lf": "7187fff854ba3c4dd1c54e7f6a2c7826d01c9236388975dc3abe63f9bb73a3db"
     },
@@ -1191,8 +1195,28 @@
       "sha256_lf": "0a96d2660397fd24b09360b1f0360838339aee3ca2f6e86cca0a50d2fda02bed"
     },
     {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-persistence-2.9.1/new-mod-conflict-query.json",
+      "sha256_lf": "8757f44aa813fd06057b050d9fa681cc81ec2c2dd1b263bd82d9b8cfe1ca8205"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-persistence-2.9.1/new-mod-conflict-query.patch",
+      "sha256_lf": "5c77c9092b375508450d5a783518b7fb1006d5352af68054227536ab7d2b765f"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-persistence-2.9.1/target-reservation.json",
+      "sha256_lf": "9ca6e118bb6c4362a3033fdd93cedce422c3f114f27c176c6d6b12bfae8ab2fd"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-persistence-2.9.1/target-reservation.patch",
+      "sha256_lf": "db20272f9dacf0d927f6740b3e4d2149016c74a1251d5a123e3eff0239c684fb"
+    },
+    {
       "path": "tools/modding/vortex-agent/native-persistence-ack-patch.test.mjs",
       "sha256_lf": "bc47fc9acaeb7a8f0d1266837d6bb3d37bee56af0c3b924196d066f755b9f393"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-persistence-reservation.test.mjs",
+      "sha256_lf": "2810305b6992f5b74088c86fbacb8f80162f04055aaf00dbc0b9d5090205231e"
     },
     {
       "path": "tools/modding/vortex-agent/native-purge-join-patch.test.mjs",

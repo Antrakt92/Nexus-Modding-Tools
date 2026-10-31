@@ -1,0 +1,259 @@
+--- a/src/main/src/store/ReduxPersistorIPC.ts
++++ b/src/main/src/store/ReduxPersistorIPC.ts
+@@ -67,12 +67,23 @@
+ /**
+  * ReduxPersistor that works via IPC instead of direct store subscription.
+  * Receives diff operations from renderer and persists them to LevelDB.
+  */
++interface INativeModPersistenceReservation {
++  owner: object;
++  gameId: string;
++  modId: string;
++  phase: "pending" | "reserved" | "held";
++  persistor: IPersistor;
++  levelPersist: LevelPersist;
++  invalidator: QueryInvalidator;
++}
++
+ class ReduxPersistorIPC {
+   private mPersistors: { [hive: string]: IPersistor } = {};
+   private mUpdateQueue: Promise<void> = Promise.resolve();
+   private mPersistorFactory: PersistorFactory | undefined;
++  private mNativeModPersistenceReservation: INativeModPersistenceReservation | undefined;
+   #mLevelPersist: LevelPersist | undefined;
+   #mInvalidator: QueryInvalidator | undefined;
+ 
+   constructor() {
+@@ -82,8 +93,14 @@
+   /**
+    * Set the LevelPersist instance and QueryInvalidator for dirty table tracking.
+    */
+   public setQueryInvalidator(levelPersist: LevelPersist, invalidator: QueryInvalidator): void {
++    const reservation = this.mNativeModPersistenceReservation;
++    if (reservation !== undefined
++        && (levelPersist !== reservation.levelPersist || invalidator !== reservation.invalidator)) {
++      reservation.phase = "held";
++      throw new Error("Reserved native persistence backend cannot be replaced");
++    }
+     this.#mLevelPersist = levelPersist;
+     this.#mInvalidator = invalidator;
+   }
+ 
+@@ -110,9 +127,18 @@
+   public insertPersistor(
+     hive: string,
+     persistor: IPersistor,
+   ): Promise<{ [key: string]: Serializable }> {
++    if (hive === "persistent" && this.mNativeModPersistenceReservation !== undefined) {
++      this.mNativeModPersistenceReservation.phase = "held";
++      return Promise.reject(new Error("Reserved native persistence hive cannot be replaced"));
++    }
+     return this.loadHydrationData(hive, persistor).then((data) => {
++      // A hydration already in flight can finish after reservation admission.
++      if (hive === "persistent" && this.mNativeModPersistenceReservation !== undefined) {
++        this.mNativeModPersistenceReservation.phase = "held";
++        throw new Error("Reserved native persistence hive cannot be replaced");
++      }
+       this.mPersistors[hive] = persistor;
+       persistor.setResetCallback(() =>
+         this.loadHydrationData(hive, persistor).then(() => undefined),
+       );
+@@ -148,8 +174,17 @@
+    * Apply diff operations received from the renderer process.
+    * This is the main entry point for IPC-based persistence.
+    */
+   public applyDiffOperations(hive: string, operations: DiffOperation[]): void {
++    if (hive === "persistent" && this.mNativeModPersistenceReservation !== undefined) {
++      try {
++        operations = this.snapshotAcknowledgedPersistenceOperations(operations);
++        this.guardNativeModPersistenceOperations(operations);
++      } catch (err) {
++        this.mNativeModPersistenceReservation.phase = "held";
++        throw err;
++      }
++    }
+     let persistor = this.mPersistors[hive];
+ 
+     // If we don't have a persistor for this hive, try to create one on demand
+     if (persistor === undefined && this.mPersistorFactory !== undefined) {
+@@ -170,8 +205,11 @@
+ 
+     this.mUpdateQueue = this.mUpdateQueue
+       .then(() => this.processOperations(hive, persistor, operations))
+       .catch((unknownError) => {
++        if (this.mNativeModPersistenceReservation !== undefined) {
++          this.mNativeModPersistenceReservation.phase = "held";
++        }
+         // Ensure errors don't break the queue
+         const err = unknownToError(unknownError);
+         log("error", "Failed to process persistence operations", {
+           hive,
+@@ -193,27 +231,11 @@
+       if (typeof hive !== "string" || hive.length === 0
+           || ["__proto__", "constructor", "prototype"].includes(hive)) {
+         throw new Error("Invalid acknowledged persistence hive");
+       }
+-      // Detach before validation/enqueue: callers must not alter a waiting batch.
+-      const snapshot = structuredClone(operations);
+-      if (!Array.isArray(snapshot) || snapshot.length === 0) {
+-        throw new Error("Acknowledged persistence requires a nonempty batch");
+-      }
+-      for (const op of snapshot) {
+-        const keys = op == null ? [] : Object.keys(op);
+-        if (op == null || !["set", "remove"].includes(op.type)
+-            || keys.length !== (op.type === "set" ? 3 : 2)
+-            || !Object.hasOwn(op, "type") || !Object.hasOwn(op, "path")
+-            || (op.type === "set" && !Object.hasOwn(op, "value"))
+-            || !Array.isArray(op.path) || op.path.length === 0) {
+-          throw new Error("Invalid acknowledged persistence operation");
+-        }
+-        for (const segment of op.path) {
+-          if (typeof segment !== "string" || segment.length === 0) {
+-            throw new Error("Invalid acknowledged persistence path");
+-          }
+-        }
++      const snapshot = this.snapshotAcknowledgedPersistenceOperations(operations);
++      if (hive === "persistent") {
++        this.guardNativeModPersistenceOperations(snapshot);
+       }
+       let persistor = Object.hasOwn(this.mPersistors, hive) ? this.mPersistors[hive] : undefined;
+       if (persistor === undefined && this.mPersistorFactory !== undefined) {
+         persistor = this.mPersistorFactory(hive);
+@@ -229,12 +251,136 @@
+         this.processOperations(hive, owner, snapshot, true),
+       );
+       // Keep the ordinary queue usable, without converting this caller's
+       // failed completion into a successful acknowledgement.
+-      this.mUpdateQueue = completion.catch(() => undefined);
++      this.mUpdateQueue = completion.catch(() => {
++        if (this.mNativeModPersistenceReservation !== undefined) {
++          this.mNativeModPersistenceReservation.phase = "held";
++        }
++      });
+       return completion;
+     } catch (err) {
+       return Promise.reject(err);
++    }
++  }
++
++  private snapshotAcknowledgedPersistenceOperations(operations: DiffOperation[]): DiffOperation[] {
++    // Detach before validation/enqueue: callers must not alter a waiting batch.
++    const snapshot = structuredClone(operations);
++    if (!Array.isArray(snapshot) || snapshot.length === 0) {
++      throw new Error("Acknowledged persistence requires a nonempty batch");
++    }
++    for (const op of snapshot) {
++      const keys = op == null ? [] : Object.keys(op);
++      if (op == null || !["set", "remove"].includes(op.type)
++          || keys.length !== (op.type === "set" ? 3 : 2)
++          || !Object.hasOwn(op, "type") || !Object.hasOwn(op, "path")
++          || (op.type === "set" && !Object.hasOwn(op, "value"))
++          || !Array.isArray(op.path) || op.path.length === 0) {
++        throw new Error("Invalid acknowledged persistence operation");
++      }
++      for (const segment of op.path) {
++        if (typeof segment !== "string" || segment.length === 0) {
++          throw new Error("Invalid acknowledged persistence path");
++        }
++      }
++    }
++    return snapshot;
++  }
++
++  /**
++   * Reserve one new mod's persistence paths before accepting more batches.
++   * Internal, permanent hold only: no dispatch, write or release capability.
++   * Renderer coherence and raw database writers need separate admission.
++   */
++  public reserveNativeModPersistence(gameId: string, modId: string): Promise<object> {
++    try {
++      const valid = (id: string) => typeof id === "string"
++        && /^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$/.test(id)
++        && !["__proto__", "constructor", "prototype"].includes(id);
++      if (!valid(gameId) || !valid(modId)) {
++        throw new Error("Invalid native persistence target");
++      }
++      if (this.mNativeModPersistenceReservation !== undefined) {
++        throw new Error("Native persistence target already held");
++      }
++      const persistor = Object.hasOwn(this.mPersistors, "persistent")
++        ? this.mPersistors.persistent : undefined;
++      const levelPersist = this.#mLevelPersist;
++      const invalidator = this.#mInvalidator;
++      if (persistor === undefined || levelPersist === undefined || invalidator === undefined) {
++        throw new Error("Native persistence backend is not ready");
++      }
++      const reservation: INativeModPersistenceReservation = {
++        owner: Object.freeze({}), gameId, modId, phase: "pending",
++        persistor, levelPersist, invalidator,
++      };
++      // Set synchronously, before the queue wait or a backend call can reenter.
++      this.mNativeModPersistenceReservation = reservation;
++      const admission = this.mUpdateQueue.then(async () => {
++        this.checkNativeModPersistenceBackend(reservation);
++        const conflict = await levelPersist.hasNewModRegistrationConflict(gameId, modId);
++        this.checkNativeModPersistenceBackend(reservation);
++        if (conflict !== false) {
++          throw new Error("Native persistence target already exists or has profile state");
++        }
++        reservation.phase = "reserved";
++        return reservation.owner;
++      }).catch((err) => {
++        reservation.phase = "held";
++        throw err;
++      });
++      this.mUpdateQueue = admission.then(() => undefined, () => undefined);
++      return admission;
++    } catch (err) {
++      return Promise.reject(err);
++    }
++  }
++
++  public checkNativeModPersistenceReservation(owner: object): void {
++    const reservation = this.mNativeModPersistenceReservation;
++    if (reservation === undefined || reservation.owner !== owner || reservation.phase !== "reserved") {
++      throw new Error("Native persistence reservation owner or state mismatch");
++    }
++    this.checkNativeModPersistenceBackend(reservation);
++  }
++
++  public getNativeModPersistenceReservation() {
++    const reservation = this.mNativeModPersistenceReservation;
++    return Object.freeze({
++      phase: reservation?.phase ?? "not_reserved",
++      gameId: reservation?.gameId, modId: reservation?.modId,
++      effectsAllowed: false, installationPermit: false, releaseSupported: false,
++    });
++  }
++
++  private checkNativeModPersistenceBackend(reservation: INativeModPersistenceReservation): void {
++    if (this.mNativeModPersistenceReservation !== reservation || reservation.phase === "held"
++        || this.mPersistors.persistent !== reservation.persistor
++        || this.#mLevelPersist !== reservation.levelPersist
++        || this.#mInvalidator !== reservation.invalidator) {
++      reservation.phase = "held";
++      throw new Error("Native persistence backend or reservation changed");
++    }
++  }
++
++  private guardNativeModPersistenceOperations(operations: DiffOperation[]): void {
++    const reservation = this.mNativeModPersistenceReservation;
++    if (reservation === undefined) return;
++    const target = ["mods", reservation.gameId, reservation.modId];
++    for (const op of operations) {
++      const parts = op.path;
++      // Physical keys use ###; ambiguous paths cannot prove non-intersection.
++      const ambiguous = parts.some((part) => part.includes("###"));
++      const modOverlap = parts.slice(0, Math.min(parts.length, target.length))
++        .every((part, index) => part === target[index]);
++      const profileOverlap = parts[0] === "profiles"
++        && (parts.length <= 2 || (parts[2] === "modState"
++          && (parts.length <= 3 || parts[3] === reservation.modId)));
++      if (ambiguous || modOverlap || profileOverlap) {
++        reservation.phase = "held";
++        throw new Error("Native persistence target is reserved");
++      }
+     }
+   }
+ 
+   // Maximum operations bundled into a single bulk INSERT or DELETE.
