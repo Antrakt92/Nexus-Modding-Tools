@@ -102,7 +102,7 @@
     {
       "path": "src/renderer/src/store/persistDiffMiddleware.ts",
       "originalSHA256": "d4dbc85a48739c30239bda2b6b091ef9631b5e9df6b3affcd935a4a3a5cf0262",
-      "finalSHA256": "326a2d53c9d08d7b56f436319675dc65be5ecc34977c5097e46511b56e7536dd"
+      "finalSHA256": "b4368a21ab8fb00ea5038708dd3008c270d2a3df3005221be9ac87fc088a1ca6"
     },
     {
       "path": "src/shared/src/types/ipc.ts",
@@ -1036,6 +1036,21 @@
       "outputSHA256": "551ddd8fbbcc1ee1e74a87a33b3b561bf7bf9dca815756f3f96ff440e0b83b3c",
       "prerequisitePatch": "renderer-extension-readiness.patch",
       "prerequisitePatchSHA256": "83bf53f8a597466d6f18a79cf6d66fea98853d129c76a91bd2872412bc61be0b",
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "renderer-acknowledged-hold",
+      "packet": "persistence",
+      "path": "src/renderer/src/store/persistDiffMiddleware.ts",
+      "manifestSHA256": "6edfe8d6415ea3bd19b057e745e9a21cd2a8278ee56b652fc04a258f0605638f",
+      "patchSHA256": "ec4926d5d20e0854cdd6ab3636083c31bfaee099a2f9dd3af0671c70dce0c600",
+      "inputSHA256": "326a2d53c9d08d7b56f436319675dc65be5ecc34977c5097e46511b56e7536dd",
+      "outputSHA256": "b4368a21ab8fb00ea5038708dd3008c270d2a3df3005221be9ac87fc088a1ca6",
+      "prerequisitePatch": "renderer-acknowledged-flush.patch",
+      "prerequisitePatchSHA256": "4db4ecd26a180915c18f0176e9986853183b1a011ac10bf1618a91698637a43c",
       "requiredManagerPatchSHA256": null,
       "requiredCompanionPatch": null,
       "requiredCompanionPatchSHA256": null,

@@ -1,0 +1,27 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/store/persistDiffMiddleware.ts",
+  "originalSourceSHA256": "d4dbc85a48739c30239bda2b6b091ef9631b5e9df6b3affcd935a4a3a5cf0262",
+  "inputSHA256": "326a2d53c9d08d7b56f436319675dc65be5ecc34977c5097e46511b56e7536dd",
+  "outputSHA256": "b4368a21ab8fb00ea5038708dd3008c270d2a3df3005221be9ac87fc088a1ca6",
+  "patchSHA256": "ec4926d5d20e0854cdd6ab3636083c31bfaee099a2f9dd3af0671c70dce0c600",
+  "prerequisitePatch": "renderer-acknowledged-flush.patch",
+  "prerequisitePatchSHA256": "4db4ecd26a180915c18f0176e9986853183b1a011ac10bf1618a91698637a43c",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "powerLossPersistenceVerified": false,
+  "releaseSupported": false,
+  "rendererBufferReleaseSupported": true,
+  "limitations": [
+    "Internal renderer persistence buffering only; no main/backend release, target reservation, registration or installation permit.",
+    "Caller must restore main write availability BEFORE renderer release.",
+    "Unknown ACK/coherence/store/factory outcome stays held without replay or reset.",
+    "Held maps retain detached lossless JSON operations with aggregate payload budget32MiB,32768 coalesced keys,32hives and32MiB key units; this is not a total process-memory or computeStateDiff allocation bound.",
+    "On overflow/failure, reducers continue but previous-state baseline and bounded pending evidence remain for explicit reconciliation; no release or complete persisted-state claim."
+  ]
+}

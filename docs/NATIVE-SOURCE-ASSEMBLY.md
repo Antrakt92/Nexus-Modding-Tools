@@ -1,6 +1,6 @@
 # Assemble the reviewed Vortex source patches
 
-`native-source-series.mjs` applies the fixed sequence of 61 reviewed patches to
+`native-source-series.mjs` applies the fixed sequence of 62 reviewed patches to
 24 original files from Vortex `v2.9.1`, commit
 `c80326367cbe6d96621ad6cf4a5488ef49bac110`. It replaces manually composing separate
 patch chains before compilation. It does not change an installed application or
@@ -35,7 +35,7 @@ match the pinned series. Patch application requires exact offsets and context;
 it has no fuzzy matching or hash-refresh mode.
 
 The fixed graph combines the 32-patch mod-management/transfer packet with the
-29-patch persistence packet. The latter includes renderer target admission and
+30-patch persistence packet. The latter includes renderer target admission and
 acknowledged diffs, main/preload/shared IPC, backend reservations and managed SQL
 ownership. Both runtime packet directories have separate closed inventories;
 test-only adapters are excluded. A cross-file companion must already have been
@@ -328,3 +328,25 @@ controlled facades: this checks native transport and frame invalidation, not ful
 Vortex startup, installed native modules, registration or installation. The
 installed application was unchanged. Request filtering and a dead-loopback proxy
 are fixture controls, not OS-wide network isolation.
+
+## Renderer persistence hold — 31 October 2026
+
+The 62-patch recipe adds an owned renderer flush-and-hold boundary. Its final
+acknowledgement leaves later changes buffered until explicit release, instead of
+immediately scheduling ordinary writes into a reserved main backend. The runtime
+packets contain 32 lifecycle and 30 persistence patch pairs.
+
+Twenty new source-backed cases passed, including the predecessor counterexample,
+old-writer and callback reentry, bounded detached payloads, late timers and
+release followed by immediate reacquisition. The combined affected suite passed
+229 cases without skips. The actual renderer TypeScript and webpack targets
+passed with all eight configuration/lock pins unchanged. Fifteen renderer inputs
+matched the fresh Program and runtime map. Ten main/preload/shared inputs and
+their unchanged outputs retain their previous qualification; those projects
+were not independently rebuilt. All 24 assembled outputs matched the qualified
+tree. Electron's npm SDK directory and path marker remained absent.
+
+This is prepared middleware and development-build qualification. Restoring main
+write availability before local release remains the coordinator's responsibility;
+the hold does not implement registration, crash reconciliation or installation.
+See the [hold contract](NATIVE-ADOPTION-BOUNDARY.md#renderer-persistence-hold).
