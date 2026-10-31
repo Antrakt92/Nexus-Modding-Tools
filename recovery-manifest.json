@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "00329c187e46a9b8a86b76edf0d7e92a907f6a029c15e41cf9f656237b4cd1f0"
+      "sha256_lf": "17162847f8c479cb21bdecba2b15c2ce2e109e1b7d13166569b9d906352a5b0f"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -312,7 +312,7 @@
     },
     {
       "path": "docs/PROCESS-PROBE-EXPERIMENT.md",
-      "sha256_lf": "f4565e763a2e13448df6a100a6a7b6f94b0a91561e70fc55c96177171305b383"
+      "sha256_lf": "2c56e836262f640c18bf210caf76d930f7d1b169cc2166bf3995d952760c3429"
     },
     {
       "path": "docs/README.md",
@@ -945,6 +945,14 @@
     {
       "path": "tools/modding/vortex-agent/process-probe-benchmark.test.mjs",
       "sha256_lf": "d4193f7c6754995ff0a1a5421fcc90882acce1e53075d8b7474883288b91e2fe"
+    },
+    {
+      "path": "tools/modding/vortex-agent/process-probe-compare.mjs",
+      "sha256_lf": "1b838967028290a8a6a10b5d1e63d8971f9864799e0e5f0aa573dd6a7b793b23"
+    },
+    {
+      "path": "tools/modding/vortex-agent/process-probe-compare.test.mjs",
+      "sha256_lf": "3d89a74ea5d0a910338fffd5449e7723470326599f450496ece2563a2cb93318"
     },
     {
       "path": "tools/modding/vortex-agent/process-probe-contract.cjs",
