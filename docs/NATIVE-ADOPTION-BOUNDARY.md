@@ -316,12 +316,30 @@ with at most 4,096 profiles. Only a leaf reducer input receives working copies;
 reservation, owner checks and post-validation do not allocate copied maps. These bounds do not prove a measured
 installation speedup or bound temporary allocation by `Reflect.ownKeys`.
 
-This is a lifetime renderer hold, not an attestation of the native window/store,
-a persistence transaction or a fence against arbitrary replacement reducers.
-Multiple observed factories, repeated initialization and a discontinuous root
-state chain refuse admission, including two stores reusing one reducer function.
-The coordinator still needs to bind the actual host, flush older pending diffs,
-reserve main persistence and verify registration before any future safe release.
+This is a lifetime renderer hold, not an independent attestation of the native
+window, a persistence transaction or a fence against arbitrary replacement
+reducers. Multiple observed factories, repeated initialization and a discontinuous
+root state chain refuse admission, including two stores reusing one reducer function.
+
+The passive store-binding layer calls `bindNativeRendererStore(store)` from the
+actual renderer startup after hydration and app metadata, before
+`extensions.setStore`. It captures the selected store and its own data `getState`
+method. Reservation and owner checks require that same method and the same root
+tracked by the reducer. Duplicate binding, method drift, root mismatch or reentry
+invalidates native eligibility; a failed bind returns false so ordinary startup
+can continue. No reservation or protected-state scan starts merely by binding.
+
+Status reports `storeBinding` as `unbound`, `binding`, `bound` or `held`. A
+binding failure before any target reservation leaves target `phase:not_reserved`;
+it does not create a startup hold over ordinary actions. Failure after an owner
+was issued holds that target too. A private scalar invocation counter detects
+reducer reentry even when the returned root identity is unchanged.
+
+The call site trusts the official Redux/enhancer initialization path. This does
+not isolate arbitrary privileged JavaScript or prove that pending persistence
+diffs have drained. The coordinator still needs window/operation binding,
+readiness, acknowledged diff completion, main persistence reservation and verified
+registration before any future safe release.
 
 ### Renderer fence checks
 
@@ -340,13 +358,28 @@ assembly/manager/marker suites, the run passed 65 cases; the seven original
 source-experiment cases also passed separately. These remain source tests, not Electron/database
 or native filesystem acceptance.
 
-The final composed renderer passed the actual TypeScript and webpack targets
+The subsequent passive store-binding layer passed 34 source-backed cases without
+skips, including the original fence cases against the composed source. Tests use
+actual Redux stores, including middleware enhancement, and check descriptor/proxy
+refusal, duplicate binding, method/root drift and swallowed callback/reducer
+reentry. An AST-extracted segment of the actual renderer entry runs app metadata,
+bind and extension exposure in order; a false bind result does not stop exposure.
+These are source/facade checks rather than an installed host observation.
+
+Before passive store binding, the composed renderer passed the actual TypeScript and webpack targets
 with the official compiler configuration and lockfile unchanged. All 13 renderer
 inputs matched the actual TypeScript Program and new bundle source map: the ten
 mod-management/transfer sources, this reducer, the acknowledged diff middleware
 and unchanged state-diff control. Seven other persistence sources retained their
 prior main/preload/shared Program/map baseline; those projects were not rebuilt
 for this renderer-only change. This remains an isolated development build.
+
+The composed store-binding renderer subsequently passed the actual TypeScript
+and webpack targets with the same official configurations and lockfile. Fourteen
+renderer inputs, including the actual startup entry and unchanged state-diff
+control, matched the new Program and source map. Ten main/preload/shared inputs
+retained their unchanged qualification baselines; those projects were not rebuilt.
+This remains an isolated development build, with no installed-host acceptance.
 
 The unmodified upstream `src/reducers/index.test.ts` could not import because the
 qualified dependency tree lacks `winapi-bindings/build/Release/winapi`. Vitest ran

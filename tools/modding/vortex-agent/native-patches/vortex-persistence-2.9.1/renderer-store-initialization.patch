@@ -1,0 +1,15 @@
+--- a/src/renderer/src/renderer.tsx
++++ b/src/renderer/src/renderer.tsx
+@@ -149,5 +149,5 @@
+ import { log } from "./logging";
+ import { initApplicationMenu } from "./menu";
+-import reducer, { buildReducerTree, Decision, sanitizeHydrationState } from "./reducers/index";
++import reducer, { buildReducerTree, Decision, sanitizeHydrationState, bindNativeRendererStore } from "./reducers/index";
+ import { fetchHydrationState } from "./store/hydration";
+ import { flushPendingDiffsSync, persistDiffMiddleware } from "./store/persistDiffMiddleware";
+@@ -642,4 +642,5 @@
+   }
+ 
++  bindNativeRendererStore(store);
+   extensions.setStore(store);
+   setOutdated(extensions.getApi());

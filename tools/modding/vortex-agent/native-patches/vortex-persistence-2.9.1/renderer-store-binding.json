@@ -1,0 +1,23 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/reducers/index.ts",
+  "inputSHA256": "6cbd67e632d3f9bce384f9659bdf699b0b120663aed09eb2b7e51d45241fec7b",
+  "outputSHA256": "4824d5ec9ffb9e768835d430e043e47b91d8e52cc18c2d9f1272c099e4d730c9",
+  "patchSHA256": "f4ed4c4e7ae11b5f98a0c7c46ea0077956c444eedd905bfcbc29e430e3469a3e",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "powerLossPersistenceVerified": false,
+  "limitations": [
+    "Passive trusted Redux/enhancer store identity only; no persistence flush, IPC, registration, release or installation authority.",
+    "Binding failure disables native eligibility and leaves ordinary unreserved startup and dispatch operational.",
+    "No attestation against arbitrary privileged JavaScript or unobserved swap-and-restore."
+  ],
+  "originalSourceSHA256": "e59a69384003bade4d1216ee28a8347b38d27291f9b3688c82dc488c168a4e22",
+  "prerequisitePatch": "renderer-target-fence.patch",
+  "prerequisitePatchSHA256": "c8a850ecb5da2411ca2ba93842ecb59bae2370d8f03beba51e93aea051bf6bb0"
+}
