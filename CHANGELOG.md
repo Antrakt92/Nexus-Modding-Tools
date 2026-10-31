@@ -17,6 +17,11 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Prepare an extractor error-settlement patch that retains the first failure
+  and waits for the exact child to close before rejecting, including stream
+  errors and asynchronous cancel failures. Failed kill requests cannot report
+  termination. The patch is uninstalled; cancellation classification and complete
+  native installation acceptance remain separate gates.
 - Add an internal Windows handle-owned transfer library: exclusive new targets,
   bounded hash-verified copying and retained partial output on failure. Native
   tests cover aliases, junctions and interrupted handle lifetimes. It is not
