@@ -11,7 +11,7 @@ from recovery import no_links
 
 ROOT = Path(__file__).resolve().parents[1]
 TEXT_SUFFIXES = {'.cjs', '.mjs', '.js', '.ts', '.tsx', '.py', '.ps1', '.json',
-                 '.md', '.yml', '.yaml', '.txt', '.css', '.html', '.svg', '.cs', '.toml', '.xml'}
+                 '.md', '.yml', '.yaml', '.txt', '.css', '.html', '.svg', '.cs', '.toml', '.xml', '.rs'}
 
 
 def validate_encoding(name, data):
@@ -19,7 +19,7 @@ def validate_encoding(name, data):
     # damaged maintained source; upstream byte-pinned snapshots stay untouched.
     parts = Path(name).parts
     maintained = len(parts) == 1 or parts[0] in {'tools', 'scripts', 'tests', 'docs', '.github'}
-    if maintained and Path(name).suffix.lower() in TEXT_SUFFIXES:
+    if maintained and (Path(name).suffix.lower() in TEXT_SUFFIXES or Path(name).name == 'Cargo.lock'):
         try:
             data.decode('utf-8', errors='strict')
         except UnicodeDecodeError:

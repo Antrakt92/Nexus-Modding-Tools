@@ -16,6 +16,10 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Add an explicit read-only process-guard benchmark and a bounded native snapshot
+  data contract. Keep startup, full invocation and batch-control measurements
+  separate; the resident guard and supported operations are unchanged.
+
 - Prepare a separate native installation activity registry with manager-scoped
   job IDs, core-tail observations and joined error cleanup. Callback, debug
   timeout and optional staging-size metadata no longer define the diagnostic
