@@ -1,0 +1,62 @@
+--- a/src/main/src/store/ReduxPersistorIPC.ts
++++ b/src/main/src/store/ReduxPersistorIPC.ts
+@@ -78,2 +78,3 @@
+   invalidator: QueryInvalidator;
++  backendOwner?: object;
+ }
+@@ -179,2 +180,3 @@
+   public applyDiffOperations(hive: string, operations: DiffOperation[]): void {
++    this.guardNativeBackendWriteAdmission();
+     if (hive === "persistent" && this.mNativeModPersistenceReservation !== undefined) {
+@@ -207,2 +209,3 @@
+ 
++    this.guardNativeBackendWriteAdmission();
+     this.mUpdateQueue = this.mUpdateQueue
+@@ -233,2 +236,3 @@
+     try {
++      this.guardNativeBackendWriteAdmission();
+       if (typeof hive !== "string" || hive.length === 0
+@@ -252,2 +256,3 @@
+       const owner = persistor;
++      this.guardNativeBackendWriteAdmission();
+       const completion = this.mUpdateQueue.then(() =>
+@@ -278,2 +283,3 @@
+     try {
++      this.guardNativeBackendWriteAdmission();
+       if (!Array.isArray(batches) || batches.length > 32) {
+@@ -336,2 +342,3 @@
+       };
++      this.guardNativeBackendWriteAdmission();
+       const completion = this.mUpdateQueue.then(async () => {
+@@ -354,2 +361,9 @@
+       return Promise.reject(err);
++    }
++  }
++
++  private guardNativeBackendWriteAdmission(): void {
++    if (this.mNativeModPersistenceReservation !== undefined) {
++      this.mNativeModPersistenceReservation.phase = "held";
++      throw new Error("Native persistence writes are held");
+     }
+@@ -414,2 +428,8 @@
+       const admission = this.mUpdateQueue.then(async () => {
++        this.checkNativeModPersistenceBackend(reservation);
++        // Drain legacy main work first; freezing earlier would strand that work.
++        reservation.backendOwner = await levelPersist.reserveNativeBackendWrites();
++        if (reservation.backendOwner === null || typeof reservation.backendOwner !== "object") {
++          throw new Error("Native backend owner is missing");
++        }
+         this.checkNativeModPersistenceBackend(reservation);
+@@ -452,2 +472,12 @@
+   private checkNativeModPersistenceBackend(reservation: INativeModPersistenceReservation): void {
++    try {
++      if (reservation.backendOwner !== undefined) {
++        reservation.levelPersist.checkNativeBackendWriteOwner(reservation.backendOwner);
++      } else if (reservation.phase === "reserved") {
++        throw new Error("Native backend owner is missing");
++      }
++    } catch (err) {
++      reservation.phase = "held";
++      throw err;
++    }
+     if (this.mNativeModPersistenceReservation !== reservation || reservation.phase === "held"

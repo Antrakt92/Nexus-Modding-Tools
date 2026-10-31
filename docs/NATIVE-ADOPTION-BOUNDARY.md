@@ -73,7 +73,9 @@ New intersecting persistent batches are refused in full before enqueueing:
 ordinary renderer diffs, quit-sync diffs and acknowledged batches use the same
 guard. Protected paths include the exact mod, its descendants and ancestors,
 and every profile's `modState[modId]`, including whole-profile replacement.
-Unrelated mods and profile fields continue through the queue. Accepted batches
+In that original target-only layer, unrelated mods and profile fields continue
+through the queue. The composed backend hold below deliberately tightens this
+admission. Accepted batches
 are detached before they can wait, preventing later caller mutation from
 retargeting a safe path. Physical `###` separator aliases are refused.
 
@@ -103,8 +105,74 @@ In this pinned upstream revision, the production `getDatabase` search finds only
 the getter definition. Current `writePersistedValue` callers write app fields,
 and backup import/key repair run before `initMainPersistence`. These are exposed
 bypass APIs, not evidence that a conflicting target write is currently running.
-A future backend fence must account for previously issued raw connections and
-Tables at execution time; checking only a connection getter cannot revoke them.
+Previously issued raw connections and Tables cannot be revoked by checking only
+a connection getter. The backend hold below therefore refuses after raw exposure.
+
+## Backend write admission
+
+`backend-write-admission.patch` follows the new-mod conflict query in
+`LevelPersist.ts`. `backend-reservation-admission.patch` follows the acknowledged
+packet in `ReduxPersistorIPC.ts`. They compose as a pair: the existing main
+reservation drains earlier accepted queue units, then acquires the concrete
+backend's opaque writer owner before querying target absence. Main checks the
+same owner and backend identities again after acquisition, after the query and
+on subsequent reservation checks. There is no second unused install interface.
+
+The backend tracks intents before argument handling, logging, SQL or the first
+await in the four KV writers, transaction methods and close. Freeze is
+synchronous; it joins previously started intents before granting its owner.
+Write failures remain observed even when their caller handled the rejection.
+Thrown `null` or `undefined` is still failure. In the backend timing wrapper,
+reporting errors cannot replace the primary SQL rejection. Legacy main rollback
+logging can still replace its primary error if logging also throws; that existing
+path is not repaired by this backend timing change. No timeout or empty queue converts uncertainty into
+success. The ordinary inactive path adds no SQL or collection scans.
+
+An open transaction or pending transaction call refuses admission. A `BEGIN`
+promise is not a whole transaction. Legacy COMMIT/ROLLBACK may finish cleanup of
+an existing transaction while the hold stays invalid; no automatic rollback,
+reset or admission retry is added. Close attempts and any earlier raw connection
+exposure also prevent admission. The getter records exposure before returning
+the connection: cached Tables/raw SQL remain usable outside this boundary, so
+the fence refuses them rather than claiming to revoke them.
+
+**This is a whole-backend lifetime hold.** New writes, BEGIN, close and raw
+connection access refuse while held. Composed main admission also refuses new
+ordinary and acknowledged writes for all hives before enqueueing, including
+unrelated settings. Earlier accepted queue work finishes before backend freeze.
+This is not a transparent pause/resume feature: there is no release yet. A future
+coordinator must bound this window and reconcile it before enabling the route.
+
+Other `DuckDBSingleton` connections and QueryRegistry execution remain separate
+gates. In the pinned official source, QueryRegistry runs five setup CALLs during
+initialization and two fixed SELECT bodies afterward. The parser's `@type` comment
+does not enforce read-only SQL and accepts extra files. Only completed setup plus
+exact file/body/parameter qualification can support a later read-only connection
+claim. This backend pair grants no global SQL isolation, registration, native
+installation, crash recovery or power-loss guarantee.
+
+### Backend admission checks
+
+```powershell
+$env:VORTEX_EXTENSION_ADMISSION_REPO = 'ABSOLUTE_OFFICIAL_GIT_CACHE'
+node --test tools/modding/vortex-agent/native-backend-write-admission.test.mjs tools/modding/vortex-agent/native-backend-reservation-admission.test.mjs
+```
+
+All 26 exact-source cases ran without skips, including a coupled flow through
+the actual patched main persistor and LevelPersist classes. SQL and invalidation
+are controlled test facades. Cases cover old queued transactions and packets,
+concurrent direct writes, early all-hive refusal, raw exposure, pending BEGIN,
+terminal cleanup, failed or missing owner receipts, query reentry, late failures
+and argument/factory callbacks. This does not execute `level_pivot`, Electron IPC
+or an installed Vortex database.
+
+The composed main source passed the actual TypeScript target, direct main build
+and 49 upstream unit tests (15 persistor, 31 backend and three IPC cases). The
+four main sources, including both changed classes, matched the actual Program
+and new bundle source map. The other 16 qualified source inputs retained their
+renderer/preload/shared baseline; those bundles were not rebuilt for this pair.
+Compiler configuration and lockfile were unchanged. This is development source/
+bundle qualification, not installed native ABI or database acceptance.
 
 ## Renderer target fence
 

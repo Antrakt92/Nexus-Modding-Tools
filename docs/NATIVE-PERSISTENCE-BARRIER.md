@@ -62,6 +62,13 @@ buffers, exclude raw database writers or survive power loss. Native registration
 still needs target exclusion, coherence across the final check/write, filesystem
 ownership and restart reconciliation.
 
+The later [backend writer pair](NATIVE-ADOPTION-BOUNDARY.md#backend-write-admission)
+composes with this barrier and the existing main reservation. Its lifetime hold
+refuses new main write calls for every hive, including empty acknowledged packets,
+before enqueueing. A future coordinator must flush before acquiring that hold;
+this preparation has no release/resume or registration method. It does not change
+the ordinary barrier path when no native reservation exists.
+
 ## Source and verification
 
 All patches are pinned to official `v2.9.1`, commit

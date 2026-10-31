@@ -1,0 +1,29 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/main/src/store/ReduxPersistorIPC.ts",
+  "prerequisitePatch": "acknowledged-packet.patch",
+  "prerequisitePatchSHA256": "879ad8234776f01f7128da73953b4de911df2f0c22765df8c33384f0ede68a70",
+  "inputSHA256": "005308ebd857eec2e28b4a8c3bb86f2ba791ceb3c5c7ddf8683071b1550beb2e",
+  "outputSHA256": "56b2ac3982a980b193d30a46960e21379a3c855362e6dd374d9424ff5d8b7d07",
+  "patchSHA256": "c44d679ade390fef8cec0ce7d5438ef72243e499d9ccc7cdca1f21d255a2a59c",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "globalSQLIsolationVerified": false,
+  "powerLossPersistenceVerified": false,
+  "releaseSupported": false,
+  "limitations": [
+    "Existing main reserve acquires backend hold only after its earlier queue drains and before target absence query.",
+    "Backend owner and captured persistor/backend/invalidator identities are rechecked after awaits and by later owner checks.",
+    "All new main batches/packets, including unrelated hives and empty barriers, refuse before enqueue while reservation exists; older accepted units drain normally.",
+    "Separate QueryRegistry/other connections and global renderer/native registration are not covered.",
+    "No release, registration, native installation or power-loss persistence permit."
+  ],
+  "requiredCompanionPatch": "backend-write-admission.patch",
+  "requiredCompanionPatchSHA256": "9cdf70626318a53bb92dc467e056274efa83a60dcec65ea3d7067de403dedca3",
+  "requiredCompanionOutputSHA256": "f26dc362445ea63ad6df32a9c6c1cd67a8c8490005b161c0e4186bd157b38487"
+}
