@@ -17,6 +17,10 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Add an internal Windows handle-owned transfer library: exclusive new targets,
+  bounded hash-verified copying and retained partial output on failure. Native
+  tests cover aliases, junctions and interrupted handle lifetimes. It is not
+  connected to Vortex installation and grants no installation permission.
 - Bound HTTP audit-server startup and preserve bind failures instead of waiting
   indefinitely for `listening`. Test-only cleanup closes the exact owned server;
   regression coverage includes occupied ports, deadlines and unfinished uploads.

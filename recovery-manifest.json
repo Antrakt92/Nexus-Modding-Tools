@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "d5fbcc26da96e514655fa96812a6aa41ecadaefaa908f6c699e8d5fcd7ba84f1"
+      "sha256_lf": "95713a229049a7f99e46e7f86bb16e26d54e5ad753111440d1f981ebe746b109"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -260,7 +260,7 @@
     },
     {
       "path": "docs/LIFECYCLE-PERFORMANCE.md",
-      "sha256_lf": "1af55d4fc9cb29d27b766aa9f48b579a149a9eeda44d3a6809f6e5e307afb694"
+      "sha256_lf": "781adf9ff622e9af05cfa07cc92e728f2dd22fe2ada729983ac3c2d9946c150c"
     },
     {
       "path": "docs/LOCAL-CLEANUP.md",
@@ -268,7 +268,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "0fe8b12d3de9301313577235e5cb0895d15d8e19deb1486e42c9f5d34e04d582"
+      "sha256_lf": "c6d3d3ff72aec72e57e5dfda77ffa96c408b2da68d69fd61d3086cd39c66b7eb"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -317,6 +317,10 @@
     {
       "path": "docs/OWN-LOCAL-BINDER.md",
       "sha256_lf": "34fbca5dd5920de08a5f3343851d4424036df3c9bc5c1b76da460c6ed10b93ef"
+    },
+    {
+      "path": "docs/OWNED-FILE-TRANSFER.md",
+      "sha256_lf": "6f8a29148fd8157c86098f08e5b15b4247c376f8c8c692f4268d64b5735f18ea"
     },
     {
       "path": "docs/PRISTINE-API-CACHE.md",
@@ -949,6 +953,14 @@
     {
       "path": "tools/modding/vortex-agent/own-install-preflight.test.mjs",
       "sha256_lf": "dfee9ac88e4d0638fff047dc7eccabc4ef62ab597b68cf835956922f3a6ebd80"
+    },
+    {
+      "path": "tools/modding/vortex-agent/owned-file-transfer.py",
+      "sha256_lf": "45f462ccd1c220007b42591c62177569b18514b7ce11aadb511d513772e1ec32"
+    },
+    {
+      "path": "tools/modding/vortex-agent/owned-file-transfer.test.py",
+      "sha256_lf": "3c703ab48b4b1103bb8dbaaf02a43ba001fd169f30c872cf51fa2d63f265daf2"
     },
     {
       "path": "tools/modding/vortex-agent/package.test.mjs",
