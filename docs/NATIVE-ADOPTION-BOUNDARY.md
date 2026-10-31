@@ -196,6 +196,50 @@ main sources matched the actual Program/new map; the other 16 qualified sources
 retained their separate baseline. Configuration and lockfile were unchanged.
 The patch changes no installed application and grants no native capability.
 
+## Main initialization readiness
+
+The prepared `native-main-readiness` layer keeps the exact production
+`initQuerySystem` promise and a private completion signal for its captured main
+persistor/backend attempt. `initMainPersistence` still returns synchronously;
+ordinary startup does not wait for queries. Internal
+`waitForNativeMainPersistenceReady()` returns an opaque frozen identity only after
+complete Registry/Invalidator/Database/Watcher wiring. A fulfilled skip (singleton
+unavailable, parser failure or zero queries) is unavailable for native work.
+`checkNativeMainPersistenceReady(owner)` rechecks the captured attempt and tuple.
+Neither API acquires a reservation or drains a queue.
+
+Close, repeated initialization and observed failure invalidate the attempt and
+settle waiting observers immediately, even if the raw SQL initialization is still
+pending. They do not cancel that raw operation. Query objects remain local until
+generation and captured-instance checks pass; old completion cannot bind a new
+main persistor or overwrite its published query tuple. Retained old hive factories
+cannot adopt the backend of a later initialization. A current ordinary factory
+continues working when only native eligibility has been held.
+
+Close captures its selected instances and installs one shared tail before calling
+finalizers. Concurrent/reentrant callers share that operation; a failed captured
+close retains its original rejection and is not automatically retried. This does
+not pause ordinary writes during close or prove resource cleanup. A stale query
+connection already acquired by an interrupted attempt is not revoked; the
+singleton capability ledger must remain conservative. Readiness is separate from
+SQL qualification, queue completion, renderer flushing, registration and native
+host acceptance. No readiness API is exposed through MCP or IPC.
+
+Nineteen readiness source tests passed without skips. Two execute the exact
+predecessor source and reproduce stale initialization/factory adoption; repaired
+cases prevent both. Other cases cover pending/fulfilled-skip/failed setup, immediate
+invalidation of observers, setup callback reentry and shared close rejection.
+Fifteen coupled SQL tests now use the actual production `initMainPersistence`
+entry rather than manually assigning the main instance. The combined source,
+renderer, assembly and SQL/source-intake run passed 122 cases without skips.
+
+The actual main TypeScript target, direct main build and 52 upstream unit cases
+passed. Seven main inputs matched the new Program/map; 17 unchanged renderer,
+preload and shared inputs retained their qualification baselines. Configuration,
+lockfile and the reviewed Node test path adapter were unchanged. The Electron
+package remained without its SDK directory/path marker before and after the run;
+no import-time installer was invoked. These are isolated source/build checks.
+
 ## Managed SQL connection admission
 
 The prepared SQL layer composes five source changes: QueryRegistry source
@@ -391,8 +435,9 @@ was introduced to turn this failure into a pass.
 Implement these boundaries before exposing an install endpoint:
 
 1. Connect target admission before conflicting native side effects. The prepared
-   main persistence reservation covers only its queue; relevant ordinary install/
-   remove/refresh writers and the renderer still need a coordinated boundary.
+   main reservations cover their source-managed queue, backend and SQL scope;
+   ordinary install/remove/refresh writers and the renderer still need a
+   coordinated boundary.
 2. Publish the verified payload through an actual no-replace owned primitive.
    Keep partial output held; discovery of a directory is not registration.
 3. Register one exact new owner and verify every profile remains disabled. Use a
