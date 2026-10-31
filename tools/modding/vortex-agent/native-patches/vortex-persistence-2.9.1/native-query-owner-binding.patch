@@ -1,0 +1,14 @@
+--- a/src/main/src/store/mainPersistence.ts
++++ b/src/main/src/store/mainPersistence.ts
+@@ -118,9 +118,9 @@
+   // Initialize registry
+   queryRegistry = new QueryRegistry(queryConnection);
+-  await queryRegistry.initialize(queries);
++  await queryRegistry.initialize(queries, queriesDir);
+ 
+   // Create invalidator and wire to persistor
+   queryInvalidator = new QueryInvalidator(queryRegistry);
+-  mainPersistor?.setQueryInvalidator(levelPersistor, queryInvalidator);
++  mainPersistor?.setQueryInvalidator(levelPersistor, queryInvalidator, queryRegistry);
+ 
+   // Create Database instance for typed model access

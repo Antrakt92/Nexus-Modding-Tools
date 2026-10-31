@@ -1,0 +1,26 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/main/src/store/ReduxPersistorIPC.ts",
+  "inputSHA256": "80003bc3b33b688066ae41d50c73d8713dea4960df7d9aa386336eb23c976ff6",
+  "outputSHA256": "85a0340ccc4927875d65e3c8a34b8ad8654120c6bb2d6bee8859c2d4b144bc04",
+  "patchSHA256": "c4e6980946efa25697bda75956bd3ad24563218f16c36777f356000f7a97ab72",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "globalSQLIsolationVerified": false,
+  "powerLossPersistenceVerified": false,
+  "releaseSupported": false,
+  "limitations": [
+    "Coupled source-managed Singleton/Registry/backend admission only, not privileged external SQL isolation.",
+    "No registration, release, native host or power-loss persistence permit."
+  ],
+  "prerequisitePatch": "legacy-rollback-primary.patch",
+  "prerequisitePatchSHA256": "c7afb5b293fd5fe6c62864e7a9c8076be24f8d67f7aa0ba1d8e44ad1be5bc069",
+  "requiredCompanionPatch": "native-backend-sql-admission.patch",
+  "requiredCompanionPatchSHA256": "5c19256cbc96a9e8b269296fda3a7754ecee36e7054c49ae5ecd6385e6669f63",
+  "requiredCompanionOutputSHA256": "ef39796be6ba9aa2f8d4030686ef1a3f30175db8c289fdce80301c5c5ba1d00f"
+}

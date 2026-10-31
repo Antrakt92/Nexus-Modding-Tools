@@ -1,0 +1,25 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/main/src/store/QueryRegistry.ts",
+  "inputSHA256": "f7c78fd586349761f077ac178ecee3745dd027911021dc6a3978bfcd7ca31839",
+  "outputSHA256": "6c304abb07fe9074d26866f3635c9f203b70b77b6fbb6463d4437d37301019a5",
+  "patchSHA256": "35090f46fe6410f6597788edf58adaffccd31cd3cdbedc5adbbc195c73c37816",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "globalSQLIsolationVerified": false,
+  "powerLossPersistenceVerified": false,
+  "releaseSupported": false,
+  "limitations": [
+    "Coupled source-managed Singleton/Registry/backend admission only, not privileged external SQL isolation.",
+    "No registration, release, native host or power-loss persistence permit.",
+    "Three SQL-file checks are initialization point observations only; never an atomic parser receipt or later-current-file claim.",
+    "Owner checks perform no file/SQL IO and validate stored immutable executed snapshots plus private generation.",
+    "Electron ASAR uses original-fs physical container FD/generation observations plus virtual fixed SQL type/size/hash/inventory; virtual inode/time are not certificates.",
+    "ASAR queries must be packed under container/queries; virtual symlinks and adjacent unpacked queries are refused; observations are not a disk lease."
+  ]
+}

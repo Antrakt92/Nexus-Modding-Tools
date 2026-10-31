@@ -1,0 +1,25 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/main/src/store/DuckDBSingleton.ts",
+  "inputSHA256": "d11e7ca11c9bc0b0ee9659b4a4d26c7fba14e6a56ccae03b25df33d91e4589a0",
+  "outputSHA256": "2f78d0bbd1ccfede3b0b9a9fb5f136a0dc5ad0ab24c7bfe13703582ded5b8344",
+  "patchSHA256": "aff6e9868e6a9a7f3e4bf93c1c1bb30320b2886cbe5f9858b6a490027e9105c1",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "globalSQLIsolationVerified": false,
+  "powerLossPersistenceVerified": false,
+  "releaseSupported": false,
+  "limitations": [
+    "Private issued records qualify exactly one managed backend attach and one fixed Registry query connection; cached extra capabilities permanently refuse, not revoked.",
+    "Public attachedDatabases Map is not native admission authority.",
+    "Only this source-managed Singleton scope is fenced, not privileged Node code or external connections."
+  ],
+  "requiredCompanionPatch": "native-query-source-admission.patch",
+  "requiredCompanionPatchSHA256": "35090f46fe6410f6597788edf58adaffccd31cd3cdbedc5adbbc195c73c37816",
+  "requiredCompanionOutputSHA256": "6c304abb07fe9074d26866f3635c9f203b70b77b6fbb6463d4437d37301019a5"
+}

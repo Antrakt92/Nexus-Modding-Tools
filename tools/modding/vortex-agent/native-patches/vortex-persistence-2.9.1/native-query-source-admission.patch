@@ -1,0 +1,334 @@
+--- a/src/main/src/store/QueryRegistry.ts
++++ b/src/main/src/store/QueryRegistry.ts
+@@ -1,7 +1,216 @@
++import { createHash } from "node:crypto";
++import * as fs from "node:fs";
++import * as physicalFS from "original-fs";
++import * as path from "node:path";
++import { types as nativeTypes } from "node:util";
+ import type { DuckDBConnection, DuckDBValue } from "@duckdb/node-api";
+ import type { Serializable } from "@vortex/shared/ipc";
+ 
+ import { log } from "../logging";
+-import type { ParsedQuery } from "./queryParser";
++import type { ParsedQuery, ParsedQueryParam } from "./queryParser";
++
++const NATIVE_QUERY_FILES: Readonly<Record<string, { bytes: number; sha256: string }>> = {"select/nexus_files.sql": {"bytes": 675, "sha256": "d1422d566e5fb63f9aeaa13bcc0ac3aca96a94a541958c5d9b5e1505a0e54aca"}, "select/profiles.sql": {"bytes": 371, "sha256": "e01ae6656cc2a11c0ee336562a311fede3eba0b4a5d1e0be338e628c38cbdb04"}, "setup/tables.sql": {"bytes": 1788, "sha256": "839f025c23416019c0205a0712592ac925cf323bf945617e09b4c51752941600"}};
++const NATIVE_QUERY_ROWS: ReadonlyArray<{ name: string; type: ParsedQuery["type"]; sha256: string; params: ParsedQueryParam[] }> = [{"name": "active_profile_nexus_files", "type": "select", "sha256": "5a9ee9894820b0349eddf1dc77a696aa4f96e82d66d1607acad8532b962b1a42", "params": []}, {"name": "recently_managed_games", "type": "select", "sha256": "29e58936d784048dee7f1cc05cb9b8fa5b15970f0f18dce776d73e037cb1b8ef", "params": [{"name": "current_game_id", "duckdbType": "VARCHAR"}]}, {"name": "mods_pivot", "type": "setup", "sha256": "b369034064f49097bd2a1b71ff387ffb6b10f117582cf0d2cb73c3a4a80f3d5d", "params": []}, {"name": "profiles_pivot", "type": "setup", "sha256": "51d613d371a19d2bd8033f628bc0f0789d8a8fbbac1329c40878bab3b0966f71", "params": []}, {"name": "profile_settings_pivot", "type": "setup", "sha256": "b10f523cffc3d4caf84cc6aab43f87eeb1805e0c373bec5aa32bf675785422e7", "params": []}, {"name": "mod_attributes_pivot", "type": "setup", "sha256": "390000f428d135890a2b94e9ca29c28ddb43eeb00420696ea0318efc945c49ee", "params": []}, {"name": "mod_state_pivot", "type": "setup", "sha256": "2b987a4969996ad56d75e47682462f380c11b6941bd53b1bda457992dc3f4b52", "params": []}];
++const nativeSQLHash = (text: string | Buffer) => createHash("sha256").update(text).digest("hex");
++function nativeData(value: unknown): boolean {
++  if (value === null || typeof value !== "object" || nativeTypes.isProxy(value)) return false;
++  const proto = Object.getPrototypeOf(value);
++  if (!Array.isArray(value) && proto !== null) {
++    if (nativeTypes.isProxy(proto)) return false;
++    const ctor = Object.getOwnPropertyDescriptor(proto, "constructor");
++    if (Object.getPrototypeOf(proto) !== null || ctor === undefined || !("value" in ctor)
++        || typeof ctor.value !== "function" || nativeTypes.isProxy(ctor.value)
++        || Function.prototype.toString.call(ctor.value) !== "function Object() { [native code] }"
++        || Object.getOwnPropertyDescriptor(ctor.value, "prototype")?.value !== proto) return false;
++  }
++  const keys = Reflect.ownKeys(value);
++  if (keys.length > 16) return false;
++  return keys.every((key) => typeof key === "string"
++    && (Array.isArray(value) && key === "length" || (() => {
++      const d = Object.getOwnPropertyDescriptor(value, key);
++      return d !== undefined && "value" in d && d.enumerable;
++    })()));
++}
++function nativeSnapshot(queries: ParsedQuery[]): ParsedQuery[] | undefined {
++  try {
++    if (nativeTypes.isProxy(queries) || !Array.isArray(queries) || queries.length !== 7 || !nativeData(queries)) return undefined;
++    const rows: ParsedQuery[] = [];
++    for (let i = 0; i < queries.length; i++) {
++      if (!Object.hasOwn(queries, i)) return undefined;
++      const q = queries[i];
++      if (q === undefined || !nativeData(q) || !["name", "type", "sql", "params", "description", "filePath"].every((k) => Object.hasOwn(q, k))
++          || typeof q.name !== "string" || typeof q.type !== "string" || typeof q.sql !== "string"
++          || typeof q.description !== "string" || typeof q.filePath !== "string"
++          || q.sql.length > 8192 || !nativeData(q.params) || !Array.isArray(q.params)
++          || q.params.length > 1) return undefined;
++      const aliasDescriptor = Object.getOwnPropertyDescriptor(q, "alias");
++      if (aliasDescriptor !== undefined && !("value" in aliasDescriptor)) return undefined;
++      const alias: unknown = aliasDescriptor?.value;
++      if (aliasDescriptor !== undefined && typeof alias !== "string") return undefined;
++      const params: ParsedQueryParam[] = [];
++      for (let j = 0; j < q.params.length; j++) {
++        if (!Object.hasOwn(q.params, j)) return undefined;
++        const p = q.params[j];
++        if (p === undefined || !nativeData(p) || Object.keys(p).length !== 2 || !Object.hasOwn(p, "name")
++            || !Object.hasOwn(p, "duckdbType") || typeof p.name !== "string"
++            || typeof p.duckdbType !== "string") return undefined;
++        params.push(Object.freeze({ name: p.name, duckdbType: p.duckdbType }));
++      }
++      Object.freeze(params);
++      const row: ParsedQuery = { name: q.name, type: q.type, sql: q.sql, params,
++        description: q.description, filePath: q.filePath };
++      if (typeof alias === "string") row.alias = alias;
++      rows.push(Object.freeze(row));
++    }
++    Object.freeze(rows);
++    return rows;
++  } catch { return undefined; }
++}
++function nativeRowsMatch(rows: Array<{ name: string; sql: string; params: ParsedQueryParam[]; type?: ParsedQuery["type"] }>, selectOnly = false): boolean {
++  const expected = NATIVE_QUERY_ROWS.filter((q) => !selectOnly || q.type === "select");
++  return rows.length === expected.length && expected.every((e) => {
++    const matches = rows.filter((q) => q.name === e.name);
++    const match = matches[0];
++    return matches.length === 1 && match !== undefined && (selectOnly || match.type === e.type)
++      && nativeSQLHash(match.sql) === e.sha256 && JSON.stringify(match.params) === JSON.stringify(e.params);
++  });
++}
++function nativeASARQueryFiles(directory: string): boolean | undefined {
++  // Electron's virtual stats have no physical identity authority. Bind the
++  // real container separately, then inspect only virtual type/size and bytes.
++  const parts = path.relative(path.parse(directory).root, directory).split(path.sep);
++  let candidate = path.parse(directory).root;
++  for (let i = 0; i < parts.length; i++) {
++    const part = parts[i];
++    if (part === undefined) return false;
++    candidate = path.join(candidate, part);
++    if (!/\.asar$/i.test(part)) continue;
++    try {
++      const container = candidate, initial = physicalFS.lstatSync(container, { bigint: true });
++      if (initial.isSymbolicLink()) return false;
++      if (initial.isDirectory()) continue; // A suffix alone does not establish an archive.
++      if (!initial.isFile() || initial.nlink !== 1n || initial.size <= 0n
++          || parts.slice(i + 1).join("/") !== "queries") return false;
++      const stamp = (v: fs.BigIntStats) => [v.dev,v.ino,v.mode,v.size,v.nlink,v.mtimeNs,v.ctimeNs].join(":");
++      const identity = (v: fs.BigIntStats) => [v.dev,v.ino,v.mode].join(":");
++      const ancestors: Array<[string,string]> = [];
++      let current = path.parse(container).root;
++      for (const segment of ["", ...path.relative(current, path.dirname(container)).split(path.sep).filter(Boolean)]) {
++        if (segment !== "") current = path.join(current, segment);
++        const value = physicalFS.lstatSync(current, { bigint: true });
++        if (!value.isDirectory() || value.isSymbolicLink()) return false;
++        ancestors.push([current, identity(value)]);
++      }
++      const unpacked = () => {
++        const root = container + ".unpacked";
++        try {
++          const value = physicalFS.lstatSync(root, { bigint: true });
++          if (!value.isDirectory() || value.isSymbolicLink()) throw new Error("QUERY_SOURCE");
++          try { physicalFS.lstatSync(path.join(root, "queries")); throw new Error("QUERY_UNPACKED"); }
++          catch (err) { if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err; }
++          return identity(value);
++        } catch (err) { if ((err as NodeJS.ErrnoException).code === "ENOENT") return "absent"; throw err; }
++      };
++      const unpackedBefore = unpacked();
++      const fd = physicalFS.openSync(container, "r");
++      try {
++        if (stamp(physicalFS.fstatSync(fd, { bigint: true })) !== stamp(initial)) return false;
++        const inventory = () => {
++          // Electron 44.2 supports ASAR readdirSync, not opendirSync. The fixed
++          // tree has exactly five entries; unknown entries refuse immediately.
++          const tree: Readonly<Record<string, ReadonlyArray<string>>> = { "": ["select", "setup"], select: ["nexus_files.sql", "profiles.sql"], setup: ["tables.sql"] };
++          for (const [relative, expected] of Object.entries(tree)) {
++            const dir = path.join(directory, relative), stat = fs.lstatSync(dir);
++            if (!stat.isDirectory() || stat.isSymbolicLink()) return false;
++            const entries = fs.readdirSync(dir, { withFileTypes: true });
++            if (entries.length !== expected.length
++                || JSON.stringify(entries.map((e) => e.name).sort()) !== JSON.stringify(expected)) return false;
++            for (const entry of entries) {
++              const value = fs.lstatSync(path.join(dir, entry.name));
++              if (entry.isSymbolicLink() || value.isSymbolicLink()
++                  || (relative === "" ? !value.isDirectory() : !value.isFile())) return false;
++            }
++          }
++          return true;
++        };
++        if (!inventory()) return false;
++        for (const [relative, pin] of Object.entries(NATIVE_QUERY_FILES)) {
++          const p = path.join(directory, relative);
++          const ordinary = () => { const v = fs.lstatSync(p); return v.isFile() && !v.isSymbolicLink() && v.size === pin.bytes; };
++          if (!ordinary()) return false;
++          const entry = fs.openSync(p, "r");
++          try {
++            const bytes = Buffer.alloc(pin.bytes + 1); let used = 0;
++            while (used < bytes.length) { const n = fs.readSync(entry,bytes,used,bytes.length-used,null); if (n === 0) break; used += n; }
++            if (used !== pin.bytes || nativeSQLHash(bytes.subarray(0,used)) !== pin.sha256 || !ordinary()) return false;
++          } finally { fs.closeSync(entry); }
++        }
++        return inventory() && unpacked() === unpackedBefore
++          && stamp(physicalFS.fstatSync(fd, { bigint: true })) === stamp(initial)
++          && stamp(physicalFS.lstatSync(container, { bigint: true })) === stamp(initial)
++          && ancestors.every(([p,id]) => { const v = physicalFS.lstatSync(p, { bigint: true }); return v.isDirectory() && !v.isSymbolicLink() && identity(v) === id; });
++      } finally { physicalFS.closeSync(fd); }
++    } catch { return false; } // Recognized physical archive never falls back unchecked.
++  }
++  return undefined;
++}
++
++function nativeQueryFiles(directory: string | undefined): boolean {
++  // Read ONLY the source SQL tree, at initialization. No per-owner-check IO.
++  try {
++    if (typeof directory !== "string" || !path.isAbsolute(directory)) return false;
++    const archive = nativeASARQueryFiles(directory);
++    if (archive !== undefined) return archive;
++    const stamp = (s: fs.BigIntStats, ancestor = false) => (ancestor ? [s.dev,s.ino,s.mode] : [s.dev,s.ino,s.mode,s.size,s.nlink,s.mtimeNs,s.ctimeNs]).join(":");
++    const observed: Array<[string,string,boolean,boolean]> = [];
++    const ordinary = (p: string, directory: boolean, ancestor = false) => {
++      const s = fs.lstatSync(p, { bigint: true });
++      if (s.isSymbolicLink() || (directory ? !s.isDirectory() : !s.isFile())) throw new Error("QUERY_SOURCE");
++      observed.push([p, stamp(s, ancestor), ancestor, directory]); return s;
++    };
++    let current = path.parse(directory).root;
++    ordinary(current, true, true);
++    for (const part of path.relative(current, directory).split(path.sep).filter(Boolean)) {
++      current = path.join(current, part); ordinary(current, true, true);
++    }
++    const found: string[] = [];
++    let count = 0;
++    const walk = (dir: string, depth: number) => {
++      if (depth > 8) throw new Error("QUERY_SOURCE");
++      ordinary(dir, true);
++      const iterator = fs.opendirSync(dir);
++      try { for (let e = iterator.readSync(); e !== null; e = iterator.readSync()) {
++        if (++count > 512) throw new Error("QUERY_SOURCE");
++        const p = path.join(dir, e.name), s = fs.lstatSync(p, { bigint: true });
++        if (s.isSymbolicLink()) throw new Error("QUERY_SOURCE");
++        if (s.isDirectory()) walk(p, depth + 1);
++        else if (s.isFile()) { if (e.name.toLowerCase().endsWith(".sql")) found.push(path.relative(directory, p).split(path.sep).join("/")); }
++        else throw new Error("QUERY_SOURCE");
++      }} finally { iterator.closeSync(); }
++    };
++    walk(directory, 0);
++    if (JSON.stringify(found.sort()) !== JSON.stringify(Object.keys(NATIVE_QUERY_FILES).sort())) return false;
++    for (const relative of found) {
++      const pin = NATIVE_QUERY_FILES[relative];
++      if (pin === undefined || !Object.hasOwn(NATIVE_QUERY_FILES, relative)) return false;
++      const p = path.join(directory, relative), before = ordinary(p, false);
++      const fd = fs.openSync(p, "r");
++      try {
++        if (stamp(fs.fstatSync(fd, { bigint: true })) !== stamp(before)) return false;
++        const data = Buffer.alloc(pin.bytes + 1); let used = 0;
++        while (used < data.length) { const n = fs.readSync(fd, data, used, data.length - used, null); if (n === 0) break; used += n; }
++        if (used !== pin.bytes || nativeSQLHash(data.subarray(0, used)) !== pin.sha256
++            || stamp(fs.fstatSync(fd, { bigint: true })) !== stamp(before)) return false;
++      } finally { fs.closeSync(fd); }
++    }
++    // All final leaf samples precede the terminal directory/ancestry samples.
++    // An extra SQL entry created during a late leaf read changes its directory.
++    for (const [p,s,ancestor,directory] of observed) {
++      if (!directory && stamp(fs.lstatSync(p, { bigint: true }), ancestor) !== s) return false;
++    }
++    return observed.filter((row) => row[3]).every(([p,s,ancestor]) =>
++      stamp(fs.lstatSync(p, { bigint: true }), ancestor) === s);
++  } catch { return false; }
++}
+ 
+ interface RegisteredQuery {
+@@ -25,4 +234,10 @@
+   #mQueries: Map<string, RegisteredQuery> = new Map();
+   #mTableToQueries: Map<string, Set<string>> = new Map();
++  #mNativeInitializations = 0;
++  #mNativePending = 0;
++  #mNativeQualified = false;
++  #mNativeBroken = false;
++  #mNativeOwner: object | undefined;
++  #mNativeGeneration = 0;
+ 
+   constructor(connection: DuckDBConnection) {
+@@ -34,5 +249,16 @@
+    * Executes setup and view queries, then registers select queries.
+    */
+-  public async initialize(queries: ParsedQuery[]): Promise<void> {
++  public async initialize(queries: ParsedQuery[], queriesDir?: string): Promise<void> {
++    if (this.#mNativeOwner !== undefined) { this.#mNativeBroken = true; throw new Error("NATIVE_QUERY_HELD"); }
++    this.#mNativeInitializations++;
++    this.#mNativePending++;
++    this.#mNativeGeneration++;
++    this.#mNativeQualified = false;
++    const snapshot = nativeSnapshot(queries);
++    const known = snapshot !== undefined && nativeRowsMatch(snapshot);
++    if (known) queries = snapshot;
++    const qualified = known && nativeQueryFiles(queriesDir);
++    let setupDone = 0;
++    try {
+     const setupQueries = queries.filter((q) => q.type === "setup");
+     const viewQueries = queries.filter((q) => q.type === "view");
+@@ -43,4 +269,5 @@
+       log("debug", "query-registry: running setup query", { name: q.name });
+       await this.#mConnection.run(q.sql);
++      if (q.type === "setup") setupDone++;
+     }
+ 
+@@ -49,4 +276,5 @@
+       log("debug", "query-registry: running view query", { name: q.name });
+       await this.#mConnection.run(q.sql);
++      if (q.type === "setup") setupDone++;
+     }
+ 
+@@ -64,4 +292,5 @@
+         // Fallback: if getTableNames fails, use empty list
+         referencedTables = [];
++        this.#mNativeBroken = true;
+         log("warn", "query-registry: could not extract table names", {
+           name: q.name,
+@@ -93,4 +322,9 @@
+       trackedTables: this.#mTableToQueries.size,
+     });
++    this.#mNativeQualified = qualified && setupDone === 5 && this.#mNativeInitializations === 1
++      && this.#mNativePending === 1 && !this.#mNativeBroken && nativeQueryFiles(queriesDir)
++      && nativeRowsMatch([...this.#mQueries.values()], true);
++    } catch (err) { this.#mNativeBroken = true; throw err; }
++    finally { this.#mNativePending--; }
+   }
+ 
+@@ -103,4 +337,5 @@
+     params?: Record<string, unknown>,
+   ): Promise<Record<string, Serializable>[]> {
++    this.#nativeCheckIfOwned();
+     const query = this.#mQueries.get(name);
+     if (query === undefined) {
+@@ -120,10 +355,49 @@
+     }
+ 
++    this.#nativeCheckIfOwned();
+     const reader = await this.#mConnection.runAndReadAll(
+       query.sql,
+       values as Record<string, DuckDBValue>,
+     );
+-    return reader.getRowObjectsJson();
++    this.#nativeCheckIfOwned();
++    const result = reader.getRowObjectsJson();
++    this.#nativeCheckIfOwned();
++    return result;
++  }
++
++  public acquireNativeQueryOwner(connection: DuckDBConnection): object {
++    this.#nativeExact();
++    if (this.#mNativeOwner !== undefined || connection !== this.#mConnection) throw new Error("NATIVE_QUERY_REFUSED");
++    this.#nativeReady();
++    this.#mNativeOwner = Object.freeze({});
++    return this.#mNativeOwner;
++  }
++
++  public checkNativeQueryOwner(owner: object, connection: DuckDBConnection): void {
++    this.#nativeExact();
++    if (owner !== this.#mNativeOwner || owner === undefined || connection !== this.#mConnection) throw new Error("NATIVE_QUERY_REFUSED");
++    this.#nativeReady();
++  }
++
++  #nativeExact(): void {
++    if (nativeTypes.isProxy(this) || Object.getPrototypeOf(this) !== QueryRegistry.prototype
++        || Reflect.ownKeys(this).length !== 0) {
++      this.#mNativeBroken = true;
++      throw new Error("NATIVE_QUERY_REFUSED");
++    }
++  }
++
++  #nativeReady(): void {
++    if (!this.#mNativeQualified || this.#mNativeBroken || this.#mNativePending !== 0
++        || this.#mNativeInitializations !== 1 || this.#mNativeGeneration !== 1
++        || !nativeRowsMatch([...this.#mQueries.values()], true)) {
++      this.#mNativeBroken = true;
++      throw new Error("NATIVE_QUERY_HELD");
++    }
++  }
++
++  #nativeCheckIfOwned(): void {
++    if (this.#mNativeOwner !== undefined) this.#nativeReady();
+   }
+ 
+   /**

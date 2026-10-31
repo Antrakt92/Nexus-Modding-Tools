@@ -1,0 +1,17 @@
+--- a/src/main/src/store/ReduxPersistorIPC.test.ts
++++ b/src/main/src/store/ReduxPersistorIPC.test.ts
+@@ -1,6 +1,14 @@
+ import type { DiffOperation } from "@vortex/shared/ipc";
+ import type { IPersistor, PersistorKey } from "@vortex/shared/state";
+ import { describe, it, expect, vi, beforeEach } from "vitest";
+ 
++// The real LevelPersist import must not load Electron's require-time installer.
++// Native path lookup is unused here; unexpected use must fail this unit suite.
++vi.mock("../getVortexPath", () => ({
++  getVortexPath: () => {
++    throw new Error("Native path lookup is outside this unit suite");
++  },
++}));
++
+ // Stub terminate so a faulted processOperations doesn't try to show a dialog.
+ // Re-throwing keeps the same control flow as the real terminate (synchronous

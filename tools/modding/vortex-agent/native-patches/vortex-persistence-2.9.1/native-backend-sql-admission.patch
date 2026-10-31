@@ -1,0 +1,51 @@
+--- a/src/main/src/store/LevelPersist.ts
++++ b/src/main/src/store/LevelPersist.ts
+@@ -9,4 +9,5 @@
+ import { log } from "../logging";
+ import DuckDBSingleton from "./DuckDBSingleton";
++import type QueryRegistry from "./QueryRegistry";
+ 
+ const SEPARATOR: string = "###";
+@@ -118,4 +119,6 @@
+   #mNativeRawExposed = false;
+   #mNativeDrain: (() => void) | undefined;
++  #mNativeSQLAttempted = false;
++  #mNativeSQL: { owner: object; backendOwner: object; registry: QueryRegistry; singleton: DuckDBSingleton } | undefined;
+ 
+   constructor(connection: DuckDBConnection, alias: string) {
+@@ -173,4 +176,35 @@
+       hold.phase = "held";
+       throw new Error("NATIVE_BACKEND_WRITE_HELD");
++    }
++  }
++
++  public reserveNativeSQLAdmission(backendOwner: object, registry: QueryRegistry): object {
++    LevelPersist.prototype.checkNativeBackendWriteOwner.call(this, backendOwner);
++    if (this.#mNativeSQLAttempted) throw new Error("NATIVE_BACKEND_SQL_REFUSED");
++    this.#mNativeSQLAttempted = true;
++    try {
++      const singleton = DuckDBSingleton.getInstance();
++      const owner = DuckDBSingleton.prototype.reserveNativeSQLConnections.call(singleton, this.#mConnection, this.#mAlias, registry);
++      if (owner === null || typeof owner !== "object") throw new Error("NATIVE_BACKEND_SQL_HELD");
++      this.#mNativeSQL = { owner, backendOwner, registry, singleton };
++      LevelPersist.prototype.checkNativeSQLAdmission.call(this, owner, backendOwner, registry);
++      return owner;
++    } catch {
++      if (this.#mNativeWriteHold !== undefined) this.#mNativeWriteHold.phase = "held";
++      throw new Error("NATIVE_BACKEND_SQL_HELD");
++    }
++  }
++  public checkNativeSQLAdmission(owner: object, backendOwner: object, registry: QueryRegistry): void {
++    LevelPersist.prototype.checkNativeBackendWriteOwner.call(this, backendOwner);
++    const record = this.#mNativeSQL;
++    if (record === undefined || record.owner !== owner || record.backendOwner !== backendOwner
++        || record.registry !== registry) throw new Error("NATIVE_BACKEND_SQL_REFUSED");
++    try {
++      if (DuckDBSingleton.getInstance() !== record.singleton) throw new Error("NATIVE_BACKEND_SQL_HELD");
++      DuckDBSingleton.prototype.checkNativeSQLConnections.call(record.singleton, owner);
++      LevelPersist.prototype.checkNativeBackendWriteOwner.call(this, backendOwner);
++    } catch {
++      if (this.#mNativeWriteHold !== undefined) this.#mNativeWriteHold.phase = "held";
++      throw new Error("NATIVE_BACKEND_SQL_HELD");
+     }
+   }

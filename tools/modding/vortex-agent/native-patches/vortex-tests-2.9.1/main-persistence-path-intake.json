@@ -1,0 +1,26 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/main/src/store/ReduxPersistorIPC.test.ts",
+  "upstreamGitBlob": "790a785de77cc13f6180ee5c3dd9107468f6b58c",
+  "inputSHA256": "c0dde906e1cf4693c77d9478933e881a2f439909aa0e77eed5a0901c3a0f3e76",
+  "outputSHA256": "1c145f07cb59c56a74184672bef663cdf1c36b674936637bf2256e038bbab583",
+  "patchSHA256": "cad184bfd52a6a2392918dc548d424b8580e13b321c3e912a72fdaba42e867d9",
+  "testOnly": true,
+  "testBodiesAndExpectationsUnchanged": true,
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "preservedPrefixSHA256": "795cfbefa13316dd0f6076ffb0fe9a09e4eca95e410ff7c7e363ee38e3700845",
+  "preservedSuffixSHA256": "967cdb44505d18f74dfdf11a2f1e17d74de6f421183024e87aca494d8c61916f",
+  "insertionByteOffset": 191,
+  "insertionSHA256": "3f237f7e61da07100517435e78d5a1e1f72a555fd8a7fff952feab027e2f1a60",
+  "limitations": [
+    "Unit test intake only: fail-closed unused native path lookup prevents Electron npm require-time installation.",
+    "All original test bytes, bodies and assertions are preserved; no production source or native behavior is changed.",
+    "Node ordinary-filesystem alias for original-fs and actual Electron ASAR evidence remain separate qualification gates."
+  ]
+}
