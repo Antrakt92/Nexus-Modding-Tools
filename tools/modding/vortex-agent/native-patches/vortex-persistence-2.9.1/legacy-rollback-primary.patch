@@ -1,0 +1,15 @@
+--- a/src/main/src/store/ReduxPersistorIPC.ts
++++ b/src/main/src/store/ReduxPersistorIPC.ts
+@@ -562,5 +562,9 @@
+           if (!acknowledged) {
+-            log("warn", "Failed to rollback transaction", {
+-              error: unknownToError(rollbackErr).message,
+-            });
++            try {
++              log("warn", "Failed to rollback transaction", {
++                error: unknownToError(rollbackErr).message,
++              });
++            } catch {
++              // Rollback diagnostics must not bypass the original fatal flow.
++            }
+           }

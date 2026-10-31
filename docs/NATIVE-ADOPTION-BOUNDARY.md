@@ -123,10 +123,9 @@ await in the four KV writers, transaction methods and close. Freeze is
 synchronous; it joins previously started intents before granting its owner.
 Write failures remain observed even when their caller handled the rejection.
 Thrown `null` or `undefined` is still failure. In the backend timing wrapper,
-reporting errors cannot replace the primary SQL rejection. Legacy main rollback
-logging can still replace its primary error if logging also throws; that existing
-path is not repaired by this backend timing change. No timeout or empty queue converts uncertainty into
-success. The ordinary inactive path adds no SQL or collection scans.
+reporting errors cannot replace the primary SQL rejection. The separate legacy
+rollback repair below preserves its original fatal flow. No timeout or empty
+queue converts uncertainty into success. The ordinary inactive path adds no SQL or collection scans.
 
 An open transaction or pending transaction call refuses admission. A `BEGIN`
 promise is not a whole transaction. Legacy COMMIT/ROLLBACK may finish cleanup of
@@ -173,6 +172,29 @@ and new bundle source map. The other 16 qualified source inputs retained their
 renderer/preload/shared baseline; those bundles were not rebuilt for this pair.
 Compiler configuration and lockfile were unchanged. This is development source/
 bundle qualification, not installed native ABI or database acceptance.
+
+### Legacy rollback diagnostics
+
+`legacy-rollback-primary.patch` follows the backend reservation patch. If both
+the original operation and rollback fail, an exception while formatting or
+logging the rollback diagnostic must not bypass the original fatal/terminate
+path. Only that secondary diagnostic is caught; rollback is still awaited and
+the primary failure, including `null` or `undefined`, reaches the existing
+normalization/fatal path. Successful work, successful rollback, the acknowledged
+path and the outer legacy queue reporter retain their behavior. A drained legacy
+queue is not an operation-success acknowledgement.
+
+```powershell
+$env:VORTEX_EXTENSION_ADMISSION_REPO = 'ABSOLUTE_OFFICIAL_GIT_CACHE'
+node --test tools/modding/vortex-agent/native-legacy-rollback-primary.test.mjs
+```
+
+All ten exact-source cases passed without skips, including a before/after case
+where the diagnostic previously prevented fatal handling. Independent review,
+the actual main TypeScript/direct build and 49 upstream unit tests passed. Four
+main sources matched the actual Program/new map; the other 16 qualified sources
+retained their separate baseline. Configuration and lockfile were unchanged.
+The patch changes no installed application and grants no native capability.
 
 ## Renderer target fence
 
