@@ -1,6 +1,6 @@
 # Assemble the reviewed Vortex source patches
 
-`native-source-series.mjs` applies the fixed sequence of 62 reviewed patches to
+`native-source-series.mjs` applies the fixed sequence of 64 reviewed patches to
 24 original files from Vortex `v2.9.1`, commit
 `c80326367cbe6d96621ad6cf4a5488ef49bac110`. It replaces manually composing separate
 patch chains before compilation. It does not change an installed application or
@@ -35,7 +35,7 @@ match the pinned series. Patch application requires exact offsets and context;
 it has no fuzzy matching or hash-refresh mode.
 
 The fixed graph combines the 32-patch mod-management/transfer packet with the
-30-patch persistence packet. The latter includes renderer target admission and
+32-patch persistence packet. The latter includes renderer target admission and
 acknowledged diffs, main/preload/shared IPC, backend reservations and managed SQL
 ownership. Both runtime packet directories have separate closed inventories;
 test-only adapters are excluded. A cross-file companion must already have been
@@ -350,3 +350,31 @@ This is prepared middleware and development-build qualification. Restoring main
 write availability before local release remains the coordinator's responsibility;
 the hold does not implement registration, crash reconciliation or installation.
 See the [hold contract](NATIVE-ADOPTION-BOUNDARY.md#renderer-persistence-hold).
+
+## Owned registration write — 31 October 2026
+
+The 64-patch recipe adds a one-shot owned Level registration method and its main
+queue entry. Runtime packet inventories now contain 32 lifecycle and 32
+persistence patch pairs. Only `LevelPersist.ts` and `ReduxPersistorIPC.ts` changed
+from the qualified 62-patch source.
+
+Twenty-two new source-backed cases passed; the combined affected run passed 251
+without skips. Five separate real-LevelDB cases executed the actual patched Level
+method: successful record/marker commit and reopen, existing target refusal,
+disabled profile-reference refusal, rollback after an injected post-INSERT error,
+and committed readback after an injected lost COMMIT reply. SQL-owner identity
+was facaded in those native cases; full Singleton, main and renderer construction
+were not exercised.
+
+The actual main TypeScript target, direct build and 52 upstream Node tests passed.
+Seven main inputs matched the fresh Program and runtime map; 18 other Program
+inputs and their unchanged outputs retain their earlier qualification. All 24
+graph outputs and eight configuration/lock pins matched. A private test-intake
+adapter changed the upstream singleton mock from a plain object to a class shape
+with an unavailable native checker that throws. All 31 Level test bodies and
+assertions remained unchanged. Electron's npm SDK directory and path marker
+remained absent.
+
+This qualifies minimal database registration, not the complete tracked install.
+Archive association, filesystem custody, renderer adoption, durable recovery and
+release remain separate [registration gates](NATIVE-ADOPTION-BOUNDARY.md#next-implementation-gates).

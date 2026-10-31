@@ -1,0 +1,89 @@
+--- a/src/main/src/store/ReduxPersistorIPC.ts
++++ b/src/main/src/store/ReduxPersistorIPC.ts
+@@ -19,5 +19,5 @@
+ import { terminate } from "../errorHandling";
+ import { log } from "../logging";
+-import LevelPersist from "./LevelPersist";
++import LevelPersist, { snapshotNativeNewModRegistration } from "./LevelPersist";
+ import type QueryInvalidator from "./QueryInvalidator";
+ 
+@@ -70,4 +70,9 @@
+  * Receives diff operations from renderer and persists them to LevelDB.
+  */
++const nativeRegistrationWrite = LevelPersist.prototype.registerNativeNewMod;
++const nativeRegistrationCheck = LevelPersist.prototype.checkNativeNewModRegistration;
++const nativeRegistrationSnapshot = snapshotNativeNewModRegistration;
++const nativeRegistrationHeld = (attempt: { phase: string }): boolean => attempt.phase === "held";
++
+ interface INativeModPersistenceReservation {
+   owner: object;
+@@ -90,4 +95,5 @@
+   // A drained queue cannot certify an earlier failed write. Never reset in-process.
+   private mPersistenceWriteFailureObserved = false;
++  private mNativeRegistration: { phase: "claimed" | "writing" | "committed" | "held" } | undefined;
+   #mLevelPersist: LevelPersist | undefined;
+   #mInvalidator: QueryInvalidator | undefined;
+@@ -467,5 +473,56 @@
+       throw new Error("Native persistence reservation owner or state mismatch");
+     }
++    if (this.mNativeRegistration?.phase === "writing") throw new Error("NATIVE_REGISTRATION_BUSY");
+     this.checkNativeModPersistenceBackend(reservation);
++  }
++
++  /** Internal minimal registration only; no renderer adoption, release or tracked-install permit. */
++  public registerNativeNewMod(owner: object, bytes: Uint8Array): Promise<unknown> {
++    const reservation = this.mNativeModPersistenceReservation;
++    if (reservation === undefined || reservation.owner !== owner || reservation.phase !== "reserved" || this.mNativeRegistration !== undefined) return Promise.reject(new Error("NATIVE_REGISTRATION_REFUSED"));
++    const attempt = { phase: "claimed" as "claimed" | "writing" | "committed" | "held" };
++    this.mNativeRegistration = attempt;
++    try {
++      const request = nativeRegistrationSnapshot(bytes);
++      if (request.gameId !== reservation.gameId || request.modId !== reservation.modId || request.installationPath !== reservation.modId) throw new Error("NATIVE_REGISTRATION_TARGET");
++      const detached = Buffer.from(JSON.stringify(request));
++      this.checkNativeModPersistenceBackend(reservation);
++      const completion = this.mUpdateQueue.then(async () => {
++        this.checkNativeModPersistenceBackend(reservation);
++        if (attempt.phase !== "claimed" || reservation.backendOwner === undefined || reservation.sqlOwner === undefined || reservation.registry === undefined) throw new Error("NATIVE_REGISTRATION_HELD");
++        attempt.phase = "writing";
++        const result = await nativeRegistrationWrite.call(reservation.levelPersist, reservation.backendOwner, reservation.sqlOwner, reservation.registry, detached);
++        this.checkNativeModPersistenceBackend(reservation);
++        if (attempt.phase !== "writing" || this.mNativeRegistration !== attempt) throw new Error("NATIVE_REGISTRATION_HELD");
++        attempt.phase = "committed";
++        return result;
++      }).catch((primary) => {
++        attempt.phase = "held";
++        reservation.phase = "held";
++        this.mPersistenceWriteFailureObserved = true;
++        throw primary;
++      });
++      this.mUpdateQueue = completion.then(() => undefined, () => undefined);
++      return completion;
++    } catch (primary) {
++      attempt.phase = "held";
++      reservation.phase = "held";
++      this.mPersistenceWriteFailureObserved = true;
++      return Promise.reject(primary);
++    }
++  }
++
++  public checkNativeNewModRegistration(owner: object): void {
++    const reservation = this.mNativeModPersistenceReservation, attempt = this.mNativeRegistration;
++    if (reservation === undefined || reservation.owner !== owner || attempt === undefined) throw new Error("NATIVE_REGISTRATION_REFUSED");
++    try {
++      if (reservation.phase !== "reserved" || nativeRegistrationHeld(attempt) || this.mPersistenceWriteFailureObserved
++          || this.mPersistors.persistent !== reservation.persistor || this.#mLevelPersist !== reservation.levelPersist
++          || this.#mInvalidator !== reservation.invalidator || this.#mQueryRegistry !== reservation.registry
++          || reservation.backendOwner === undefined || reservation.sqlOwner === undefined || reservation.registry === undefined) throw new Error("NATIVE_REGISTRATION_HELD");
++      if (attempt.phase === "claimed") this.checkNativeModPersistenceBackend(reservation);
++      else nativeRegistrationCheck.call(reservation.levelPersist, reservation.backendOwner, reservation.sqlOwner, reservation.registry);
++      if (reservation.phase !== "reserved" || nativeRegistrationHeld(attempt)) throw new Error("NATIVE_REGISTRATION_HELD");
++    } catch (error) { attempt.phase = "held"; reservation.phase = "held"; throw error; }
+   }
+ 
+@@ -473,5 +530,5 @@
+     const reservation = this.mNativeModPersistenceReservation;
+     return Object.freeze({
+-      phase: reservation?.phase ?? "not_reserved",
++      phase: reservation?.phase ?? "not_reserved", registrationPhase: this.mNativeRegistration?.phase ?? "not_attempted",
+       gameId: reservation?.gameId, modId: reservation?.modId,
+       effectsAllowed: false, installationPermit: false, releaseSupported: false,
