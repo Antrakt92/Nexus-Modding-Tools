@@ -202,6 +202,56 @@ test('reading cannot adopt a replacement root even if the original child directo
   assert.equal(swapped, true); assert(fs.existsSync(path.join(dir, 'plan.json')));
 });
 
+test('a root replaced during the final plan-name check cannot become a valid journal', t => {
+  const {root, store} = fixture(t), writer = store.begin(plan()), dir = path.join(root, writer.planId);
+  const file = path.join(dir, 'plan.json'), before = fs.readFileSync(file);
+  const original = fs.readdirSync; let checks = 0, swapped = false;
+  fs.readdirSync = (value, ...args) => {
+    const result = original(value, ...args);
+    if (String(value) === dir && ++checks === 2) {
+      fs.renameSync(root, root + '-original'); fs.mkdirSync(root);
+      fs.renameSync(path.join(root + '-original', writer.planId), dir);
+      swapped = true;
+    }
+    return result;
+  };
+  try {assert.throws(() => store.read(writer.planId), /PLAN_JOURNAL_PATH_CHANGED/);}
+  finally {fs.readdirSync = original;}
+  assert(swapped); assert.deepEqual(fs.readFileSync(file), before);
+});
+
+test('a root replaced after final publication readback cannot return a writable plan owner', t => {
+  const {root, store} = fixture(t), value = plan(), planId = canonicalPlanId(value);
+  const dir = path.join(root, planId), file = path.join(dir, 'plan.json');
+  const open = fs.openSync, close = fs.closeSync, stat = fs.lstatSync;
+  let reader, readbackClosed = false, swapped = false, before;
+  fs.openSync = (name, flags, ...args) => {
+    const fd = open(name, flags, ...args);
+    if (String(name) === file && flags === 'r') reader = fd;
+    return fd;
+  };
+  fs.closeSync = fd => {
+    const result = close(fd);
+    if (fd === reader) readbackClosed = true;
+    return result;
+  };
+  fs.lstatSync = (name, ...args) => {
+    const result = stat(name, ...args);
+    if (!swapped && readbackClosed && String(name) === file) {
+      before = fs.readFileSync(file);
+      fs.renameSync(root, root + '-original'); fs.mkdirSync(root);
+      fs.renameSync(path.join(root + '-original', planId), dir);
+      swapped = true;
+    }
+    return result;
+  };
+  try {assert.throws(() => store.begin(value), /PLAN_JOURNAL_PATH_CHANGED/);}
+  finally {fs.openSync = open; fs.closeSync = close; fs.lstatSync = stat;}
+  assert(swapped); assert.deepEqual(fs.readFileSync(file), before);
+  assert.throws(() => store.begin(value), /PLAN_JOURNAL_PATH_CHANGED/);
+  assert.throws(() => createPlanJournal({root}).begin(value), /PLAN_JOURNAL_EXISTS_HOLD/);
+});
+
 test('default journal root follows the configured runtime workspace rather than current/source directory', t => {
   const { workspace } = fixture(t), prior = process.env.NEXUS_WORKSPACE; process.env.NEXUS_WORKSPACE = workspace;
   try {

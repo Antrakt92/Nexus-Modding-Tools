@@ -6,7 +6,7 @@ import strictJSON from './strict-json.cjs';
 export const identity = stat => `${stat.dev}:${stat.ino}`;
 export const generation = stat => [stat.dev, stat.ino, stat.size, stat.mtimeNs, stat.ctimeNs, stat.nlink].join(':');
 
-// Internal synchronous record I/O shared by the two journal schemas. File flush
+// Internal synchronous record I/O shared by journal schemas. File flush
 // and exact readback do not establish power-loss durability of directory entries.
 export function createImmutableRecordIO({maxBytes, prefix}) {
   if (!Number.isSafeInteger(maxBytes) || maxBytes <= 0 || maxBytes > 64 * 1024 * 1024
@@ -72,6 +72,8 @@ export function createImmutableRecordIO({maxBytes, prefix}) {
       const closing = fd; fd = undefined; fs.closeSync(closing);
       const finalized = new Map(); readJSON(final, finalized, bytes);
       need(identity(fs.lstatSync(final, {bigint: true})) === identity(after), 'CHANGED');
+      // Final name/readback observations must not adopt a replaced ancestor.
+      sameAncestry(dir, pins);
       return finalized.get(final);
     } finally {if (fd !== undefined) fs.closeSync(fd);}
   }

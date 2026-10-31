@@ -127,6 +127,23 @@ test('reading cannot adopt a foreign root containing the original operation dire
   finally {fs.lstatSync = original;}
   assert(swapped); assert(fs.existsSync(recordPath(root)));
 });
+
+test('a root replaced during the final intent-name check cannot become an observed intent', t => {
+  const {store, root} = fixture(t), r = request(); store.begin(encode(r));
+  const dir = path.join(root, r.operationId), before = fs.readFileSync(recordPath(root));
+  const original = fs.opendirSync; let checks = 0, swapped = false;
+  fs.opendirSync = (file, ...args) => {
+    if (String(file) === dir && ++checks === 2) {
+      fs.renameSync(root, root + '-original'); fs.mkdirSync(root);
+      fs.renameSync(path.join(root + '-original', r.operationId), dir);
+      swapped = true;
+    }
+    return original(file, ...args);
+  };
+  try {assert.throws(() => store.read(r.operationId, expectedHash()), /NATIVE_INTENT_PATH_CHANGED/);}
+  finally {fs.opendirSync = original;}
+  assert(swapped); assert.deepEqual(fs.readFileSync(recordPath(root)), before);
+});
 test('changed or removed records cannot become a successful same-process absence', t => {
   const {store, root} = fixture(t), r = request(); store.begin(encode(r));
   fs.renameSync(path.join(root, r.operationId), path.join(root, 'held-original'));

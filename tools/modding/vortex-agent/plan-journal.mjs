@@ -98,6 +98,7 @@ export function createPlanJournal(options = {}) {
       sameAncestry(dir, pins); seen.add(planId);
       need(JSON.stringify(fs.readdirSync(dir).sort()) === JSON.stringify(names)
         && [...observations].every(([file, stamp]) => generation(fs.lstatSync(file, { bigint: true })) === stamp), 'PLAN_JOURNAL_CHANGED');
+      sameAncestry(dir, pins);
       return { planId, plan, events, valid: true, ...result };
     });
   }
