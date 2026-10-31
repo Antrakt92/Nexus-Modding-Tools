@@ -17,6 +17,14 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Assemble the reviewed Vortex source patches through one pinned six-file,
+  20-patch graph. Reject changed inputs and packet drift; return detached output
+  bytes and a receipt that keeps compilation and native admission unverified.
+  Full renderer qualification found and repaired two Bluebird type mismatches
+  and an unknown rejection passed to an Error callback. The complete series
+  passes the original renderer typecheck and webpack build in isolation; it is
+  not an installed Vortex update.
+
 - Prepare shared deployment queue/writer, purge and refresh ownership. Join
   cancellation and manifest recovery, preserve primary failures and prevent
   swallowed errors from becoming successful completion. These patches are not

@@ -19,7 +19,7 @@ function sources(){
  let manager=readFileSync(process.env.VORTEX_NATIVE_INSTALL_MANAGER,'utf8');
  for(const name of ['ordinary-tracking','callback-order','native-activity','strict-selection','copy-error','transfer-join','manager-exclusion','lifecycle-owner-bridge','lifecycle-result-bridge'])manager=patched(manager,name);
  const original=readFileSync(process.env.VORTEX_NATIVE_MOD_INDEX,'utf8');
- const index=patched(original,'deployment-lifecycle');
+ const index=patched(patched(original,'deployment-lifecycle'),'deployment-error-types');
  const modOriginal=readFileSync(process.env.VORTEX_NATIVE_MOD_ACTIVATION_SOURCE,'utf8');
  const mod=patched(modOriginal,'deployment-cancel');
  const debouncer=readFileSync(process.env.VORTEX_NATIVE_DEBOUNCER_SOURCE,'utf8');
@@ -131,6 +131,22 @@ integration('a synchronous callback followed by enqueue failure cannot refund it
  const timer=f.exports.ownDeploymentTimer(raw);
  timer.schedule(()=>calls++);await tick();assert.equal(calls,1);assert.equal(f.manager.getNativeInstallExclusion().legacyCalls,1);
  timer.runNow(()=>calls++);await tick();assert.equal(calls,2);assert.equal(f.manager.getNativeInstallExclusion().legacyCalls,2);
+});
+
+integration('primitive enqueue rejection is normalized once and late callbacks cannot refund its owner',async()=>{
+ for(const method of ['schedule','runNow']){
+  const f=fixture(),callbacks=[],primitive='own primitive enqueue failure';let late;
+  const enqueue=done=>{late=done;throw primitive;};
+  const timer=f.exports.ownDeploymentTimer({schedule:enqueue,runNow:enqueue,wait:done=>done(null)});
+  assert.equal(timer[method](error=>callbacks.push(error)),undefined);
+  await tick();assert.equal(callbacks.length,1);
+  assert(callbacks[0] instanceof Error);assert.equal(callbacks[0].message,primitive);
+  assert.equal(f.manager.getNativeInstallExclusion().legacyCalls,1);
+  assert.throws(()=>f.manager.reserveNativeInstallExclusion(),/busy/);
+  late(null);late(Error('own late duplicate'));await tick();
+  assert.equal(callbacks.length,1);assert.equal(f.manager.getNativeInstallExclusion().legacyCalls,1);
+  assert.deepEqual(f.events,[]);
+ }
 });
 
 integration('capacity refusal happens before enqueue and exclusive admission before writer effects',async()=>{

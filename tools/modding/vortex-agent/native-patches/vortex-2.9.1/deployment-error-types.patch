@@ -1,0 +1,11 @@
+--- a/src/renderer/src/extensions/mod_management/index.ts
++++ b/src/renderer/src/extensions/mod_management/index.ts
+@@ -1495,7 +1495,7 @@
+           fail(error);
+           reject(firstError);
+         }
+-      })).catch((error) => { notify(error); });
++      })).catch((error) => { notify(unknownToError(error)); });
+     } catch (error) {
+       notify(unknownToError(error));
+     }
