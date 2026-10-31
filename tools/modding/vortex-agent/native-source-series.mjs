@@ -8,19 +8,34 @@ import strict from './strict-json.cjs';
 import {applyExact} from './native-patch-test-fixture.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const PACKET = path.join(HERE, 'native-patches/vortex-2.9.1');
-const SERIES_SHA256 = '8a2b1764b31639f5b6c899339757c9b243c4f1f7dfcb0833106124a79c22439b';
+const PACKETS = Object.freeze({
+  lifecycle: path.join(HERE, 'native-patches/vortex-2.9.1'),
+  persistence: path.join(HERE, 'native-patches/vortex-persistence-2.9.1'),
+});
+const SERIES_SHA256 = '6fcbaf625707d234e710a877a106a1b39593fc81928442d3da8f377b4f54938a';
 export const NATIVE_SOURCE_PATHS = Object.freeze([
-  'src/renderer/src/extensions/mod_management/eventHandlers.ts',
-  'src/renderer/src/extensions/mod_management/index.ts',
-  'src/renderer/src/extensions/mod_management/InstallManager.ts',
-  'src/renderer/src/extensions/mod_management/modActivation.ts',
-  'src/renderer/src/extensions/mod_management/util/activationStore.ts',
-  'src/renderer/src/extensions/mod_management/util/deploy.ts',
-  'src/renderer/src/util/transferPath.ts',
-  'src/renderer/src/extensions/mod_management/views/Settings.tsx',
-  'src/renderer/src/extensions/download_management/index.ts',
-  'src/renderer/src/extensions/download_management/views/Settings.tsx',
+  "src/renderer/src/extensions/mod_management/eventHandlers.ts",
+  "src/renderer/src/extensions/mod_management/index.ts",
+  "src/renderer/src/extensions/mod_management/InstallManager.ts",
+  "src/renderer/src/extensions/mod_management/modActivation.ts",
+  "src/renderer/src/extensions/mod_management/util/activationStore.ts",
+  "src/renderer/src/extensions/mod_management/util/deploy.ts",
+  "src/renderer/src/util/transferPath.ts",
+  "src/renderer/src/extensions/mod_management/views/Settings.tsx",
+  "src/renderer/src/extensions/download_management/index.ts",
+  "src/renderer/src/extensions/download_management/views/Settings.tsx",
+  "src/main/src/Application.ts",
+  "src/main/src/store/DuckDBSingleton.ts",
+  "src/main/src/store/LevelPersist.ts",
+  "src/main/src/store/QueryRegistry.ts",
+  "src/main/src/store/ReduxPersistorIPC.ts",
+  "src/main/src/store/mainPersistence.ts",
+  "src/main/src/store/persistenceIPC.ts",
+  "src/preload/src/index.ts",
+  "src/renderer/src/reducers/index.ts",
+  "src/renderer/src/store/persistDiffMiddleware.ts",
+  "src/shared/src/types/ipc.ts",
+  "src/shared/src/types/preload.ts"
 ]);
 export const NATIVE_SOURCE_LIMITS = Object.freeze({fileBytes: 2*1024*1024, totalBytes: 8*1024*1024});
 const fail = code => {throw Error('NATIVE_SOURCE_SERIES_' + code);};
@@ -68,8 +83,11 @@ function snapshot(input) {
 const generation = stat => ['dev', 'ino', 'size', 'mtimeNs', 'ctimeNs', 'nlink'].map(key => String(stat[key])).join(':');
 function readPacket() {
   const pins = new Map();
-  const root = fs.lstatSync(PACKET, {bigint: true});
-  need(root.isDirectory() && !root.isSymbolicLink(), 'PACKET');
+  const roots = Object.entries(PACKETS).map(([id, directory]) => {
+    const stat = fs.lstatSync(directory, {bigint: true});
+    need(stat.isDirectory() && !stat.isSymbolicLink(), 'PACKET');
+    return {id, directory, generation: generation(stat)};
+  });
   const read = (file, maxBytes) => {
     const before = fs.lstatSync(file, {bigint: true});
     need(before.isFile() && !before.isSymbolicLink() && before.size > 0n
@@ -94,25 +112,31 @@ function readPacket() {
   const raw = read(path.join(HERE, 'native-source-series.json'), 64*1024);
   need(sha(raw) === SERIES_SHA256, 'SERIES');
   const series = strict.parseStrictJSON(raw, {maxBytes: 64*1024, maxDepth: 8, maxTokens: 8000});
-  need(series.schema === 'native-source-series/1' && series.files.length === 10
-    && series.patches.length === 30 && exact(Object.fromEntries(series.files.map(row => [row.path, true])), NATIVE_SOURCE_PATHS), 'SERIES');
-  const names = series.patches.flatMap(row => [row.name+'.json', row.name+'.patch']).sort();
+  need(series.schema === 'native-source-series/2' && series.files.length === 22
+    && series.patches.length === 49 && exact(Object.fromEntries(series.files.map(row => [row.path, true])), NATIVE_SOURCE_PATHS), 'SERIES');
   const inventory = () => {
-    const directory = fs.opendirSync(PACKET), actual = [];
-    try {
-      for (let entry = directory.readSync(); entry !== null; entry = directory.readSync()) {
-        need(actual.length < names.length, 'PACKET');
-        actual.push(entry.name);
-      }
-    } finally {directory.closeSync();}
-    actual.sort();
-    need(actual.length === names.length && actual.every((name, index) => name === names[index]), 'PACKET');
+    for (const {id, directory: packet} of roots) {
+      const names = series.patches.filter(row => row.packet === id)
+        .flatMap(row => [row.name+'.json', row.name+'.patch']).sort();
+      need(names.length === (id === 'lifecycle' ? 60 : 38), 'SERIES');
+      const directory = fs.opendirSync(packet), actual = [];
+      try {
+        for (let entry = directory.readSync(); entry !== null; entry = directory.readSync()) {
+          need(actual.length < names.length, 'PACKET');
+          actual.push(entry.name);
+        }
+      } finally {directory.closeSync();}
+      actual.sort();
+      need(actual.length === names.length && actual.every((name, index) => name === names[index]), 'PACKET');
+    }
   };
   inventory();
   const records = series.patches.map(row => {
-    need(/^[a-z][a-z-]{0,63}$/.test(row.name) && NATIVE_SOURCE_PATHS.includes(row.path), 'SERIES');
-    const manifestBytes = read(path.join(PACKET, row.name+'.json'), 16*1024);
-    const patchBytes = read(path.join(PACKET, row.name+'.patch'), 1024*1024);
+    need(/^[a-z][a-z-]{0,63}$/.test(row.name) && NATIVE_SOURCE_PATHS.includes(row.path)
+      && Object.hasOwn(PACKETS, row.packet), 'SERIES');
+    const packet = PACKETS[row.packet];
+    const manifestBytes = read(path.join(packet, row.name+'.json'), 16*1024);
+    const patchBytes = read(path.join(packet, row.name+'.patch'), 1024*1024);
     need(sha(manifestBytes) === row.manifestSHA256 && sha(patchBytes) === row.patchSHA256, 'PACKET');
     const manifest = strict.parseStrictJSON(manifestBytes, {maxBytes: 16*1024, maxDepth: 8, maxTokens: 2000});
     const original = series.files.find(file => file.path === row.path);
@@ -121,15 +145,19 @@ function readPacket() {
       && (manifest.originalSourceSHA256 ?? original.originalSHA256) === original.originalSHA256 && manifest.preparedOnly === true
       && ['installed', 'nativeAcceptanceVerified'].every(key => manifest[key] === false)
       && ['nativeTerminalGuarantee', 'globalIdleGuarantee'].every(key => !Object.hasOwn(manifest, key) || manifest[key] === false)
-      && ['inputSHA256', 'outputSHA256', 'patchSHA256', 'prerequisitePatch', 'prerequisitePatchSHA256', 'requiredManagerPatchSHA256']
+      && ['inputSHA256', 'outputSHA256', 'patchSHA256', 'prerequisitePatch', 'prerequisitePatchSHA256', 'requiredManagerPatchSHA256',
+        'requiredCompanionPatch', 'requiredCompanionPatchSHA256', 'requiredCompanionOutputSHA256']
         .every(key => (manifest[key] ?? null) === row[key]), 'GRAPH');
     return {row, patch: decode(patchBytes)};
   });
   const verify = () => {
     inventory();
     for (const [file, pin] of pins) need(generation(fs.lstatSync(file, {bigint: true})) === pin, 'PACKET');
-    const after = fs.lstatSync(PACKET, {bigint: true});
-    need(after.isDirectory() && !after.isSymbolicLink() && after.dev === root.dev && after.ino === root.ino, 'PACKET');
+    for (const root of roots) {
+      const after = fs.lstatSync(root.directory, {bigint: true});
+      need(after.isDirectory() && !after.isSymbolicLink()
+        && generation(after) === root.generation, 'PACKET');
+    }
   };
   verify();
   return {series, records, verify};
@@ -153,13 +181,24 @@ export function assembleNativeSources(input) {
     for (const {row, patch} of records) {
       need(!applied.has(row.name), 'GRAPH');
       if (row.prerequisitePatch !== null) {
-        const parent = applied.get(row.prerequisitePatch.replace(/\.patch$/, ''));
-        need(parent && parent.patchSHA256 === row.prerequisitePatchSHA256, 'GRAPH');
+        need(/^[a-z][a-z-]{0,63}\.patch$/.test(row.prerequisitePatch), 'GRAPH');
+        const parent = applied.get(row.prerequisitePatch.slice(0, -6));
+        need(parent && parent.packet === row.packet
+          && parent.patchSHA256 === row.prerequisitePatchSHA256, 'GRAPH');
       } else need(row.prerequisitePatchSHA256 === null, 'GRAPH');
       if (row.requiredManagerPatchSHA256 !== null) {
         need([...applied.values()].some(parent => parent.patchSHA256 === row.requiredManagerPatchSHA256
           && parent.path.endsWith('/InstallManager.ts')), 'GRAPH');
       }
+      if (row.requiredCompanionPatch !== null) {
+        need(/^[a-z][a-z-]{0,63}\.patch$/.test(row.requiredCompanionPatch), 'GRAPH');
+        const companion = applied.get(row.requiredCompanionPatch.slice(0, -6));
+        // This is the retained intermediate node receipt, not today's final text.
+        need(companion && companion.packet === row.packet
+          && companion.patchSHA256 === row.requiredCompanionPatchSHA256
+          && companion.outputSHA256 === row.requiredCompanionOutputSHA256, 'GRAPH');
+      } else need(row.requiredCompanionPatchSHA256 === null
+        && row.requiredCompanionOutputSHA256 === null, 'GRAPH');
       const source = texts.get(row.path);
       need(sha(source) === row.inputSHA256, 'PATCH');
       const output = applyExact(source, patch, row.path);
@@ -177,10 +216,11 @@ export function assembleNativeSources(input) {
     }
     verify();
     return Object.freeze({sources: Object.freeze(sources), receipt: frozen({
-      schema: 'native-source-assembly-receipt/1', sourceSeriesSHA256: SERIES_SHA256,
+      schema: 'native-source-assembly-receipt/2', sourceSeriesSHA256: SERIES_SHA256,
       upstreamRepository: series.upstreamRepository, upstreamTag: series.upstreamTag, upstreamCommit: series.upstreamCommit,
       patches: series.patches.map(row => ({...row})), sources: sourceReceipt,
       preparedOnly: true, nativeAdmission: false, effectsAllowed: false,
+      installationPermit: false, globalSQLIsolationVerified: false, powerLossPersistenceVerified: false,
       typecheckVerified: false, nativeAcceptanceVerified: false, installed: false,
     })});
   } catch (error) {

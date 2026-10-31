@@ -38,8 +38,8 @@ Neither is the result of a particular new registration.
 
 `native-patches/vortex-persistence-2.9.1/batch-acknowledgement.patch` adds an
 internal `applyDiffOperationsAcknowledged` method to `ReduxPersistorIPC`.
-It is separate from the fixed renderer source series. No existing caller or IPC
-channel invokes it, and no installed application is changed by keeping this patch.
+It is included in the fixed complete source series. No installed application is
+changed by keeping or assembling this patch.
 
 The new method:
 
