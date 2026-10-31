@@ -21,6 +21,7 @@ is a fallback after an uncertain tracked operation.
 | Native activity | [Core-tail diagnostic patch](NATIVE-ACTIVITY-PATCH.md), separate IDs and joined error cleanup | Prepared only; no extractor/process exit proof or native dispatch acknowledgement |
 | Native terminal | Exact intent/job binding and proven extractor/mandatory cleanup completion | Not accepted by the reviewed ordinary host contract |
 | Dispatch data contract | Closed full-plan request and bounded synchronous consumed-ID model with operation/job exclusion | Offline only; caller-provided lifetime claims, no native invocation or persistence |
+| Intent storage | Exclusive operation reservation, immutable full-request record and externally bound readback | File/process-exit checks only; no power-loss publication proof, shared durable job exclusion or dispatch permit |
 | Durable executor | [Fixed native dispatch contract](NATIVE-DISPATCH-CONTRACT.md), one server-owned ID and durable per-effect intents | Not implemented by the data model or diagnostic registry |
 | New local ZIP | Atomic no-clobber import, or separately accepted direct-local contract | Not implemented |
 | Enable/deploy | Reuse existing reviewed operations after accepted disabled installation | Not connected to installation |
