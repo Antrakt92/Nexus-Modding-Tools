@@ -122,9 +122,39 @@ RSS, clean-machine acceptance or the best persistent-worker design. First
 observed calls here follow prior tests and executable hashing; they are not cold
 OS-cache or first-download measurements. Background host activity was not disabled.
 
-The current Rust executable still imports `VCRUNTIME140.dll`. Distribution and
+The dynamic build used in that comparison imports `VCRUNTIME140.dll`. Distribution and
 runtime integration remain separate gates. The existing batch control also shows
 that interpreter reuse deserves comparison before selecting a permanent backend.
+
+## Static-CRT delivery experiment
+
+The original comparison above used the dynamic-CRT build. The separate explicit
+[`static-crt.toml`](../tools/modding/native-process-probe/static-crt.toml) recipe
+removes its observed dynamic CRT imports without changing the request protocol
+or adding crates. Pass the config and x64 target explicitly; a manifest path
+alone does not select nested Cargo configuration.
+
+The static artifact was 335,872 bytes, SHA-256
+`4dc250a8069239aaaaed7208af4e3a203cab3b4e0a2532496f7a098c1475d167`.
+Its declared imports, independently checked by dumpbin and the new bounded
+`process-probe-pe.cjs` parser, normalize to kernel32.dll, ntdll.dll and
+api-ms-win-core-synch-l1-2-0.dll. The old dynamic artifact is retained for its
+benchmark evidence; neither binary is installed in Vortex or distributed here.
+
+Another sequential 40-pair run recorded full-iteration medians of 296.86 ms for
+PowerShell and 49.96 ms for the static prototype, empirical p95 values of 312.05
+and 56.84 ms, and maxima of 318.49 and 57.26 ms. The run took 15.06 seconds.
+This preserves the observed component advantage on this host. Separate runs
+are not a controlled causal comparison of static versus dynamic CRT performance.
+
+The PE parser bounds AMD64/PE32+ headers, section mappings, import descriptors
+and DLL names. Shared mutable buffers and unsupported/malformed layouts refuse.
+Its nonempty exact OS-import allowlist and delay-import check produce
+`systemImportsOnly`, not a claim about all possible runtime DLL loading, CRT
+linkage, signatures or OS compatibility. Native tests can require that import
+policy with `VORTEX_PROCESS_PROBE_EXPECT_STATIC_CRT=1` before launching the CLI.
+Clean-Windows tests, dependency notices, servicing and actual packaging remain
+separate gates. Static linkage does not waive them.
 
 ## Acceptance before integration
 

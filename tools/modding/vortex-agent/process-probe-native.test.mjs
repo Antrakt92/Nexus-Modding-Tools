@@ -5,6 +5,7 @@ import path from 'node:path';
 import {createHash, randomBytes} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 import contract from './process-probe-contract.cjs';
+import pe from './process-probe-pe.cjs';
 
 const binary = process.env.VORTEX_PROCESS_PROBE_BINARY;
 const pin = process.env.VORTEX_PROCESS_PROBE_SHA256;
@@ -15,7 +16,14 @@ function invoke(input, args = []) {
   assert(path.isAbsolute(binary)); assert.match(pin, /^[a-f0-9]{64}$/);
   const before = fs.lstatSync(binary, {bigint: true});
   assert(before.isFile() && !before.isSymbolicLink() && before.size <= 32n * 1024n * 1024n);
-  assert.equal(createHash('sha256').update(fs.readFileSync(binary)).digest('hex'), pin);
+  const bytes = fs.readFileSync(binary);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), pin);
+  const imports = pe.inspectProcessProbePE(bytes);
+  assert.equal(imports.machine, 'amd64'); assert.equal(imports.format, 'PE32+');
+  if (process.env.VORTEX_PROCESS_PROBE_EXPECT_STATIC_CRT === '1') {
+    assert.equal(imports.delayImportsPresent, false);
+    assert.equal(imports.systemImportsOnly, true, 'static recipe must retain only reviewed declared OS imports');
+  }
   const result = spawnSync(binary, args, {input, encoding: 'buffer', timeout: 10000,
     maxBuffer: contract.LIMITS.responseBytes, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe']});
   assert.ifError(result.error); assert.equal(result.signal, null);

@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "17162847f8c479cb21bdecba2b15c2ce2e109e1b7d13166569b9d906352a5b0f"
+      "sha256_lf": "4da173c825bbba965cc62b04b2339a372b79bf45b1f7bd655035a5aaec5f6759"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -312,7 +312,7 @@
     },
     {
       "path": "docs/PROCESS-PROBE-EXPERIMENT.md",
-      "sha256_lf": "2c56e836262f640c18bf210caf76d930f7d1b169cc2166bf3995d952760c3429"
+      "sha256_lf": "edb401e30b0a137e77f8b5ffc2c477dd44d0a1e033acf013aba2e6cb17887c94"
     },
     {
       "path": "docs/README.md",
@@ -448,11 +448,11 @@
     },
     {
       "path": "tools/modding/native-process-probe/DEPENDENCIES.md",
-      "sha256_lf": "1cc220f036339643e4e80679b3f184cc7eb71e75c78ea07381d39deb1b35543c"
+      "sha256_lf": "2f4d9e2462c28d43323eba4107935f2d7c5f2918d9cc0e3ca37bdbd7d2c8d6f7"
     },
     {
       "path": "tools/modding/native-process-probe/README.md",
-      "sha256_lf": "787cd18666768cbd06eadb862f9c0b06e4842fd5a59c3ad0ced611e151397fbc"
+      "sha256_lf": "e3e64da0a7c1ae48330695281f24b11a0811277187c73682b14d4943e8169f0e"
     },
     {
       "path": "tools/modding/native-process-probe/rust-toolchain.toml",
@@ -461,6 +461,10 @@
     {
       "path": "tools/modding/native-process-probe/src/main.rs",
       "sha256_lf": "a1a2d26a4eef097e183c3598c9d92f4f0f04b85eb7eb4d00e507fbd1ab99b082"
+    },
+    {
+      "path": "tools/modding/native-process-probe/static-crt.toml",
+      "sha256_lf": "c15a7ac389f2c0c79f69228d530a23002a60c6e533e5cbe34a77744223be81cc"
     },
     {
       "path": "tools/modding/nexus-cli/README.md",
@@ -964,7 +968,15 @@
     },
     {
       "path": "tools/modding/vortex-agent/process-probe-native.test.mjs",
-      "sha256_lf": "6623babca0edcc97dabaa92aeab1c2c3e8a9b1177966b29b366c939d917cb8a3"
+      "sha256_lf": "ae91654dbc69d7c2cdcaad3a6dced8ac45f6ca5d984912aa334af7e2ed203eab"
+    },
+    {
+      "path": "tools/modding/vortex-agent/process-probe-pe.cjs",
+      "sha256_lf": "0641ea2db2402528a3f3bf58a2260301815b2f5f86380ab8c051720264213825"
+    },
+    {
+      "path": "tools/modding/vortex-agent/process-probe-pe.test.cjs",
+      "sha256_lf": "6f3874b9df504685876aaa9d46bc7186425c25c55fa871b700e356025014bfdb"
     },
     {
       "path": "tools/modding/vortex-agent/receipts.cjs",
