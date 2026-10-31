@@ -13,7 +13,7 @@ is a fallback after an uncertain tracked operation.
 | Stage | Evidence or deliverable | Current boundary |
 | --- | --- | --- |
 | Native source | Vortex tag `v2.9.1`, commit `c80326367cbe6d96621ad6cf4a5488ef49bac110`; five reviewed installed renderer entries byte-identical to upstream | Source identity, not new native safety APIs |
-| Archive seal | Nine Windows sharing checks passed; the exact installed extractor binary also extracted the sealed test ZIP with matching payload | Mechanics/binary fixture only; node-7z wrapper, ancestor handoff and crash lifetime remain unproved |
+| Archive seal and temp handoff | [Archive/temp custody](ARCHIVE-TEMP-CUSTODY.md), 35 Windows tests and one actual owned-SDK extraction followed by transfer through the original held root | Normal path with surviving keeper only; crash lifetime, no-clobber extraction and native installation remain unproved |
 | Extractor error settlement | [Pinned node-7z patch](NATIVE-EXTRACTOR-CLOSE-PATCH.md) joins the exact child's close before rejecting the first asynchronous failure | Prepared only; cancellation, descendants, native wrapper acceptance and cleanup ownership remain separate gates |
 | Child resource observation | [Passive child observer](CHILD-TERMINAL-OBSERVER.md), actual child/pipe events and status independent of a caller promise | Internal component only; no extractor adoption, durable executor, descendant or cleanup permit |
 | Extraction job ownership | [Explicit owned factory](NATIVE-OWNED-EXTRACTOR.md), fixed archive/destination, bounded attempts and per-instance child ownership | Prepared source only; native call sites, durable executor and safe cleanup remain held |
@@ -24,7 +24,7 @@ is a fallback after an uncertain tracked operation.
 | Transfer failure | [Copy-error propagation patch](NATIVE-COPY-ERROR-PATCH.md), actual native transfer/concurrency regressions | Prepared only; error propagation is not no-clobber, safe cleanup or terminal proof |
 | Transfer worker join | [Joined transfer patch](NATIVE-TRANSFER-JOIN-PATCH.md), stop new callbacks after failure and await started mkdir/copy callbacks | Prepared only; callback settlement is not detached I/O/extractor exit or safe path cleanup |
 | Native ownership | No replacement, exclusive owner/path reservation and owned cleanup | Missing from the reviewed ordinary host contract |
-| File transfer primitive | [Handle-owned transfer](OWNED-FILE-TRANSFER.md), exclusive relative creation, native identity pins and retained failure output | Windows fixture library only; no Vortex connection, extractor handoff or cleanup permit |
+| File transfer primitive | [Handle-owned transfer](OWNED-FILE-TRANSFER.md), exclusive relative creation, native identity pins, retained failure output and borrowed temp-root handoff | Windows fixture library only; no Vortex connection, crash custody or cleanup permit |
 | Native activity | [Core-tail diagnostic patch](NATIVE-ACTIVITY-PATCH.md), separate IDs and joined error cleanup | Prepared only; no extractor/process exit proof or native dispatch acknowledgement |
 | Native terminal | Exact intent/job binding and proven extractor/mandatory cleanup completion | Not accepted by the reviewed ordinary host contract |
 | Dispatch data contract | Closed full-plan request and bounded synchronous consumed-ID model with operation/job exclusion | Offline only; caller-provided lifetime claims, no native invocation or persistence |
