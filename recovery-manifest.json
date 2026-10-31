@@ -196,7 +196,7 @@
     },
     {
       "path": "docs/AGENT-WORKFLOW.md",
-      "sha256_lf": "1f7c9de85f67077fe15e7e5b932eb7407ac90052b4cbd019fa1040cd02a9b0af"
+      "sha256_lf": "a57f69453b36e981aa15121639e7a493d1d2eb1d0c89c707dcb0d1287885a284"
     },
     {
       "path": "docs/ARCHIVE-TEMP-CUSTODY.md",
@@ -212,7 +212,7 @@
     },
     {
       "path": "docs/AUTHORIZED-RESTART.md",
-      "sha256_lf": "ac354074344a91ed313d91ed396b1ded8768fc45ca94f97f984fc386aed2c936"
+      "sha256_lf": "dfd0d79e19d0cdebe47726011c4d19477f0e5d8a9798ba8819277b7f87fcbb9b"
     },
     {
       "path": "docs/CHILD-TERMINAL-OBSERVER.md",
@@ -264,7 +264,7 @@
     },
     {
       "path": "docs/LIFECYCLE-IMPLEMENTATION.md",
-      "sha256_lf": "72316429115e67b0c5f90ceb3b37f575ee6345980ef4333fec694358de135be6"
+      "sha256_lf": "78bde8962f9eab81ee5ace6651574b652d8a9933331fb3ce83f0d2256160950d"
     },
     {
       "path": "docs/LIFECYCLE-PERFORMANCE.md",
@@ -391,8 +391,12 @@
       "sha256_lf": "edb401e30b0a137e77f8b5ffc2c477dd44d0a1e033acf013aba2e6cb17887c94"
     },
     {
+      "path": "docs/READ-CAPTURE-BASELINE.md",
+      "sha256_lf": "4878df139f24a8ede94e021d52328c94e217fbd31280c11818a1c8b0b2892abd"
+    },
+    {
       "path": "docs/READ-CAPTURE-PREPARATION.md",
-      "sha256_lf": "f87f60c3aa2c01be25267773df1197528f5da2adaec353fdcee10f54f9793d3c"
+      "sha256_lf": "61232ecf4259b875daa718c49c207a7d90229dffb8c7aca08674d14e23b3e1fe"
     },
     {
       "path": "docs/README.md",
@@ -660,7 +664,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/README.md",
-      "sha256_lf": "4ef6a04f1b73ee7c095d109e6b0e66b4147012b935a75dde9066838980ca48d3"
+      "sha256_lf": "6b5c7743b9490d11f75299f184a3cfc2caf7df17df1ff0988bda21e01456cb40"
     },
     {
       "path": "tools/modding/vortex-agent/archive-temp-lease.test.py",
@@ -689,6 +693,14 @@
     {
       "path": "tools/modding/vortex-agent/build.mjs",
       "sha256_lf": "fe59834384882c6d8154524d7aca4d59b9d68a66b55d3eb3c98e047b55d6853d"
+    },
+    {
+      "path": "tools/modding/vortex-agent/capture-disk-baseline.mjs",
+      "sha256_lf": "7e441b53a7de69843983a05c91baaae385baa5353bc21c08063f922886446989"
+    },
+    {
+      "path": "tools/modding/vortex-agent/capture-disk-baseline.test.mjs",
+      "sha256_lf": "01b088d8c9ff16a8571790c0adde4d6c0ec91e622559bb2dbcce3a96ed0bcd34"
     },
     {
       "path": "tools/modding/vortex-agent/catalog-snapshot.test.mjs",
@@ -1476,11 +1488,11 @@
     },
     {
       "path": "tools/modding/vortex-agent/prepare-read-capture.mjs",
-      "sha256_lf": "8e4171e7761017b0f95a4c96b6fbc75bb998830cfd2167efc67702aaa7b5989a"
+      "sha256_lf": "61bb9c37c4ba4d10afdc4fd3ed7cc8dcf03cce036250e101540c0c9d637681a3"
     },
     {
       "path": "tools/modding/vortex-agent/prepare-read-capture.test.mjs",
-      "sha256_lf": "683bb85ca5eedde773d5ba15fbbda84895d23bc0e0204c230067f2d65665a6fe"
+      "sha256_lf": "2b36baada289c2e630541f043a417e6a2e7b0b92916b9ac6f2637c53136d67a2"
     },
     {
       "path": "tools/modding/vortex-agent/prepare-source-guard.mjs",

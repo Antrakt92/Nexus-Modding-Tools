@@ -147,6 +147,9 @@ For a native read capture without packages, use the separate
 one pinned read-only family, omits historical optional diagnostics and leaves
 current-session bindings empty. It does not install an extension or capture a
 running host; code verification is separate from native execution approval.
+The [external baseline CLI](../../../docs/READ-CAPTURE-BASELINE.md) checks protected
+hardlink pairs and preference files before native capture. Its default plan avoids
+a full payload hash pass; explicit capture writes only new local evidence.
 
 For reviewed task-owned one-shots, the [installation settlement observer](install-settlement.md)
 provides pinned record/flag checks and specific waiting diagnostics without
