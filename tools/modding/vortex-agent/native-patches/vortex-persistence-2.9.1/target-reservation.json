@@ -1,0 +1,26 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/main/src/store/ReduxPersistorIPC.ts",
+  "originalSourceSHA256": "2a86c8e57e643172e8babf3474bd2e697a1cf8b3f3e3f3ea1f44934781a737e3",
+  "prerequisitePatch": "batch-acknowledgement.patch",
+  "prerequisitePatchSHA256": "0a96d2660397fd24b09360b1f0360838339aee3ca2f6e86cca0a50d2fda02bed",
+  "inputSHA256": "889c85856fc5ef4f14b9c66dbae06f48a7a07d9a2d1cf601a80696d3daa050a2",
+  "outputSHA256": "ddc2ff79896e311bef88834521fa8c45c32c5fd371becfe3da9895ca1580764c",
+  "patchSHA256": "db20272f9dacf0d927f6740b3e4d2149016c74a1251d5a123e3eff0239c684fb",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "releaseSupported": false,
+  "limitations": [
+    "Internal main persistence queue fence and bounded database conflict query only; no native install or writes by the owner.",
+    "Pending renderer diffs, raw database writers, filesystem ownership and crash recovery need separate admission.",
+    "No release/reset/replay; conflicting writes and uncertain admission leave a permanent hold."
+  ],
+  "requiredCompanionPatch": "new-mod-conflict-query.patch",
+  "requiredCompanionPatchSHA256": "5c77c9092b375508450d5a783518b7fb1006d5352af68054227536ab7d2b765f",
+  "requiredCompanionOutputSHA256": "789e8cc72682d65def311535ce20d36d4fc992cd01cdb0f9b58084696848f7e0"
+}

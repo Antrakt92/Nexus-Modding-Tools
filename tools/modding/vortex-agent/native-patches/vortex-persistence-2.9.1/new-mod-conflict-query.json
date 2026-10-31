@@ -1,0 +1,24 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/main/src/store/LevelPersist.ts",
+  "upstreamGitBlob": "ac800c51d45785ab759c8b87d66657e4c5a49d70",
+  "originalSourceSHA256": "742929670876a79c7332a13d16381cf2098ee55f57f838e3e35668853d1455a1",
+  "inputSHA256": "742929670876a79c7332a13d16381cf2098ee55f57f838e3e35668853d1455a1",
+  "outputSHA256": "789e8cc72682d65def311535ce20d36d4fc992cd01cdb0f9b58084696848f7e0",
+  "patchSHA256": "5c77c9092b375508450d5a783518b7fb1006d5352af68054227536ab7d2b765f",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "atomicAbsenceVerified": false,
+  "powerLossPersistenceVerified": false,
+  "limitations": [
+    "Internal key-only conflict observation; no reservation, queue serialization, registration or renderer-diff flush.",
+    "Ancestor blobs conservatively conflict without inspecting their values; false tombstones also conflict.",
+    "Only one constant result row is returned; underlying physical scan cost and latency are not established.",
+    "No native host, level_pivot ABI, durable persistence, filesystem ownership or installation permit."
+  ]
+}

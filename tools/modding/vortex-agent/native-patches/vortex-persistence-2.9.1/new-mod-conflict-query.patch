@@ -1,0 +1,43 @@
+--- a/src/main/src/store/LevelPersist.ts
++++ b/src/main/src/store/LevelPersist.ts
+@@ -189,6 +189,40 @@
+     return firstRow[0] as string;
+   }
+ 
++  /**
++   * Conservative target read for a future owned registration fence.
++   * A false result is only this read's observation, not an atomic absence permit.
++   */
++  public async hasNewModRegistrationConflict(gameId: string, modId: string): Promise<boolean> {
++    const safeId = (value: string) => typeof value === "string" && value.length > 0
++      && value.length <= 200 && /^[A-Za-z0-9]/.test(value) && !/[^A-Za-z0-9._-]/.test(value)
++      && !["__proto__", "constructor", "prototype"].includes(value.toLowerCase());
++    if (!safeId(gameId) || !safeId(modId)) {
++      throw new Error("Invalid new-mod registration identity");
++    }
++    const gamePrefix = ["persistent", "mods", gameId].join(SEPARATOR);
++    const targetPrefix = ["persistent", "mods", gameId, modId].join(SEPARATOR);
++    const reader = await this.#mConnection.runAndReadAll(
++      `WITH keys AS (
++         SELECT key, string_split(key, '###') AS parts FROM ${this.#mAlias}.kv
++       )
++       SELECT 1 FROM keys
++       WHERE key IS NULL OR key = '' OR key = 'persistent'
++          OR key = 'persistent###mods' OR key = $1
++          OR key = $2 OR starts_with(key, $2 || '###')
++          OR key = 'persistent###profiles'
++          OR (starts_with(key, 'persistent###profiles###') AND (
++               array_length(parts) = 3
++               OR (list_extract(parts, 4) = 'modState' AND (
++                    array_length(parts) = 4 OR list_extract(parts, 5) = $3
++               ))
++          ))
++       LIMIT 1`,
++      [gamePrefix, targetPrefix, modId],
++    );
++    return reader.getRows().length > 0;
++  }
++
+   public async getAllKeys(): Promise<string[][]> {
+     const reader = await this.#mConnection.runAndReadAll(`SELECT key FROM ${this.#mAlias}.kv`);
+     const rows = reader.getRows();

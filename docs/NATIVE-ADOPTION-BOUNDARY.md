@@ -61,13 +61,49 @@ disabled state or safe Vortex registration. In particular it does not flush the
 renderer queue, block main-origin writers or prevent a late older renderer diff
 from overwriting a newer registration.
 
+## Prepared main persistence reservation
+
+The separate `target-reservation.patch` layers on the batch acknowledgement.
+`reserveNativeModPersistence(gameId, modId)` establishes a main-owned pending
+reservation synchronously, then waits behind previously accepted persistence
+work before checking the database. It requires the concrete backend/invalidator
+to be ready and retains their identity across that wait and the read.
+
+New intersecting persistent batches are refused in full before enqueueing:
+ordinary renderer diffs, quit-sync diffs and acknowledged batches use the same
+guard. Protected paths include the exact mod, its descendants and ancestors,
+and every profile's `modState[modId]`, including whole-profile replacement.
+Unrelated mods and profile fields continue through the queue. Accepted batches
+are detached before they can wait, preventing later caller mutation from
+retargeting a safe path. Physical `###` separator aliases are refused.
+
+Read failure, a conflicting batch, an earlier queued failure or a backend
+replacement leaves the reservation held. Async hydration rechecks before replacing
+the backend. The internal owner is an object identity; status never exposes it.
+There is deliberately no registration, write, release, reset or replay method.
+
+`new-mod-conflict-query.patch` adds a concrete `LevelPersist` query for this
+reservation. One parameterized `SELECT 1 ... LIMIT 1` detects target leaves,
+exact records, ancestor blobs and profile-state entries without returning stored
+values or hydrating the collection. Even a disabled tombstone for the same mod ID
+is a conflict: this first path requires a new identity. Ambiguous parent blobs
+also refuse. A read error is never converted into absence. Bounded returned data
+does not establish an indexed query or constant execution time.
+
+This covers the persistor queue, not all database writers. Startup/admin/import/
+repair paths that write directly still need admission. A main queue drain also
+does not flush delayed renderer diffs. A future registration must coordinate and
+resynchronize the renderer before any safe release; a late diff cannot become
+permission to overwrite the new record. Neither reservation nor a clean database
+snapshot establishes filesystem custody, crash recovery or an installation permit.
+
 ## Next implementation gates
 
 Implement these boundaries before exposing an install endpoint:
 
-1. Reserve the target before conflicting native side effects. Admission must cover
-   relevant ordinary install/remove/refresh writers and main-origin persistence,
-   rather than relying on renderer action vetoes.
+1. Connect target admission before conflicting native side effects. The prepared
+   main persistence reservation covers only its queue; relevant ordinary install/
+   remove/refresh writers and the renderer still need a coordinated boundary.
 2. Publish the verified payload through an actual no-replace owned primitive.
    Keep partial output held; discovery of a directory is not registration.
 3. Register one exact new owner and verify every profile remains disabled. Use a
@@ -101,10 +137,25 @@ They cover blocked writes/commits, exact errors, queue ordering, detached inputs
 sparse operations, inherited keys, factory reuse and commit/rollback failures.
 Missing inputs skip the source-dependent tests and do not establish acceptance.
 
-The main-process TypeScript target, its seven prerequisite builds, all 15 upstream
-persistor tests and `src/main/build.mjs` passed with the patch. The exact output
-source was present in the 1,141-file TypeScript Program and the resulting main
-source map. The official lock and compiler configuration were unchanged. The
+For the combined acknowledgement, reservation and conflict query:
+
+```powershell
+$env:VORTEX_NATIVE_LEVEL_PERSIST_SOURCE = 'ABSOLUTE_ORIGINAL_LevelPersist.ts'
+$env:VORTEX_NATIVE_DUCKDB_NODE_API = 'ABSOLUTE_QUALIFIED_DUCKDB_NODE_API_DIRECTORY'
+node --test tools/modding/vortex-agent/native-persistence-ack-patch.test.mjs tools/modding/vortex-agent/native-persistence-reservation.test.mjs tools/modding/vortex-agent/native-new-mod-conflict-query.test.mjs
+```
+
+All 36 cases passed without skips. The six query cases use the existing DuckDB
+node-api `1.5.1-r.1` against a private `:memory:` table. One combines the actual
+patched persistor and LevelPersist classes: an earlier real transaction finishes
+before the conflict query, which refuses the now-existing target and holds the
+reservation. Its dirty-table notification hook is stubbed; the native
+`level_pivot` extension and installed database are not tested.
+
+The combined main-process TypeScript target, its seven prerequisite builds, all
+46 upstream persistor/backend tests and `src/main/build.mjs` passed. Both exact
+output sources were present in the 1,141-file TypeScript Program and the resulting
+main source map. The official lock and compiler configuration were unchanged. The
 initial main typecheck required the official local `generate:unleash` target to
 produce its missing schema; no compiler options or declarations were weakened.
 
