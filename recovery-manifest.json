@@ -4,7 +4,7 @@
   "files": [
     {
       "path": ".gitattributes",
-      "sha256_lf": "841e1fe3e2e86b551480fb411313911325c6589dc6d338be68a662dd4969659d"
+      "sha256_lf": "3a6b47631cd6da30e91c2cdb51b40c5ec78d46f18d3d896b24f0d8b4d7ac6303"
     },
     {
       "path": ".github/ISSUE_TEMPLATE/bug-report.yml",
@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "45f4773f0326658c51b8f93ed5eb293384497c140b0dca22aec0f1039552fecd"
+      "sha256_lf": "a843b8e57a76da15f8fbf442d2e33a6122fa3175abcda15e4593051ee027be58"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -268,7 +268,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "d84cc2e2884ff178e792580e9ed1b4d78263ba7868adad6651f9f9651e63257a"
+      "sha256_lf": "6393c01ee2ba9c356b2b49e01bd5a01fec5c311442e7e3642246f84090bd4bff"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -281,6 +281,10 @@
     {
       "path": "docs/NATIVE-LIFECYCLE-GATES.md",
       "sha256_lf": "4389ce1bf97ac2fe43d120a732fa2133a51e8e1e1d6e71d3f091330cec02513a"
+    },
+    {
+      "path": "docs/NATIVE-TRACKING-PATCH.md",
+      "sha256_lf": "de6cf0a3290c9f6d5df1018a361b6ed393850b95f651bcf6693fe2c516aa8b80"
     },
     {
       "path": "docs/NO-RESTART-WORKFLOW.md",
@@ -765,6 +769,18 @@
     {
       "path": "tools/modding/vortex-agent/native-install-wait.test.cjs",
       "sha256_lf": "6b5c4075de0d3075dad391acb817a4a5f9bf68107ba51e1561ff6b53725b88dc"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/ordinary-tracking.json",
+      "sha256_lf": "13c4fc09d1705c922360736f64f6b16caf2d780dd876a8f80ea0581d12448874"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/ordinary-tracking.patch",
+      "sha256_lf": "c9d5711ac1c5ce3e8c01aebc9f4ffcc0c5fa5640da189753b34e3178e9205af3"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-tracking-patch.test.mjs",
+      "sha256_lf": "e0e0f6b83c6a99d659deb42efdbec5bab0a72bcb70e9907794a6c7fb228cf1b1"
     },
     {
       "path": "tools/modding/vortex-agent/own-helper-binder.mjs",
