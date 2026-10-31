@@ -17,6 +17,10 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Prepare a Vortex transfer patch that propagates failed copy fallbacks instead
+  of reporting success. Source-derived tests preserve the self-copy exception
+  and verify that rejection does not prove other transfers have stopped. The
+  patch remains uninstalled; no-clobber and safe cleanup are separate gates.
 - Prepare a private new-disabled Vortex selection patch that rejects provider,
   owner/path and all-profile conflicts before legacy replacement branches. Public
   installation remains unavailable; the patch is uninstalled and does not prove

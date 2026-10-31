@@ -53,6 +53,11 @@ tracked-package and all-profile conflict checks while bypassing legacy replaceme
 branches. It remains uninstalled and requires separate owner/reservation, full
 application-build and native acceptance gates.
 
+The [transfer-error patch](NATIVE-COPY-ERROR-PATCH.md) repairs swallowed native
+copy failures. Source-derived tests preserve the existing successful/self-copy
+routes and demonstrate that other workers can still run after rejection. This
+does not close no-clobber, ownership or terminal gates.
+
 The current bottleneck evidence and architectural constraints are in
 [Lifecycle performance](LIFECYCLE-PERFORMANCE.md). This checklist does not replace
 the [agent workflow](AGENT-WORKFLOW.md) or task-specific native admission.

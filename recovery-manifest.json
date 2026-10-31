@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "b482c8a655e9e639fd3f6236e41e0434aca5f3431c239f74b57c9e63df8f777b"
+      "sha256_lf": "962bac82850d16d427546dc345770b81aeef7825a5e2e492d314398e9573fd04"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -256,7 +256,7 @@
     },
     {
       "path": "docs/LIFECYCLE-IMPLEMENTATION.md",
-      "sha256_lf": "da43d55ea19ea66d8d99180575e75106785c4e8720609dc72f4196e29269ba79"
+      "sha256_lf": "36d45543ae699bd1b3a4f56d20913705d54b3cb31a7f923a6905e5b46fefcd15"
     },
     {
       "path": "docs/LIFECYCLE-PERFORMANCE.md",
@@ -268,7 +268,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "3a704a8660fa145e38282b6de1a69b38231e608c01ef0d0e8dd4cd8a99861a1d"
+      "sha256_lf": "d6edb7e0dd7a9c75cacfb3f09dfd834cf6c1af014a36b5b1f401751e4ea44677"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -281,6 +281,10 @@
     {
       "path": "docs/NATIVE-CALLBACK-PATCH.md",
       "sha256_lf": "23b9e8128d7f88e8d67ec050117b172e28b4911c323c13ff67aead8dd0ab6b85"
+    },
+    {
+      "path": "docs/NATIVE-COPY-ERROR-PATCH.md",
+      "sha256_lf": "228c2160a2cd7d79330018011eb49c6b8f0e45760d9e5abe7b67c54d31a2cf6c"
     },
     {
       "path": "docs/NATIVE-DISPATCH-CONTRACT.md",
@@ -799,6 +803,10 @@
       "sha256_lf": "9c50555d82f0699ee8926f155cd28d5bf2e49efb3a6b4debbc8fa2f27512ccb6"
     },
     {
+      "path": "tools/modding/vortex-agent/native-copy-error-patch.test.mjs",
+      "sha256_lf": "48d0110e75ad133e9036ebebfc8bd3d1c642d40e2b4d0968c04c940146b48a00"
+    },
+    {
       "path": "tools/modding/vortex-agent/native-dispatch-contract.cjs",
       "sha256_lf": "ec4d123f389b5aefc5134c49ea8b5eb355065f0016eb34792b1bf41d60009c58"
     },
@@ -857,6 +865,14 @@
     {
       "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/callback-order.patch",
       "sha256_lf": "76ec9e21c30e8bdd3ec4ae20190e14fab19b5665183f34a17fffb87b990c7784"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/copy-error.json",
+      "sha256_lf": "61cc530f2e14b2d3fba08300c651041d4d9dbbcb40b87d3cb76b87382b1fa3df"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/copy-error.patch",
+      "sha256_lf": "15f73ef8333782d1eaf4841e5fd7013dd6a4140723c96ac2a7e29025e9823955"
     },
     {
       "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/native-activity.json",
