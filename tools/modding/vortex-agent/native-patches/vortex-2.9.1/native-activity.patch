@@ -1,0 +1,330 @@
+--- a/src/renderer/src/extensions/mod_management/InstallManager.ts
++++ b/src/renderer/src/extensions/mod_management/InstallManager.ts
+@@ -217,6 +217,17 @@
+ } from "./util/testModReference";
+ 
+ // Interface for tracking active installation information
++// Diagnostic lifetime is one InstallManager instance, not a durable native API.
++interface INativeInstallActivity {
++  nativeJobId: string;
++  state: "queued" | "running" | "settled";
++  coreStarted: boolean;
++  coreTailSettled: boolean;
++  callbackOutcome: "not_observed" | "success" | "failed";
++  coreRejected: boolean;
++  metadataPending: boolean;
++}
++
+ interface IActiveInstallation {
+   installId: string;
+   sourceModId?: string;
+@@ -553,6 +564,102 @@
+   // Tracks the currently active installations - can be used with debug functions
+   //  to inspect the state of ongoing installations
+   private mActiveInstalls: Map<string, IActiveInstallation> = new Map();
++
++  // Independent of dependency deduplication and debug tracking cleanup.
++  private static mNativeManagerSequence = 0;
++  private mNativeInstallScopeId = InstallManager.allocateNativeInstallScope();
++  private mNativeInstallSequence = 0;
++
++  private static allocateNativeInstallScope(): string {
++    const next = InstallManager.mNativeManagerSequence + 1;
++    if (!Number.isSafeInteger(next)) {
++      throw new ProcessCanceled("Native manager sequence exhausted");
++    }
++    const nonce = shortid();
++    if (!/^[A-Za-z0-9_-]{1,64}$/.test(nonce)) {
++      throw new ProcessCanceled("Invalid native manager nonce");
++    }
++    InstallManager.mNativeManagerSequence = next;
++    // The counter prevents same-class manager reuse even if shortid collides.
++    // A future executor must additionally bind the renderer generation.
++    return `manager-${nonce}-${next}`;
++  }
++  private mNativeInstallActivities: Map<string, INativeInstallActivity> = new Map();
++  private mNativeInstallTerminals: Map<string, INativeInstallActivity> = new Map();
++
++  public getNativeInstallActivities() {
++    return {
++      scope: "manager-lifetime-install-core-only",
++      managerScopeId: this.mNativeInstallScopeId,
++      globalIdleVerified: false,
++      active: Array.from(this.mNativeInstallActivities.values(), (job) => this.nativeInstallSnapshot(job)),
++      recent: Array.from(this.mNativeInstallTerminals.values(), (job) => this.nativeInstallSnapshot(job)),
++    };
++  }
++
++  public getNativeInstallActivity(nativeJobId: string) {
++    const job = this.mNativeInstallActivities.get(nativeJobId) ?? this.mNativeInstallTerminals.get(nativeJobId);
++    return job === undefined
++      ? { managerScopeId: this.mNativeInstallScopeId, state: "not_observed" as const }
++      : this.nativeInstallSnapshot(job);
++  }
++
++  private nativeInstallSnapshot(job: INativeInstallActivity) {
++    return {
++      managerScopeId: this.mNativeInstallScopeId,
++      nativeJobId: job.nativeJobId,
++      state: job.state,
++      coreStarted: job.coreStarted,
++      coreTailSettled: job.coreTailSettled,
++      callbackOutcome: job.callbackOutcome,
++      coreRejected: job.coreRejected,
++      metadataPending: job.metadataPending,
++    };
++  }
++
++  private beginNativeInstallActivity(): INativeInstallActivity {
++    const next = this.mNativeInstallSequence + 1;
++    if (!Number.isSafeInteger(next)) {
++      throw new ProcessCanceled("Native installation sequence exhausted");
++    }
++    const nativeJobId = `${this.mNativeInstallScopeId}-native-${next}`;
++    if (this.mNativeInstallActivities.has(nativeJobId) || this.mNativeInstallTerminals.has(nativeJobId)) {
++      throw new ProcessCanceled("Native installation sequence collision");
++    }
++    this.mNativeInstallSequence = next;
++    const job: INativeInstallActivity = {
++      nativeJobId, state: "queued", coreStarted: false, coreTailSettled: false,
++      callbackOutcome: "not_observed", coreRejected: false, metadataPending: false,
++    };
++    this.mNativeInstallActivities.set(nativeJobId, job);
++    return job;
++  }
++
++  private settleNativeInstallActivity(job: INativeInstallActivity): void {
++    if (this.mNativeInstallActivities.get(job.nativeJobId) !== job) {
++      return;
++    }
++    job.state = "settled";
++    job.coreTailSettled = job.coreStarted;
++    this.mNativeInstallActivities.delete(job.nativeJobId);
++    this.mNativeInstallTerminals.set(job.nativeJobId, job);
++    while (this.mNativeInstallTerminals.size > 128) {
++      const oldest = this.mNativeInstallTerminals.keys().next();
++      if (!oldest.done) {
++        this.mNativeInstallTerminals.delete(oldest.value);
++      }
++    }
++  }
++
++  private observeNativeInstallMetadata(job: INativeInstallActivity, result: Promise<void>): void {
++    job.metadataPending = true;
++    // Size calculation only reads staging and updates modSize. It does not hold
++    // archive access or payload writes, so it is excluded from core settlement.
++    Promise.resolve(result).then(
++      () => { job.metadataPending = false; },
++      () => { job.metadataPending = false; },
++    );
++  }
+ 
+   // Installation paths (mod.installationPath) of mods that completed
+   // installation or removal since the last deployment. Consumed (and cleared)
+@@ -1204,6 +1311,50 @@
+     sourceModId?: string,
+     modReference?: IModReference,
+   ): void {
++    const nativeActivity = this.beginNativeInstallActivity();
++    let delivered = false;
++    const callbackOnce = (err: Error, id: string) => {
++      if (delivered) {
++        return;
++      }
++      delivered = true;
++      nativeActivity.callbackOutcome = err ? "failed" : "success";
++      callback?.(err, id);
++    };
++    try {
++      this.installTracked(nativeActivity, archiveId, archivePath, downloadGameIds, api, info,
++        processDependencies, enable, callbackOnce, forceGameId, fileList, unattended,
++        forceInstaller, allowAutoDeploy, sourceModId, modReference);
++    } catch (err) {
++      nativeActivity.coreRejected = true;
++      if (!nativeActivity.coreStarted) {
++        this.settleNativeInstallActivity(nativeActivity);
++      }
++      // Setup can fail before the original tracked callback exists. Preserve
++      // its synchronous throw, while delivering at most one failure notice.
++      try { callbackOnce(unknownToError(err), undefined); } catch { /* Caller notification only. */ }
++      throw err;
++    }
++  }
++
++  private installTracked(
++    nativeActivity: INativeInstallActivity,
++    archiveId: string,
++    archivePath: string,
++    downloadGameIds: string[],
++    api: IExtensionApi,
++    info: any,
++    processDependencies: boolean,
++    enable: boolean,
++    callback: (error: Error, id: string) => void,
++    forceGameId?: string,
++    fileList?: IFileListItem[],
++    unattended?: boolean,
++    forceInstaller?: string,
++    allowAutoDeploy?: boolean,
++    sourceModId?: string,
++    modReference?: IModReference,
++  ): void {
+     const baseName = path.basename(archivePath, path.extname(archivePath)).trim() || "EMPTY_NAME";
+     const installId =
+       sourceModId != null
+@@ -1213,6 +1364,7 @@
+     // Refuse an allocation collision before touching the existing entry.
+     if (sourceModId == null && this.mActiveInstalls.has(installId)) {
+       callback?.(new ProcessCanceled("Installation tracking ID collision"), undefined);
++      this.settleNativeInstallActivity(nativeActivity);
+       return;
+     }
+     const dummyArchiveId = archiveId || "direct-install-" + shortid();
+@@ -1281,6 +1433,7 @@
+       if (download && download.state !== "finished") {
+         const error = new Error(`Cannot install: download not finished (state: ${download.state})`);
+         trackedCallback(error, undefined);
++        this.settleNativeInstallActivity(nativeActivity);
+         return;
+       } else if (download) {
+         modReference = modReference || downloadToModRef(download);
+@@ -1302,6 +1455,7 @@
+     // Use parallel installation concurrency limiter instead of sequential mQueue
+     this.mInstallLimit
+       .do(() => {
++        nativeActivity.state = "running";
+         return new Promise<string>((resolve, reject) => {
+           const installationZip = new Zip();
+ 
+@@ -1310,6 +1464,8 @@
+           let overrides: string[] = [];
+           let destinationPath: string;
+           let tempPath: string;
++          let mandatoryCleanup: Promise<void> | undefined;
++          let cleanupStarted = false;
+           // Use the already-created installation tracking
+           const activeInstall = this.mActiveInstalls.get(installId);
+           if (activeInstall !== installInfo) {
+@@ -1350,6 +1506,7 @@
+           // Start the installation process - the promise will resolve when callback is called
+           const dlInfo =
+             archiveId != null ? api.getState().persistent.downloads.files[archiveId] : undefined;
++          nativeActivity.coreStarted = true;
+           const installationPromise = withTrackedActivity(
+             "vortex.mod-management",
+             "mod.install",
+@@ -1903,7 +2060,7 @@
+                       });
+                     }
+                   }
+-                  this.setModSize(api, modId, installGameId);
++                  this.observeNativeInstallMetadata(nativeActivity, this.setModSize(api, modId, installGameId));
+                   api.events.emit("did-install-mod", installGameId, archiveId, modId, modInfo);
+                   promiseCallback?.(null, modId);
+                   return null;
+@@ -1923,6 +2080,7 @@
+                   if (!canceled && err instanceof Error) {
+                     setError(err);
+                   }
++                  cleanupStarted = true;
+                   let prom: Promise<void> = Promise.resolve(
+                     destinationPath !== undefined ? fs.removeAsync(destinationPath) : undefined,
+                   )
+@@ -1940,6 +2098,10 @@
+                         { destinationPath },
+                       );
+                     });
++                  mandatoryCleanup = prom;
++                  // Join independently of error formatting/branch selection,
++                  // which can throw before this catch returns its promise.
++                  mandatoryCleanup.catch(() => {});
+ 
+                   if (installContext !== undefined) {
+                     const pretty = prettifyNodeErrorMessage(errObj);
+@@ -1954,6 +2116,8 @@
+                         pretty,
+                       ),
+                     );
++                    mandatoryCleanup = prom;
++                    mandatoryCleanup.catch(() => {});
+                   }
+ 
+                   if (err === undefined) {
+@@ -2044,22 +2208,24 @@
+                       promiseCallback?.(err, null);
+                     });
+                   } else if (getErrorCode(err) === "MODULE_NOT_FOUND") {
+-                    const requireStack = (err as { requireStack?: string[] }).requireStack;
+-                    const location = requireStack !== undefined ? ` (at ${requireStack[0]})` : "";
+-                    installContext.reportError(
+-                      "Installation failed",
+-                      "Module failed to load:\n{{message}}{{location}}\n\n" +
+-                        "This usually indicates that the Vortex installation has been " +
+-                        "corrupted or an external application (like an Anti-Virus) has interfered with " +
+-                        "the loading of the module. " +
+-                        "Please check whether your AV reported something and try reinstalling Vortex.",
+-                      false,
+-                      {
+-                        location,
+-                        message: errObj.message.split("\n")[0],
+-                      },
+-                    );
+-                    promiseCallback?.(errObj, null);
++                    return prom.then(() => {
++                      const requireStack = (err as { requireStack?: string[] }).requireStack;
++                      const location = requireStack !== undefined ? ` (at ${requireStack[0]})` : "";
++                      installContext.reportError(
++                        "Installation failed",
++                        "Module failed to load:\n{{message}}{{location}}\n\n" +
++                          "This usually indicates that the Vortex installation has been " +
++                          "corrupted or an external application (like an Anti-Virus) has interfered with " +
++                          "the loading of the module. " +
++                          "Please check whether your AV reported something and try reinstalling Vortex.",
++                        false,
++                        {
++                          location,
++                          message: errObj.message.split("\n")[0],
++                        },
++                      );
++                      promiseCallback?.(errObj, null);
++                    });
+                   } else if (err instanceof InsufficientDiskSpace) {
+                     return prom.then(() => {
+                       if (installContext !== undefined) {
+@@ -2185,6 +2351,7 @@
+               }
+             })
+             .catch((unknownErr) => {
++              nativeActivity.coreRejected = true;
+               const installError = unknownToError(unknownErr);
+               if (this.mActiveInstalls.get(installId) === installInfo) {
+                 log("warn", "Installation failed", {
+@@ -2196,10 +2363,27 @@
+                 }
+                 reject(installError);
+               }
+-            });
++            })
++            // Callback-backed limiter promises may settle before this tail.
++            // Only the actual core, its cleanup and fallback can release activity.
++            .finally(() => {
++              if (cleanupStarted && mandatoryCleanup === undefined) {
++                // Cleanup threw before returning an owned promise. Its work is
++                // unknown; retaining activity is safer than claiming a join.
++                return;
++              }
++              return Promise.resolve(mandatoryCleanup)
++                .catch(() => { nativeActivity.coreRejected = true; })
++                .then(() => this.settleNativeInstallActivity(nativeActivity));
++            })
++            .catch(() => { nativeActivity.coreRejected = true; });
+         });
+       })
+       .catch((err) => {
++        nativeActivity.coreRejected = true;
+         trackedCallback?.(unknownToError(err), null);
++        if (!nativeActivity.coreStarted) {
++          this.settleNativeInstallActivity(nativeActivity);
++        }
+       });
+   }

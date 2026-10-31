@@ -16,6 +16,11 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Prepare a separate native installation activity registry with manager-scoped
+  job IDs, core-tail observations and joined error cleanup. Callback, debug
+  timeout and optional staging-size metadata no longer define the diagnostic
+  core lifetime. This patch is not installed or a native completion guarantee.
+
 - Prepare a Vortex callback patch that prevents callback/bookkeeping exceptions
   from entering destructive install cleanup, reports success after synchronous
   event handlers, and preserves replacement tracking entries. Forced timeout
