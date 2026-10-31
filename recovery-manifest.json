@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "c132a80101544c4475f0c7ac8961e2774b183666ffb35bad088b90e429f2b8d8"
+      "sha256_lf": "c2d52255286f60c5ef5a2057ae16c3069b1fb523f6f637544c6f26381a0133f2"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -200,7 +200,7 @@
     },
     {
       "path": "docs/ARCHIVE-TEMP-CUSTODY.md",
-      "sha256_lf": "8acf4fc690f40464cbcfb605db5d2b0d6708c6f7422713cf7b4e2ae1b2534d2d"
+      "sha256_lf": "e23df40b8a46e4640001a5c079aa28df49419bd3642f5d8f11a159535d883754"
     },
     {
       "path": "docs/AUDIT-20261025.md",
@@ -276,7 +276,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "3802ac40b61ee6c70cb32c17a4e7ec32515120f84dcd340430b306eb648bcd59"
+      "sha256_lf": "0f2fe50ef50f07f3a6c4191463c5c7dab4eda451a1501ec2497b0c4448de0e2d"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -293,6 +293,10 @@
     {
       "path": "docs/NATIVE-COPY-ERROR-PATCH.md",
       "sha256_lf": "228c2160a2cd7d79330018011eb49c6b8f0e45760d9e5abe7b67c54d31a2cf6c"
+    },
+    {
+      "path": "docs/NATIVE-CRASH-CUSTODY.md",
+      "sha256_lf": "635d22103404dde6bafa0759cb032ae7d0e5fc7394c1bdba70b5826e36ec5639"
     },
     {
       "path": "docs/NATIVE-DISPATCH-CONTRACT.md",
@@ -849,6 +853,10 @@
     {
       "path": "tools/modding/vortex-agent/native-copy-error-patch.test.mjs",
       "sha256_lf": "f4a705cf8c9c877046bc9aff4e61c6cc95d40ebec3af2fa009f14a159c1db97a"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-custody-process.test.py",
+      "sha256_lf": "f13040c63c74670fcdbe011a2e3dfb8b9bdc2acecaab87c46f4b9828abb9301c"
     },
     {
       "path": "tools/modding/vortex-agent/native-dispatch-contract.cjs",
