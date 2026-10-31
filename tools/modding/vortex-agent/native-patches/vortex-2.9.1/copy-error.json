@@ -1,0 +1,30 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/extensions/mod_management/InstallManager.ts",
+  "originalSourceSHA256": "577d56a8728052069f850face9bb57437dbf2886bd41409fe6a66cfefc08ed33",
+  "prerequisitePatch": "strict-selection.patch",
+  "prerequisitePatchSHA256": "c91b8ffe9e6061fa2bb756d97954024dd478a977e664fecb5d0e950618db6ea3",
+  "inputSHA256": "004ceae2a4e02d0abef1e39c1c888718ab0c140116d221b533e2a31c46e41baf",
+  "outputSHA256": "cba7e1fda1580ba57c14308e89be46e3b9de8ed2c290ee21d3e74288b30ba9bd",
+  "patchSHA256": "15f73ef8333782d1eaf4841e5fd7013dd6a4140723c96ac2a7e29025e9823955",
+  "scope": "Propagate failed copy fallbacks from extractArchive; preserve the existing self-copy exception.",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "nativeTerminalGuarantee": false,
+  "globalIdleGuarantee": false,
+  "noReplacementGuarantee": false,
+  "importNoClobberGuarantee": false,
+  "ownerReservationGuarantee": false,
+  "installationPermit": false,
+  "testSourceEnvironment": "VORTEX_NATIVE_INSTALL_MANAGER",
+  "limitations": [
+    "Prepared source artifact only; no installed host or full upstream build/typecheck acceptance.",
+    "Existing remove-before-copy, overwrite defaults and missing-source warning behavior remain unchanged; no no-clobber or ownership guarantee.",
+    "Concurrent transfers may still be running when a worker rejects; rejection is not extractor/child termination or permission to clean up.",
+    "The legacy self-copy exception and message heuristic remain; source-derived tests use owned filesystem/API stubs without native effects."
+  ]
+}

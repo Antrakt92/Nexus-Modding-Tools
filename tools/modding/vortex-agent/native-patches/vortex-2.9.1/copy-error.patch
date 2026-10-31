@@ -1,0 +1,8 @@
+--- a/src/renderer/src/extensions/mod_management/InstallManager.ts
++++ b/src/renderer/src/extensions/mod_management/InstallManager.ts
+@@ -7907,4 +7907,5 @@
+           return;
+         }
++        throw err;
+       }
+     };
