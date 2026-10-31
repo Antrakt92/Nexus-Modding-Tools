@@ -10,6 +10,7 @@ import http from 'node:http';
 import { PassThrough } from 'node:stream';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import {waitForServerListening, closeOwnedTestServer} from './http-startup-test-support.mjs';
 const require = createRequire(import.meta.url);
 const guard = require('./guard.cjs');
 const inspection = require('./inspection.cjs');
@@ -157,21 +158,18 @@ async function server(options = {}) {
     id => id === '@nexusmods/vortex-api' ? { actions: {}, selectors: f.selectors, util: {}, log: () => {} } : id === './vortexControl' ? control
       : id.startsWith('./') ? require(id) : upstream(id), module, module.exports);
   const listener = module.exports.start(f.api, 0, { tokenProvider: async () => '7'.repeat(64), ...options });
-  await new Promise(r => listener.listening ? r() : listener.once('listening', r));
+  try { await waitForServerListening(listener); }
+  catch (error) {
+    try { await closeOwnedTestServer(listener); }
+    catch (cleanupError) { throw new AggregateError([error, cleanupError], 'AUDIT_SERVER_START_CLEANUP_FAILED', {cause: error}); }
+    throw error;
+  }
   const endpoint = `http://127.0.0.1:${listener.address().port}/mcp`, headers = { 'content-type': 'application/json', accept: 'application/json, text/event-stream', authorization: 'Bearer ' + '7'.repeat(64) };
   return { listener, endpoint, headers };
 }
 const HTTP_PHASE_MS = 5000;
 async function closeServer(listener) {
-  let timer;
-  try {
-    await new Promise((resolve, reject) => {
-      timer = setTimeout(() => reject(new Error('AUDIT_SERVER_CLOSE_TIMEOUT')), HTTP_PHASE_MS);
-      // Stop admission before destroying connections; otherwise a late accept can survive cleanup.
-      listener.close(error => error ? reject(error) : resolve());
-      listener.closeAllConnections();
-    });
-  } finally { clearTimeout(timer); }
+  await closeOwnedTestServer(listener, {timeoutMs: HTTP_PHASE_MS});
 }
 async function fetchText(s, body, phase) {
   const signal = AbortSignal.timeout(HTTP_PHASE_MS);

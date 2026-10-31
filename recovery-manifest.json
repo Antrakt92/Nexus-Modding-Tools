@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "69922ec9f3f64154597cd34483a1c74d00cd56e49eb8644f51177323fa43e586"
+      "sha256_lf": "d5fbcc26da96e514655fa96812a6aa41ecadaefaa908f6c699e8d5fcd7ba84f1"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -596,7 +596,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/audit-fixes.test.mjs",
-      "sha256_lf": "0f59b272400b31648af7505eb38ed164a2586302fba113d62a4cd68fd7ca9db4"
+      "sha256_lf": "25eb500749892a7e6e94cde39f392961b6a8d0d5802300b91b9e1974b193347a"
     },
     {
       "path": "tools/modding/vortex-agent/bridge-audit.test.mjs",
@@ -713,6 +713,14 @@
     {
       "path": "tools/modding/vortex-agent/http-ingress.cjs",
       "sha256_lf": "74d973c6a7416e6592122000c5966c03a5b35bf0bf8c3e51d04e844e9e4b36ff"
+    },
+    {
+      "path": "tools/modding/vortex-agent/http-startup-test-support.mjs",
+      "sha256_lf": "0d3a5cf1efffb4f3c8ed708e8b9a1c370fa7463ead3cc8f40de0b36199132988"
+    },
+    {
+      "path": "tools/modding/vortex-agent/http-startup-test-support.test.mjs",
+      "sha256_lf": "73658e4f18f02b2b6f382312c533b50812b9fc451d253a0aeb0842991cf790bd"
     },
     {
       "path": "tools/modding/vortex-agent/immutable-records.mjs",
