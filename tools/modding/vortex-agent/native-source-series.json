@@ -16,7 +16,7 @@
     },
     {
       "path": "src/renderer/src/extensions/mod_management/InstallManager.ts",
-      "finalSHA256": "c6bc608b1eb16a2da570fdc95a4dac405ab470d0dfe70ef56da943279ddf1827",
+      "finalSHA256": "a4f1b06cacdfd499e884f7fbe4b139166ecdac315c85d1493955c1284978c084",
       "originalSHA256": "577d56a8728052069f850face9bb57437dbf2886bd41409fe6a66cfefc08ed33"
     },
     {
@@ -374,6 +374,17 @@
       "prerequisitePatch": "download-transfer-cleanup-hold.patch",
       "prerequisitePatchSHA256": "ea32c6feeb28dae5264933757e1c175d5716bfe3c2ce9821b3e7e7f86c7fe14c",
       "requiredManagerPatchSHA256": "dbcac46a4b9814ee33f899d6d8697e4d3aeb966c2b5f9bda931b12ae3064e9d7"
+    },
+    {
+      "name": "native-transfer-marker-admission",
+      "path": "src/renderer/src/extensions/mod_management/InstallManager.ts",
+      "manifestSHA256": "fca0b9c55a3a57c5339fbdf8e6a9a696f42778592866d487ada1fb0682dface3",
+      "patchSHA256": "68ba2f9f35553264241edc95dee41c1e7a49247c3048566206406753af8f6704",
+      "inputSHA256": "c6bc608b1eb16a2da570fdc95a4dac405ab470d0dfe70ef56da943279ddf1827",
+      "outputSHA256": "a4f1b06cacdfd499e884f7fbe4b139166ecdac315c85d1493955c1284978c084",
+      "prerequisitePatch": "lifecycle-result-bridge.patch",
+      "prerequisitePatchSHA256": "dbcac46a4b9814ee33f899d6d8697e4d3aeb966c2b5f9bda931b12ae3064e9d7",
+      "requiredManagerPatchSHA256": null
     }
   ]
 }

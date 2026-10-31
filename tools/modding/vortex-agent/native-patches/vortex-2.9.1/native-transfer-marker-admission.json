@@ -1,0 +1,29 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/extensions/mod_management/InstallManager.ts",
+  "originalSourceSHA256": "577d56a8728052069f850face9bb57437dbf2886bd41409fe6a66cfefc08ed33",
+  "prerequisitePatch": "lifecycle-result-bridge.patch",
+  "prerequisitePatchSHA256": "dbcac46a4b9814ee33f899d6d8697e4d3aeb966c2b5f9bda931b12ae3064e9d7",
+  "inputSHA256": "c6bc608b1eb16a2da570fdc95a4dac405ab470d0dfe70ef56da943279ddf1827",
+  "outputSHA256": "a4f1b06cacdfd499e884f7fbe4b139166ecdac315c85d1493955c1284978c084",
+  "patchSHA256": "68ba2f9f35553264241edc95dee41c1e7a49247c3048566206406753af8f6704",
+  "scope": "Refuse persisted transfer markers across registered managers before exclusion and permanently invalidate an issued owner after observed transfer uncertainty.",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "nativeTerminalGuarantee": false,
+  "globalIdleGuarantee": false,
+  "noReplacementGuarantee": false,
+  "ownerReservationGuarantee": false,
+  "installationPermit": false,
+  "testSourceEnvironment": "VORTEX_NATIVE_INSTALL_MANAGER",
+  "limitations": [
+    "Observed renderer-state admission only; no state/marker writes, release, reset or native dispatch.",
+    "Before-reservation refusal creates no owner; a clean new observation may be checked again.",
+    "After-issued-owner uncertainty is sticky for this loaded class; marker disappearance cannot revive it.",
+    "Other state writers may act between observations; no global state lease, filesystem custody, persistence acknowledgement or restart recovery."
+  ]
+}
