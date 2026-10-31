@@ -134,7 +134,16 @@
                  log("warn", "Installation completed but callback was not called", {
                    installId,
                    modId,
-@@ -2156,7 +2184,7 @@
+@@ -2150,18 +2178,22 @@
+                     });
+                   }
+                 }
+-                this.mActiveInstalls.delete(installId);
++                if (this.mActiveInstalls.get(installId) === installInfo) {
++                  this.mActiveInstalls.delete(installId);
++                }
+                 resolve(modId);
+               }
              })
              .catch((unknownErr) => {
                const installError = unknownToError(unknownErr);
@@ -143,3 +152,11 @@
                  log("warn", "Installation failed", {
                    installId,
                    error: installError.message,
+                 });
+-                this.mActiveInstalls.delete(installId);
++                if (this.mActiveInstalls.get(installId) === installInfo) {
++                  this.mActiveInstalls.delete(installId);
++                }
+                 reject(installError);
+               }
+             });

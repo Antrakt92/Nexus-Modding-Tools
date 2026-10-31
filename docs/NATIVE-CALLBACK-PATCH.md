@@ -17,7 +17,8 @@ The [patch](../tools/modding/vortex-agent/native-patches/vortex-2.9.1/callback-o
 - delivers each callback once, isolating callback and success-bookkeeping errors
   from native installation failures;
 - checks the exact tracking object before updating or deleting its map entry,
-  including delayed fallback and forced debug cleanup;
+  including delayed fallback and forced debug cleanup; fallback deletion checks
+  again after synchronous state subscribers can replace the entry;
 - routes forced debug cleanup through the same one-shot callback.
 
 The [manifest](../tools/modding/vortex-agent/native-patches/vortex-2.9.1/callback-order.json)
