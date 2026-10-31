@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "38c33b5142427aed7cc7f16f552384815bac305bac8850bfe7e60b7b70f424f5"
+      "sha256_lf": "db51270a33fa4df008008fb82db9d5e9cd00c10c8ef33d11c2fe377e8af1fa61"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -311,8 +311,12 @@
       "sha256_lf": "e49eb2d4c0cb884ffd250ff962acaa31c36e2c9932498d27897a60d7a1534f61"
     },
     {
+      "path": "docs/PROCESS-PROBE-EXPERIMENT.md",
+      "sha256_lf": "d0f876f22a49d33c8b1c212e46d4501fd6caf0df857caae978a01620799aafa6"
+    },
+    {
       "path": "docs/README.md",
-      "sha256_lf": "374afd222b4450b0c673f43c42076ff302adf62a03a54833c368a1951fd9d63d"
+      "sha256_lf": "aae9ebc2cd42ed2d60b696f0019363fdd48682845b5e1d5f2ea3bd0239be7bde"
     },
     {
       "path": "docs/RESTORE.md",
@@ -396,7 +400,7 @@
     },
     {
       "path": "scripts/update_manifest.py",
-      "sha256_lf": "633aaa8cda7f2e5408529f4721e6ada7a78c8e119cd877e28e6173d3d90cb8b1"
+      "sha256_lf": "edecc8e9dd9926f588d8a1be074137334ee38b8e48455059c31ad1e57e412359"
     },
     {
       "path": "source-lock.json",
@@ -424,7 +428,7 @@
     },
     {
       "path": "tests/test_update_manifest.py",
-      "sha256_lf": "1c322701f63fdacde7be6bf16ed3e171501d29b5bdba0fa1c8f7a22e0b124014"
+      "sha256_lf": "c8367ca3317e6628e7a72d27dc405caca7b67c15f5106a9c394e6579ecec7e76"
     },
     {
       "path": "tools/modding/AGENT-TOOLS.md",
@@ -909,6 +913,22 @@
     {
       "path": "tools/modding/vortex-agent/process-guard.test.mjs",
       "sha256_lf": "5204409a634bfdd385ec503172eb5e7cf25e55c46dbd2557cbc7d0ba8b211e8f"
+    },
+    {
+      "path": "tools/modding/vortex-agent/process-probe-benchmark.mjs",
+      "sha256_lf": "7835e6b992a550b44c31a6c2c206b40d6c906ef93b381f669b1e68fea489ee1f"
+    },
+    {
+      "path": "tools/modding/vortex-agent/process-probe-benchmark.test.mjs",
+      "sha256_lf": "d4193f7c6754995ff0a1a5421fcc90882acce1e53075d8b7474883288b91e2fe"
+    },
+    {
+      "path": "tools/modding/vortex-agent/process-probe-contract.cjs",
+      "sha256_lf": "c94f38802611694e4386e067b3312f1a6253d2e797afc3cc1cceb763635199b4"
+    },
+    {
+      "path": "tools/modding/vortex-agent/process-probe-contract.test.cjs",
+      "sha256_lf": "822331329dc3e373ed1c73072a6ec5c00d389a6458ee7a0d7e02ae987498b467"
     },
     {
       "path": "tools/modding/vortex-agent/receipts.cjs",

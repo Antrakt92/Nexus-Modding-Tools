@@ -17,6 +17,14 @@ spec.loader.exec_module(u)
 
 
 class UpdateManifestTests(unittest.TestCase):
+    def test_rust_source_and_cargo_lock_require_utf8_but_binary_is_not_normalized_as_text(self):
+        for name in ['tools/native/src/main.rs', 'tools/native/Cargo.lock']:
+            with self.subTest(name=name):
+                with self.assertRaisesRegex(ValueError, 'not valid UTF-8'):
+                    u.validate_encoding(name, b'not utf8 \xff')
+                u.validate_encoding(name, '// source \u00e9\n'.encode('utf-8'))
+        u.validate_encoding('tools/native/probe.exe', b'opaque binary \xff')
+
     def test_manifest_rejects_non_utf8_maintained_source_before_pinning_it(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
