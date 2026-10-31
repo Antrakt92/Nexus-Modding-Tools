@@ -1,0 +1,413 @@
+--- a/src/renderer/src/store/persistDiffMiddleware.ts
++++ b/src/renderer/src/store/persistDiffMiddleware.ts
+@@ -195,4 +195,14 @@
+ let activeSyncFlush: (() => void) | undefined;
+ let activeAcknowledgedFlush: (() => Promise<void>) | undefined;
++interface NativePersistenceHoldController {
++  acquire: () => Promise<object>;
++  check: (owner: object) => void;
++  release: (owner: object) => void;
++  invalidate: () => void;
++}
++let activeNativePersistenceHold: NativePersistenceHoldController | undefined;
++let nativePersistenceFactoryHeld = false;
++let nativePersistenceWriter: NativePersistenceHoldController | undefined;
++let nativePersistenceWritersAmbiguous = false;
+ 
+ /**
+@@ -226,4 +236,18 @@
+   let pendingDiffs: PendingDiffs = {};
+   let flushTimeout: ReturnType<typeof setTimeout> | null = null;
++  activeNativePersistenceHold?.invalidate();
++  let nativeStore: MiddlewareAPI<Dispatch<AnyAction>, IState> | undefined;
++  let nativeDispatchDepth = 0;
++  let nativeControlDepth = 0;
++  let nativeHold: { owner: object; phase: "pending" | "ready" | "held" | "released";
++    generation: number; store: MiddlewareAPI<Dispatch<AnyAction>, IState>; getState: unknown;
++    keys: number; units: number; hives: number; bytes: number; sizes: Map<string, Map<string, number>>; reject: (error: unknown) => void } | undefined;
++  const nativeHoldActive = () => nativeHold !== undefined && nativeHold.phase !== "released";
++  // Callback-bearing operations can change phase; always reread at the boundary.
++  const nativeHoldFailed = () => nativeHold?.phase === "held";
++  const failNativeHold = (error: unknown) => {
++    acknowledgedHeld = true;
++    if (nativeHold !== undefined) { nativeHold.phase = "held"; nativeHold.reject(error); }
++  };
+   let acknowledgedFlight: Promise<void> | undefined;
+   let acknowledgedHeld = false;
+@@ -239,9 +263,9 @@
+   const flushDiffs = () => {
+     flushTimeout = null;
+-    if (acknowledgedFlight !== undefined || acknowledgedHeld) return;
++    if (acknowledgedFlight !== undefined || acknowledgedHeld || nativeHoldActive() || nativePersistenceFactoryHeld) return;
+     ++legacyFlushDepth;
+     try {
+       const persistApi = getApi();
+-      if (persistApi == null || acknowledgedHeld || acknowledgedFlight !== undefined) {
++      if (persistApi == null || acknowledgedHeld || acknowledgedFlight !== undefined || nativeHoldActive() || nativePersistenceFactoryHeld) {
+         return;
+       }
+@@ -251,11 +275,11 @@
+         PendingHiveDiffs,
+       ][]) {
+-        if (acknowledgedHeld || acknowledgedFlight !== undefined) return;
++        if (acknowledgedHeld || acknowledgedFlight !== undefined || nativeHoldActive() || nativePersistenceFactoryHeld) return;
+         // Serialize operations to ensure IPC compatibility
+         const serializedOps = Array.from(operations.values(), serializeOperation);
+-        if (acknowledgedHeld || acknowledgedFlight !== undefined) return;
++        if (acknowledgedHeld || acknowledgedFlight !== undefined || nativeHoldActive() || nativePersistenceFactoryHeld) return;
+         try {
+           persistApi.sendDiff(hive, serializedOps);
+-          if (acknowledgedHeld || acknowledgedFlight !== undefined) return;
++          if (acknowledgedHeld || acknowledgedFlight !== undefined || nativeHoldActive() || nativePersistenceFactoryHeld) return;
+           // cleared only once the send succeeded, so a failure keeps the queue for the next flush
+           delete pendingDiffs[hive];
+@@ -281,6 +305,7 @@
+    */
+   const flushDiffsSync = () => {
+-    if (acknowledgedFlight !== undefined || acknowledgedHeld) {
++    if (acknowledgedFlight !== undefined || acknowledgedHeld || nativeHoldActive() || nativePersistenceFactoryHeld) {
+       ++coherenceGeneration;
++      if (nativeHold !== undefined) failNativeHold(new Error("NATIVE_PERSISTENCE_HOLD_COHERENCE"));
+       acknowledgedHeld = true;
+       return;
+@@ -289,5 +314,5 @@
+     try {
+       const persistApi = getApi();
+-      if (persistApi == null || acknowledgedHeld || acknowledgedFlight !== undefined) {
++      if (persistApi == null || acknowledgedHeld || acknowledgedFlight !== undefined || nativeHoldActive() || nativePersistenceFactoryHeld) {
+         return;
+       }
+@@ -300,8 +325,8 @@
+         PendingHiveDiffs,
+       ][]) {
+-        if (acknowledgedHeld || acknowledgedFlight !== undefined) return;
++        if (acknowledgedHeld || acknowledgedFlight !== undefined || nativeHoldActive() || nativePersistenceFactoryHeld) return;
+         if (operations.size > 0) {
+           const serializedOps = Array.from(operations.values(), serializeOperation);
+-          if (acknowledgedHeld || acknowledgedFlight !== undefined) return;
++          if (acknowledgedHeld || acknowledgedFlight !== undefined || nativeHoldActive() || nativePersistenceFactoryHeld) return;
+           if (persistApi.sendDiffSync != null) {
+             persistApi.sendDiffSync(hive, serializedOps);
+@@ -311,5 +336,5 @@
+         }
+       }
+-      if (acknowledgedHeld || acknowledgedFlight !== undefined) return;
++      if (acknowledgedHeld || acknowledgedFlight !== undefined || nativeHoldActive() || nativePersistenceFactoryHeld) return;
+       pendingDiffs = {};
+     } finally {
+@@ -318,5 +343,6 @@
+   };
+ 
+-  const flushAcknowledged = (): Promise<void> => {
++  const flushAcknowledged = (nativeOwner?: object): Promise<void> => {
++    if (nativePersistenceFactoryHeld || (nativeHoldActive() && nativeHold?.owner !== nativeOwner)) return Promise.reject(new Error("NATIVE_PERSISTENCE_HOLD_ACTIVE"));
+     if (acknowledgedFlight !== undefined) return acknowledgedFlight;
+     if (acknowledgedHeld) return Promise.reject(new Error("Acknowledged persistence flush is held"));
+@@ -338,4 +364,5 @@
+     const generation = coherenceGeneration;
+     const fail = (error: unknown) => {
++      if (nativeHold !== undefined) failNativeHold(error);
+       acknowledgedHeld = true;
+       acknowledgedFlight = undefined;
+@@ -384,4 +411,83 @@
+   activeAcknowledgedFlush = flushAcknowledged;
+ 
++  const validateNativeHold = (owner: object) => {
++    const held = nativeHold;
++    if (held === undefined || held.owner !== owner) throw new Error("NATIVE_PERSISTENCE_HOLD_OWNER");
++    if (nativeControlDepth !== 0 || nativeDispatchDepth !== 0 || legacyFlushDepth !== 0) {
++      failNativeHold(new Error("NATIVE_PERSISTENCE_HOLD_REENTRY"));
++      throw new Error("NATIVE_PERSISTENCE_HOLD_REENTRY");
++    }
++    ++nativeControlDepth;
++    try {
++      const descriptor = Object.getOwnPropertyDescriptor(held.store, "getState");
++      if (activeNativePersistenceHold !== nativeController || nativePersistenceFactoryHeld
++          || nativePersistenceWritersAmbiguous || nativePersistenceWriter !== nativeController
++          || held.phase !== "ready" || acknowledgedHeld || acknowledgedFlight !== undefined
++          || nativeControlDepth !== 1 || nativeDispatchDepth !== 0
++          || held.generation !== coherenceGeneration || nativeStore !== held.store
++          || descriptor === undefined || !("value" in descriptor) || descriptor.value !== held.getState) throw new Error();
++    } catch {
++      failNativeHold(new Error("NATIVE_PERSISTENCE_HOLD_HELD"));
++      throw new Error("NATIVE_PERSISTENCE_HOLD_HELD");
++    } finally { --nativeControlDepth; }
++    return held;
++  };
++  const nativeController: NativePersistenceHoldController = {
++    acquire() {
++      if (nativeControlDepth !== 0 || nativeDispatchDepth !== 0 || legacyFlushDepth !== 0) {
++        failNativeHold(new Error("NATIVE_PERSISTENCE_HOLD_REENTRY"));
++        return Promise.reject(new Error("NATIVE_PERSISTENCE_HOLD_REENTRY"));
++      }
++      if (nativePersistenceFactoryHeld || nativePersistenceWritersAmbiguous || nativePersistenceWriter !== nativeController
++          || acknowledgedHeld || nativeHold !== undefined || acknowledgedFlight !== undefined || nativeStore === undefined) return Promise.reject(new Error("NATIVE_PERSISTENCE_HOLD_UNAVAILABLE"));
++      ++nativeControlDepth;
++      try {
++        const descriptor = Object.getOwnPropertyDescriptor(nativeStore, "getState");
++        if (acknowledgedHeld || nativeControlDepth !== 1 || descriptor === undefined || !("value" in descriptor) || typeof descriptor.value !== "function") throw new Error("NATIVE_PERSISTENCE_HOLD_UNAVAILABLE");
++        let resolveOwner: (owner: object) => void = () => {};
++        let rejectOwner: (error: unknown) => void = () => {};
++        const ready = new Promise<object>((resolve, reject) => { resolveOwner = resolve; rejectOwner = reject; });
++        const held = { owner: Object.freeze({}), phase: "pending" as "pending" | "ready" | "held" | "released",
++          generation: coherenceGeneration, store: nativeStore, getState: descriptor.value,
++          keys: 0, units: 0, hives: 0, bytes: 0, sizes: new Map<string, Map<string, number>>(), reject: rejectOwner };
++        nativeHold = held;
++        const completion = flushAcknowledged(held.owner);
++        void completion.then(() => {
++          try {
++            if (held.phase !== "pending" || acknowledgedHeld || held.generation !== coherenceGeneration
++                || activeNativePersistenceHold !== nativeController || nativePersistenceFactoryHeld) throw new Error("NATIVE_PERSISTENCE_HOLD_HELD");
++            held.phase = "ready";
++            validateNativeHold(held.owner);
++            resolveOwner(held.owner);
++          } catch (error) { failNativeHold(error); }
++        }, failNativeHold);
++        return ready;
++      } catch (error) {
++        failNativeHold(error);
++        return Promise.reject(error);
++      } finally { --nativeControlDepth; }
++    },
++    check(owner) { validateNativeHold(owner); },
++    release(owner) {
++      const held = validateNativeHold(owner);
++      ++nativeControlDepth;
++      try {
++        held.phase = "released";
++        if (Object.keys(pendingDiffs).length !== 0) scheduleFlush();
++        if (acknowledgedHeld || nativePersistenceFactoryHeld || held.phase !== "released") throw new Error("NATIVE_PERSISTENCE_HOLD_HELD");
++        nativeHold = undefined;
++      } catch (error) { failNativeHold(error); throw error; }
++      finally { --nativeControlDepth; }
++    },
++    invalidate() {
++      if (nativeHold !== undefined) {
++        nativePersistenceFactoryHeld = true;
++        failNativeHold(new Error("NATIVE_PERSISTENCE_HOLD_FACTORY_CHANGED"));
++      }
++    },
++  };
++  activeNativePersistenceHold = nativeController;
++
++
+   // Expose this instance's synchronous flush for the quit-time beforeunload hook.
+   activeSyncFlush = flushDiffsSync;
+@@ -391,5 +497,5 @@
+    */
+   const scheduleFlush = () => {
+-    if (acknowledgedFlight !== undefined || acknowledgedHeld) return;
++    if (acknowledgedFlight !== undefined || acknowledgedHeld || nativeHoldActive() || nativePersistenceFactoryHeld) return;
+     if (flushTimeout == null) {
+       flushTimeout = setTimeout(flushDiffs, DEBOUNCE_MS);
+@@ -403,13 +509,39 @@
+     let hiveDiffs = pendingDiffs[hive];
+     if (hiveDiffs === undefined) {
++      if (nativeHoldActive() && nativeHold !== undefined) {
++        if (nativeHold.hives >= 32) throw new Error("NATIVE_PERSISTENCE_HOLD_BUFFER_LIMIT");
++        ++nativeHold.hives;
++        nativeHold.units += hive.length;
++      }
+       hiveDiffs = new Map();
+       pendingDiffs[hive] = hiveDiffs;
+     }
+     for (const op of operations) {
+-      const key = pathKey(op.path);
+-      // Map.set keeps an existing key's position, so delete first: the newest write to a path
+-      // must sort after anything queued since the previous one
++      let queued = op;
++      const held = nativeHoldActive() ? nativeHold : undefined;
++      let bytes = 0;
++      if (held !== undefined) {
++        const packet = serializeAcknowledgedBatches([{ hive, operations: [op] }]);
++        if (held.phase === "held" || acknowledgedHeld || nativePersistenceFactoryHeld) throw new Error("NATIVE_PERSISTENCE_HOLD_HELD");
++        const detached = JSON.parse(packet) as PersistenceBatch[];
++        const first = detached[0]?.operations[0];
++        if (first === undefined) throw new Error("NATIVE_PERSISTENCE_HOLD_BUFFER_LIMIT");
++        queued = first;
++        bytes = new TextEncoder().encode(packet).byteLength;
++      }
++      const key = pathKey(queued.path);
++      if (held !== undefined) {
++        const prior = held.sizes.get(hive)?.get(key) ?? 0;
++        if ((!hiveDiffs.has(key) && held.keys >= 32768) || held.units + (hiveDiffs.has(key) ? 0 : key.length) > 32 * 1024 * 1024
++            || held.bytes - prior + bytes > 32 * 1024 * 1024) throw new Error("NATIVE_PERSISTENCE_HOLD_BUFFER_LIMIT");
++        if (!hiveDiffs.has(key)) { ++held.keys; held.units += key.length; }
++        held.bytes += bytes - prior;
++        let sizes = held.sizes.get(hive);
++        if (sizes === undefined) { sizes = new Map(); held.sizes.set(hive, sizes); }
++        sizes.set(key, bytes);
++      }
++      // Retain an independent bounded snapshot while held, not caller-owned values.
+       hiveDiffs.delete(key);
+-      hiveDiffs.set(key, op);
++      hiveDiffs.set(key, queued);
+     }
+     scheduleFlush();
+@@ -417,64 +549,90 @@
+ 
+   const middleware: Middleware =
+-    (store: MiddlewareAPI<Dispatch<AnyAction>, IState>) =>
+-    (next: Dispatch<AnyAction>) =>
++    (store: MiddlewareAPI<Dispatch<AnyAction>, IState>) => {
++      if (nativeStore !== undefined && nativeStore !== store && nativeHold !== undefined) {
++        nativePersistenceFactoryHeld = true;
++        failNativeHold(new Error("NATIVE_PERSISTENCE_HOLD_STORE_CHANGED"));
++      }
++      if (nativePersistenceWriter === undefined) nativePersistenceWriter = nativeController;
++      else if (nativePersistenceWriter !== nativeController || (nativeStore !== undefined && nativeStore !== store)) nativePersistenceWritersAmbiguous = true;
++      nativeStore = store;
++      return (next: Dispatch<AnyAction>) =>
+     (action: AnyAction) => {
+-      // Let the action process first
+-      const result = next(action);
+-
+-      // Allow hydration to update previous state even if the persist API isn't
+-      // available yet, since they won't trigger diffs until after hydration completes.
+-      if (
+-        action.type === "__hydrate" ||
+-        action.type === "__hydrate_replace" ||
+-        action.type === "__persist_push"
+-      ) {
+-        ++coherenceGeneration;
+-        // Update previous state without computing diff.
+-        // __persist_push originates from main — sending it back would create a loop.
+-        previousState = store.getState();
++      ++nativeDispatchDepth;
++      if (nativeHoldActive() && nativeDispatchDepth !== 1) failNativeHold(new Error("NATIVE_PERSISTENCE_HOLD_REENTRY"));
++      try {
++        // Let the action process first
++        const result = next(action);
++
++        // Allow hydration to update previous state even if the persist API isn't
++        // available yet, since they won't trigger diffs until after hydration completes.
++        if (
++          action.type === "__hydrate" ||
++          action.type === "__hydrate_replace" ||
++          action.type === "__persist_push"
++        ) {
++          ++coherenceGeneration;
++          if (nativeHoldActive()) {
++            failNativeHold(new Error("NATIVE_PERSISTENCE_HOLD_COHERENCE"));
++            return result;
++          }
++          // Update previous state without computing diff.
++          // __persist_push originates from main — sending it back would create a loop.
++          previousState = store.getState();
++          return result;
++        }
++
++        if (nativeHoldFailed() || nativePersistenceFactoryHeld) return result;
++        const newState = store.getState();
++        if (nativeHoldFailed() || nativePersistenceFactoryHeld) return result;
++
++        // Initialize previous state on first action
++        if (previousState == null) {
++          previousState = newState;
++          return result;
++        }
++
++        // Skip if no persist API available
++        if (getApi() == null) {
++          if (nativeHoldActive()) failNativeHold(new Error("NATIVE_PERSISTENCE_HOLD_API_UNAVAILABLE"));
++          return result;
++        }
++
++        if (nativeHoldFailed() || nativePersistenceFactoryHeld) return result;
++        // Compute and queue diffs for each persisted hive
++        try {
++          for (const hive of persistedHives) {
++            const oldHive = previousState[hive as keyof IState];
++            const newHive = newState[hive as keyof IState];
++
++            // Skip if hive hasn't changed (reference equality)
++            if (oldHive === newHive) {
++              continue;
++            }
++
++            // Compute diff for this hive
++            const operations = computeStateDiff(oldHive, newHive);
++            if (nativeHoldFailed() || nativePersistenceFactoryHeld) return result;
++            if (operations.length > 0) {
++              queueDiffs(hive as PersistedHive, operations);
++            }
++          }
++
++          // Update previous state for next comparison
++          if (nativeHoldFailed() || nativePersistenceFactoryHeld) return result;
++          previousState = newState;
++        } catch (err) {
++          if (nativeHoldActive()) failNativeHold(err);
++          log("error", "failed to compute state diff, changes held for the next attempt", {
++            error: getErrorMessageOrDefault(err),
++          });
++        }
++
+         return result;
+-      }
+-
+-      const newState = store.getState();
+-
+-      // Initialize previous state on first action
+-      if (previousState == null) {
+-        previousState = newState;
+-        return result;
+-      }
+-
+-      // Skip if no persist API available
+-      if (getApi() == null) {
+-        return result;
+-      }
+-
+-      // Compute and queue diffs for each persisted hive
+-      try {
+-        for (const hive of persistedHives) {
+-          const oldHive = previousState[hive as keyof IState];
+-          const newHive = newState[hive as keyof IState];
+-
+-          // Skip if hive hasn't changed (reference equality)
+-          if (oldHive === newHive) {
+-            continue;
+-          }
+-
+-          // Compute diff for this hive
+-          const operations = computeStateDiff(oldHive, newHive);
+-          if (operations.length > 0) {
+-            queueDiffs(hive as PersistedHive, operations);
+-          }
+-        }
+-
+-        // Update previous state for next comparison
+-        previousState = newState;
+-      } catch (err) {
+-        log("error", "failed to compute state diff, changes held for the next attempt", {
+-          error: getErrorMessageOrDefault(err),
+-        });
+-      }
+-
+-      return result;
++      } catch (error) {
++        if (nativeHoldActive()) failNativeHold(error);
++        throw error;
++      } finally { --nativeDispatchDepth; }
++    };
+     };
+ 
+@@ -512,2 +670,17 @@
+   return activeAcknowledgedFlush();
+ }
++
++
++/** Internal lifetime barrier. Main write availability must be restored BEFORE release. */
++export function acquireNativePersistenceFlushHold(): Promise<object> {
++  if (activeNativePersistenceHold === undefined) return Promise.reject(new Error("NATIVE_PERSISTENCE_HOLD_UNAVAILABLE"));
++  return activeNativePersistenceHold.acquire();
++}
++export function checkNativePersistenceFlushHold(owner: object): void {
++  if (activeNativePersistenceHold === undefined) throw new Error("NATIVE_PERSISTENCE_HOLD_UNAVAILABLE");
++  activeNativePersistenceHold.check(owner);
++}
++export function releaseNativePersistenceFlushHold(owner: object): void {
++  if (activeNativePersistenceHold === undefined) throw new Error("NATIVE_PERSISTENCE_HOLD_UNAVAILABLE");
++  activeNativePersistenceHold.release(owner);
++}

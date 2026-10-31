@@ -555,6 +555,33 @@ qualified dependency tree lacks `winapi-bindings/build/Release/winapi`. Vitest r
 zero cases in that suite. No native mock, dependency install or weakened assertion
 was introduced to turn this failure into a pass.
 
+## Renderer persistence hold
+
+`acquireNativePersistenceFlushHold()` pauses ordinary persistence sends before
+starting its own acknowledged flush. It refuses to join an older flush because
+that snapshot may omit newer pending changes. After the acknowledgement, later
+Redux actions continue to run while their diffs remain buffered. Public flushes,
+captured debounce callbacks and quit-time sends cannot bypass the hold.
+
+The opaque owner belongs to one attached middleware/store. Another attached writer,
+factory/store replacement, hydration/push, quit or callback reentry invalidates
+native eligibility. An unknown or failed acknowledgement stays held without replay.
+Failure preserves the prior comparison baseline and bounded pending evidence;
+the current Redux state may have moved ahead and requires reconciliation.
+
+Held operations are detached from caller-owned values. The coalesced queue is
+limited to 32 hives, 32,768 keys, 32 MiB of path-key units and 32 MiB of serialized
+operation packets, including their envelopes. Replacing one key subtracts its old
+packet size. These bounds do not cover the entire Redux heap or transient diff
+computation. Overflow leaves the hold unreleasable instead of silently flushing
+partial changes.
+
+`checkNativePersistenceFlushHold(owner)` validates the current local owner.
+`releaseNativePersistenceFlushHold(owner)` resumes scheduling fresh buffered diffs
+and retires that owner; the already acknowledged snapshot is not replayed. The
+caller must first restore main write availability. This local API does not unlock
+main, prove that it is writable, or implement the installation coordinator.
+
 ## Next implementation gates
 
 Implement these boundaries before exposing an install endpoint:
@@ -562,7 +589,9 @@ Implement these boundaries before exposing an install endpoint:
 1. Connect target admission before conflicting native side effects. The prepared
    main reservations cover their source-managed queue, backend and SQL scope;
    ordinary install/remove/refresh writers and the renderer still need a
-   coordinated boundary.
+   coordinated boundary. Acquire the renderer persistence hold before its final
+   acknowledged flush and the main reservation; do not use a standalone flush
+   whose success immediately resumes ordinary sends.
 2. Publish the verified payload through an actual no-replace owned primitive.
    Keep partial output held; discovery of a directory is not registration.
 3. Register one exact new owner and verify every profile remains disabled. Use a
