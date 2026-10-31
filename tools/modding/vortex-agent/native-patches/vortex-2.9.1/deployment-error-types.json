@@ -1,0 +1,21 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/extensions/mod_management/index.ts",
+  "originalSourceSHA256": "d895c7614a692242e1921fa0d9fba1a52743bcd9aed5b1bcac9a539d393b2400",
+  "prerequisitePatch": "deployment-lifecycle.patch",
+  "prerequisitePatchSHA256": "4607775fd2b426dfa0bbd960d6275659a60fd4e168b8eb7d6a3950c9c7718286",
+  "inputSHA256": "6216f75fd7ab07dea3ac466e43bbd803618a9f73e7e6d9d8bf96d25e63aded6c",
+  "outputSHA256": "d41e40fb3319e44053644050015f3095d7a52444ba8b92f4dbaabb14d4526cb6",
+  "patchSHA256": "388ab9c0f84ff76105a05f31b61822f8189ab75293725caef4c1e1f8bf6252b3",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "limitations": [
+    "Exact-source compatibility repair; application typecheck and build require independent qualification.",
+    "No native runtime acceptance, host registration or installation permit."
+  ]
+}

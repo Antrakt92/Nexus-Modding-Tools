@@ -1,0 +1,9 @@
+--- a/src/renderer/src/extensions/mod_management/eventHandlers.ts
++++ b/src/renderer/src/extensions/mod_management/eventHandlers.ts
+@@ -1145,5 +1145,5 @@
+   mod: IMod,
+   callback: ((err: Error) => void) | undefined,
+-): Promise<void> | void {
++): PromiseLike<void> | void {
+   const store = api.store;
+   const state: IState = store.getState();

@@ -1,0 +1,260 @@
+{
+  "schema": "native-source-series/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "files": [
+    {
+      "path": "src/renderer/src/extensions/mod_management/eventHandlers.ts",
+      "originalSHA256": "c45773ac110808acb3a3bf79bdcb1b3cab1ef498c6ddfdf7c29f11abb60733eb",
+      "finalSHA256": "2d2a7247a50ad6e010c2018b970bf54ab6d205a2a8cf6fed89e070258f39f9d0"
+    },
+    {
+      "path": "src/renderer/src/extensions/mod_management/index.ts",
+      "originalSHA256": "d895c7614a692242e1921fa0d9fba1a52743bcd9aed5b1bcac9a539d393b2400",
+      "finalSHA256": "d41e40fb3319e44053644050015f3095d7a52444ba8b92f4dbaabb14d4526cb6"
+    },
+    {
+      "path": "src/renderer/src/extensions/mod_management/InstallManager.ts",
+      "finalSHA256": "c6bc608b1eb16a2da570fdc95a4dac405ab470d0dfe70ef56da943279ddf1827",
+      "originalSHA256": "577d56a8728052069f850face9bb57437dbf2886bd41409fe6a66cfefc08ed33"
+    },
+    {
+      "path": "src/renderer/src/extensions/mod_management/modActivation.ts",
+      "originalSHA256": "cb7aa8614fe9650d69f824f5693baa141baa19635373e11a5dde7bd290deddc6",
+      "finalSHA256": "ad198a4d1920950e41a5575e2422165c7ffc4c91e683deda2239a58f2c3832b3"
+    },
+    {
+      "path": "src/renderer/src/extensions/mod_management/util/activationStore.ts",
+      "originalSHA256": "2232eb8d10050aa0fa53b44061f1114f27df4a88fb8c919a5c19f3a1b3cd0734",
+      "finalSHA256": "e96a7ae63e95d9a7fe2596c2e7626fb9bdc7d304dd8db6112aee0a5f8a08bfe5"
+    },
+    {
+      "path": "src/renderer/src/extensions/mod_management/util/deploy.ts",
+      "originalSHA256": "f877affe50d147620e3fb5fb010e84410fac1192a678d76f3408643b88e4fae2",
+      "finalSHA256": "e2f26f7d4388b2c15f5a6dbb9f5c14a8c01660b74a65106b23c032ec332c9d3a"
+    }
+  ],
+  "patches": [
+    {
+      "name": "ordinary-tracking",
+      "path": "src/renderer/src/extensions/mod_management/InstallManager.ts",
+      "manifestSHA256": "13c4fc09d1705c922360736f64f6b16caf2d780dd876a8f80ea0581d12448874",
+      "patchSHA256": "c9d5711ac1c5ce3e8c01aebc9f4ffcc0c5fa5640da189753b34e3178e9205af3",
+      "inputSHA256": "577d56a8728052069f850face9bb57437dbf2886bd41409fe6a66cfefc08ed33",
+      "outputSHA256": "3a82d810f47409332262b204f4cde3ff11e7cbf0acbc9036715048a25594a050",
+      "prerequisitePatch": null,
+      "prerequisitePatchSHA256": null,
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "callback-order",
+      "path": "src/renderer/src/extensions/mod_management/InstallManager.ts",
+      "manifestSHA256": "12e8a90fa5634e373d849f8a96ac7ad0641d3ec7f927089703f64d057de15b3f",
+      "patchSHA256": "76ec9e21c30e8bdd3ec4ae20190e14fab19b5665183f34a17fffb87b990c7784",
+      "inputSHA256": "3a82d810f47409332262b204f4cde3ff11e7cbf0acbc9036715048a25594a050",
+      "outputSHA256": "f0caab882f695df5827261f973bc4589070530eb33c28879e2480657e68e21d1",
+      "prerequisitePatch": "ordinary-tracking.patch",
+      "prerequisitePatchSHA256": "c9d5711ac1c5ce3e8c01aebc9f4ffcc0c5fa5640da189753b34e3178e9205af3",
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "native-activity",
+      "path": "src/renderer/src/extensions/mod_management/InstallManager.ts",
+      "manifestSHA256": "f7501f003c2cb4a0e5ef9c4a892e5cb9f017c48dfd2680172c9f51472dbb1b59",
+      "patchSHA256": "518d18897c281bc72fb47c597e2b154bbaecc2072d1951f4932af08e6a9b959a",
+      "inputSHA256": "f0caab882f695df5827261f973bc4589070530eb33c28879e2480657e68e21d1",
+      "outputSHA256": "0a6cd70aeea38c761af7e50c193f9a11dbaf159e378b2bc9f810585bf5e2a028",
+      "prerequisitePatch": "callback-order.patch",
+      "prerequisitePatchSHA256": "76ec9e21c30e8bdd3ec4ae20190e14fab19b5665183f34a17fffb87b990c7784",
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "strict-selection",
+      "path": "src/renderer/src/extensions/mod_management/InstallManager.ts",
+      "manifestSHA256": "f58d1a210c91cf9ab40ce550cd38b5fbfc0c3099c003fd93aeacfb19485d73ea",
+      "patchSHA256": "c91b8ffe9e6061fa2bb756d97954024dd478a977e664fecb5d0e950618db6ea3",
+      "inputSHA256": "0a6cd70aeea38c761af7e50c193f9a11dbaf159e378b2bc9f810585bf5e2a028",
+      "outputSHA256": "004ceae2a4e02d0abef1e39c1c888718ab0c140116d221b533e2a31c46e41baf",
+      "prerequisitePatch": "native-activity.patch",
+      "prerequisitePatchSHA256": "518d18897c281bc72fb47c597e2b154bbaecc2072d1951f4932af08e6a9b959a",
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "copy-error",
+      "path": "src/renderer/src/extensions/mod_management/InstallManager.ts",
+      "manifestSHA256": "61cc530f2e14b2d3fba08300c651041d4d9dbbcb40b87d3cb76b87382b1fa3df",
+      "patchSHA256": "15f73ef8333782d1eaf4841e5fd7013dd6a4140723c96ac2a7e29025e9823955",
+      "inputSHA256": "004ceae2a4e02d0abef1e39c1c888718ab0c140116d221b533e2a31c46e41baf",
+      "outputSHA256": "cba7e1fda1580ba57c14308e89be46e3b9de8ed2c290ee21d3e74288b30ba9bd",
+      "prerequisitePatch": "strict-selection.patch",
+      "prerequisitePatchSHA256": "c91b8ffe9e6061fa2bb756d97954024dd478a977e664fecb5d0e950618db6ea3",
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "transfer-join",
+      "path": "src/renderer/src/extensions/mod_management/InstallManager.ts",
+      "manifestSHA256": "540104730956fd0ad600ab97351864eeda24086e411fdc91412d6c661abc43e2",
+      "patchSHA256": "20e5e5bbf5e8a814fc89fbb16f75147d3b7b26b4b3be6f47c3dba6765caf700f",
+      "inputSHA256": "cba7e1fda1580ba57c14308e89be46e3b9de8ed2c290ee21d3e74288b30ba9bd",
+      "outputSHA256": "61abf69a0a11579da830a93c04cba7ca7dac36faf090d4685ed026c9bf385480",
+      "prerequisitePatch": "copy-error.patch",
+      "prerequisitePatchSHA256": "15f73ef8333782d1eaf4841e5fd7013dd6a4140723c96ac2a7e29025e9823955",
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "manager-exclusion",
+      "path": "src/renderer/src/extensions/mod_management/InstallManager.ts",
+      "manifestSHA256": "c3f8b21243a6015f5fed6676a0819fee344a57e56db7fb1c6586ef5d080bb7ac",
+      "patchSHA256": "baf14e57097fe39f4a42ce5b3bda594e3b90d1f39d27885215b212bf5b300fa3",
+      "inputSHA256": "61abf69a0a11579da830a93c04cba7ca7dac36faf090d4685ed026c9bf385480",
+      "outputSHA256": "ab3aa908239f13f753801bdc1c3a4a57da5ec750b3cc67430be3d9429c750f67",
+      "prerequisitePatch": "transfer-join.patch",
+      "prerequisitePatchSHA256": "20e5e5bbf5e8a814fc89fbb16f75147d3b7b26b4b3be6f47c3dba6765caf700f",
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "lifecycle-owner-bridge",
+      "path": "src/renderer/src/extensions/mod_management/InstallManager.ts",
+      "manifestSHA256": "ecc8ccab3fed03e2fc3c1e76af5bf094bdfc9b18e0e25b7ba9d4e03e30a0997f",
+      "patchSHA256": "667be8134de0ef515326dd3faec826a32f430412f5bc0946588d7e0cbe2558fa",
+      "inputSHA256": "ab3aa908239f13f753801bdc1c3a4a57da5ec750b3cc67430be3d9429c750f67",
+      "outputSHA256": "7b69e1ce675b889611ceb319b5b0f329600efca37b5407224af9c6008b14533d",
+      "prerequisitePatch": "manager-exclusion.patch",
+      "prerequisitePatchSHA256": "baf14e57097fe39f4a42ce5b3bda594e3b90d1f39d27885215b212bf5b300fa3",
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "lifecycle-result-bridge",
+      "path": "src/renderer/src/extensions/mod_management/InstallManager.ts",
+      "manifestSHA256": "4dfabc3ace0c01939fa2873fc53bb8e01bef6ec74069227f5914a1cd76ca7017",
+      "patchSHA256": "dbcac46a4b9814ee33f899d6d8697e4d3aeb966c2b5f9bda931b12ae3064e9d7",
+      "inputSHA256": "7b69e1ce675b889611ceb319b5b0f329600efca37b5407224af9c6008b14533d",
+      "outputSHA256": "c6bc608b1eb16a2da570fdc95a4dac405ab470d0dfe70ef56da943279ddf1827",
+      "prerequisitePatch": "lifecycle-owner-bridge.patch",
+      "prerequisitePatchSHA256": "667be8134de0ef515326dd3faec826a32f430412f5bc0946588d7e0cbe2558fa",
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "lifecycle-handler-ownership",
+      "path": "src/renderer/src/extensions/mod_management/eventHandlers.ts",
+      "manifestSHA256": "be950933524a2a0fb876b03fae9989b9cc750b4a44407e06da0039c70de9d5ae",
+      "patchSHA256": "3e754806735e77d2522a5bc25c554ac9ebfef41b2be0679c83bf0cb0370b82b0",
+      "inputSHA256": "c45773ac110808acb3a3bf79bdcb1b3cab1ef498c6ddfdf7c29f11abb60733eb",
+      "outputSHA256": "56e3d15ce63e4617ef5aeb475a5cdef41709c49d84352e43b9dca5168512b0e6",
+      "prerequisitePatch": "lifecycle-owner-bridge.patch",
+      "prerequisitePatchSHA256": "667be8134de0ef515326dd3faec826a32f430412f5bc0946588d7e0cbe2558fa",
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "refresh-lifecycle",
+      "path": "src/renderer/src/extensions/mod_management/eventHandlers.ts",
+      "manifestSHA256": "4c5e7fe52b0a32d4d15d88d363407cdaf5b24b0702d046d0a78c380c4a35b882",
+      "patchSHA256": "4dedbd7082685052f440e7dcfd41af83d7c41eeab9bede69a55b39ce413d3902",
+      "inputSHA256": "56e3d15ce63e4617ef5aeb475a5cdef41709c49d84352e43b9dca5168512b0e6",
+      "outputSHA256": "ec749f966eaa909fdcb7c5efba24da758174bc0d00978ff078165849ccb2023b",
+      "prerequisitePatch": "lifecycle-handler-ownership.patch",
+      "prerequisitePatchSHA256": "3e754806735e77d2522a5bc25c554ac9ebfef41b2be0679c83bf0cb0370b82b0",
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "deployment-cancel",
+      "path": "src/renderer/src/extensions/mod_management/modActivation.ts",
+      "manifestSHA256": "65f63058014165aaf72ed6ddb0c8bb4df28c90677e5c87ec08370e53f95e30d0",
+      "patchSHA256": "a507c5b42ab4ffab0c6966a0031cf12f1a0a3da4eca97fc1c8619cbaf3552e89",
+      "inputSHA256": "cb7aa8614fe9650d69f824f5693baa141baa19635373e11a5dde7bd290deddc6",
+      "outputSHA256": "ad198a4d1920950e41a5575e2422165c7ffc4c91e683deda2239a58f2c3832b3",
+      "prerequisitePatch": null,
+      "prerequisitePatchSHA256": null,
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "deployment-lifecycle",
+      "path": "src/renderer/src/extensions/mod_management/index.ts",
+      "manifestSHA256": "20ef33afb35c8e27c6adbeb8644bd031a152c773a07a0f22a28b1f1c091b5f0b",
+      "patchSHA256": "4607775fd2b426dfa0bbd960d6275659a60fd4e168b8eb7d6a3950c9c7718286",
+      "inputSHA256": "d895c7614a692242e1921fa0d9fba1a52743bcd9aed5b1bcac9a539d393b2400",
+      "outputSHA256": "6216f75fd7ab07dea3ac466e43bbd803618a9f73e7e6d9d8bf96d25e63aded6c",
+      "prerequisitePatch": "lifecycle-owner-bridge.patch",
+      "prerequisitePatchSHA256": "667be8134de0ef515326dd3faec826a32f430412f5bc0946588d7e0cbe2558fa",
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "activation-join",
+      "path": "src/renderer/src/extensions/mod_management/util/activationStore.ts",
+      "manifestSHA256": "c2666e62fa437f5454449c2e0e7c1acf5c882c3104cbf72619a523afd2f06f7f",
+      "patchSHA256": "097f02e0ecb437b3f147de385a58071557a93c8827db4520aaaf370d87a18785",
+      "inputSHA256": "2232eb8d10050aa0fa53b44061f1114f27df4a88fb8c919a5c19f3a1b3cd0734",
+      "outputSHA256": "c6c86dd6a84a4925a30954d140972d26a37a12153004ed5f07bc63d3bdb655f6",
+      "prerequisitePatch": null,
+      "prerequisitePatchSHA256": null,
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "activation-ownership",
+      "path": "src/renderer/src/extensions/mod_management/util/activationStore.ts",
+      "manifestSHA256": "716458328e0b98b0919dbb65198386b48109ae7c79cb4514c38dd3a356517df2",
+      "patchSHA256": "b4deb74b1ea49c94a8b751698a9569eec85055f913a8c14b8c9c418de22f5f75",
+      "inputSHA256": "c6c86dd6a84a4925a30954d140972d26a37a12153004ed5f07bc63d3bdb655f6",
+      "outputSHA256": "580490862738a404e204755c05aa3ed203248141297561d86a1a59d4ee71050b",
+      "prerequisitePatch": "activation-join.patch",
+      "prerequisitePatchSHA256": "097f02e0ecb437b3f147de385a58071557a93c8827db4520aaaf370d87a18785",
+      "requiredManagerPatchSHA256": "dbcac46a4b9814ee33f899d6d8697e4d3aeb966c2b5f9bda931b12ae3064e9d7"
+    },
+    {
+      "name": "purge-join",
+      "path": "src/renderer/src/extensions/mod_management/util/deploy.ts",
+      "manifestSHA256": "f4fac447c3e9b0b5d2f7569a61d9eb59dfdf8b13de845289159312076740fa96",
+      "patchSHA256": "fe4d6d56f153ddc4f142034dd907f4d5c7d075c806839e1e534f73270b1fa575",
+      "inputSHA256": "f877affe50d147620e3fb5fb010e84410fac1192a678d76f3408643b88e4fae2",
+      "outputSHA256": "4500ed7578015989281edc6492f5b7e651a3ede533e892912b579909a7638e26",
+      "prerequisitePatch": null,
+      "prerequisitePatchSHA256": null,
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "purge-ownership",
+      "path": "src/renderer/src/extensions/mod_management/util/deploy.ts",
+      "manifestSHA256": "1dc70b8c6ff3e3d6f73ff94353ee563c2004217daf9953e94bc0a45f0f8839e7",
+      "patchSHA256": "20bce9cc5e574ad11cf4b7478dfcad8a62057003076afedc416138b93a779c8e",
+      "inputSHA256": "4500ed7578015989281edc6492f5b7e651a3ede533e892912b579909a7638e26",
+      "outputSHA256": "e2f26f7d4388b2c15f5a6dbb9f5c14a8c01660b74a65106b23c032ec332c9d3a",
+      "prerequisitePatch": "purge-join.patch",
+      "prerequisitePatchSHA256": "fe4d6d56f153ddc4f142034dd907f4d5c7d075c806839e1e534f73270b1fa575",
+      "requiredManagerPatchSHA256": "dbcac46a4b9814ee33f899d6d8697e4d3aeb966c2b5f9bda931b12ae3064e9d7"
+    },
+    {
+      "name": "handler-promise-types",
+      "path": "src/renderer/src/extensions/mod_management/eventHandlers.ts",
+      "manifestSHA256": "3df82cc9f29e533bc0f5a1618d3d610ec593de28a200c6e41185487c5b1720d2",
+      "patchSHA256": "4f89edaf51ccc801d3ea2dbedd57e8241496b34df37efb2d57fb40be3b643388",
+      "inputSHA256": "ec749f966eaa909fdcb7c5efba24da758174bc0d00978ff078165849ccb2023b",
+      "outputSHA256": "2d2a7247a50ad6e010c2018b970bf54ab6d205a2a8cf6fed89e070258f39f9d0",
+      "prerequisitePatch": "refresh-lifecycle.patch",
+      "prerequisitePatchSHA256": "4dedbd7082685052f440e7dcfd41af83d7c41eeab9bede69a55b39ce413d3902",
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "deployment-error-types",
+      "path": "src/renderer/src/extensions/mod_management/index.ts",
+      "manifestSHA256": "5b181d710e8b14e920b5c141f4d05caf1374493cd76f30de4f65a84239416607",
+      "patchSHA256": "388ab9c0f84ff76105a05f31b61822f8189ab75293725caef4c1e1f8bf6252b3",
+      "inputSHA256": "6216f75fd7ab07dea3ac466e43bbd803618a9f73e7e6d9d8bf96d25e63aded6c",
+      "outputSHA256": "d41e40fb3319e44053644050015f3095d7a52444ba8b92f4dbaabb14d4526cb6",
+      "prerequisitePatch": "deployment-lifecycle.patch",
+      "prerequisitePatchSHA256": "4607775fd2b426dfa0bbd960d6275659a60fd4e168b8eb7d6a3950c9c7718286",
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "activation-promise-types",
+      "path": "src/renderer/src/extensions/mod_management/util/activationStore.ts",
+      "manifestSHA256": "0dbeb6767bc6a7690983aa9b8f24bcea173bef28d60d801aef9a71d9863db959",
+      "patchSHA256": "d05b608d01fccfc5e652d51eb442ddbb44ec340e8d9e29aa841a86e20af9b626",
+      "inputSHA256": "580490862738a404e204755c05aa3ed203248141297561d86a1a59d4ee71050b",
+      "outputSHA256": "e96a7ae63e95d9a7fe2596c2e7626fb9bdc7d304dd8db6112aee0a5f8a08bfe5",
+      "prerequisitePatch": "activation-ownership.patch",
+      "prerequisitePatchSHA256": "b4deb74b1ea49c94a8b751698a9569eec85055f913a8c14b8c9c418de22f5f75",
+      "requiredManagerPatchSHA256": null
+    }
+  ]
+}

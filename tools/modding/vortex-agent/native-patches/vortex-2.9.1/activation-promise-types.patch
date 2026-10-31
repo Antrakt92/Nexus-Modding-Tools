@@ -1,0 +1,11 @@
+--- a/src/renderer/src/extensions/mod_management/util/activationStore.ts
++++ b/src/renderer/src/extensions/mod_management/util/activationStore.ts
+@@ -101,7 +101,7 @@
+   return repairManifest(parsed);
+ }
+ 
+-async function joinPurgeOperations(operations: Array<() => Promise<unknown>>): Promise<void> {
++async function joinPurgeOperations(operations: Array<() => PromiseLike<unknown>>): Promise<void> {
+   let failed = false;
+   let firstError: unknown;
+   const capture = (error: unknown) => {
