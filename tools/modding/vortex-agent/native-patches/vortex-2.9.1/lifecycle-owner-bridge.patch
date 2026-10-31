@@ -1,0 +1,33 @@
+--- a/src/renderer/src/extensions/mod_management/InstallManager.ts
++++ b/src/renderer/src/extensions/mod_management/InstallManager.ts
+@@ -631,8 +631,30 @@
+     }
+     return false;
+   }
+ 
++  // Fixed core lifecycle producers share the manager's existing ownership set.
++  // Rejection or unknown startup retains ownership until explicit reconciliation.
++  public static trackNativeLifecycleCall(action: () => void | PromiseLike<void>): Promise<void> {
++    if (InstallManager.mNativeExclusiveOwner !== undefined
++        || InstallManager.mNativeLegacyCalls.size >= 4096) {
++      throw new ProcessCanceled("Native installation exclusion held");
++    }
++    const owner = Object.freeze({});
++    InstallManager.mNativeLegacyCalls.add(owner);
++    let result: void | PromiseLike<void>;
++    try {
++      result = action();
++    } catch (error) {
++      return Promise.reject(error);
++    }
++    return Promise.resolve(result).then(() => {
++      if (!InstallManager.mNativeLegacyCalls.delete(owner)) {
++        throw new ProcessCanceled("Native lifecycle activity owner mismatch");
++      }
++    });
++  }
++
+   private beginNativeLegacyCall(): object {
+     if (InstallManager.mNativeExclusiveOwner !== undefined
+         || InstallManager.mNativeLegacyCalls.size >= 4096) {
+       throw new ProcessCanceled("Native installation exclusion held");

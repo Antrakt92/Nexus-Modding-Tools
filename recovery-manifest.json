@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "e1fa9194fe8382a52a4ccbf5701384a8e97ab53f1807b098bc92ad472304947d"
+      "sha256_lf": "cad5c6d7c350dce04134863231ffc9fb1736655404f16b685335b8afca06da11"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -276,7 +276,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "997755b290298ff7a7b05b348c953a2c737f8888f557523fcd4c563221d06af5"
+      "sha256_lf": "f96b577cda74b6c6f0e2ce43ed07d7cfa2ed000931ea5ea97de10581ddf48ede"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -315,8 +315,12 @@
       "sha256_lf": "4389ce1bf97ac2fe43d120a732fa2133a51e8e1e1d6e71d3f091330cec02513a"
     },
     {
+      "path": "docs/NATIVE-LIFECYCLE-HANDLERS.md",
+      "sha256_lf": "893a5c19b82bedd7b178a1c63dc6c127c657fb1248f483995969db3a1d66b547"
+    },
+    {
       "path": "docs/NATIVE-MANAGER-EXCLUSION.md",
-      "sha256_lf": "1c5f49309f7d13d0df4f230d5d48fa4bb9ee264a702f777718b8005e3c082ade"
+      "sha256_lf": "ebf37b54fc555920684f4900000817922037074dea0e40d37afb9b54d15bb3c4"
     },
     {
       "path": "docs/NATIVE-OWNED-EXTRACTOR.md",
@@ -943,6 +947,10 @@
       "sha256_lf": "cedf1abe35d35521099447b4613053e56fd39cc2a4e7bbf874ef32ecfd26e916"
     },
     {
+      "path": "tools/modding/vortex-agent/native-lifecycle-handler-patch.test.mjs",
+      "sha256_lf": "81773f1b154448796aa24d7cdda3f76b3733855f04834e01bffdcec20cb89588"
+    },
+    {
       "path": "tools/modding/vortex-agent/native-manager-exclusion-patch.test.mjs",
       "sha256_lf": "0d446becc32448a177c8408f62c174af28bd783950ece55165f8d2cb3b744073"
     },
@@ -997,6 +1005,22 @@
     {
       "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/copy-error.patch",
       "sha256_lf": "15f73ef8333782d1eaf4841e5fd7013dd6a4140723c96ac2a7e29025e9823955"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/lifecycle-handler-ownership.json",
+      "sha256_lf": "be950933524a2a0fb876b03fae9989b9cc750b4a44407e06da0039c70de9d5ae"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/lifecycle-handler-ownership.patch",
+      "sha256_lf": "3e754806735e77d2522a5bc25c554ac9ebfef41b2be0679c83bf0cb0370b82b0"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/lifecycle-owner-bridge.json",
+      "sha256_lf": "ecc8ccab3fed03e2fc3c1e76af5bf094bdfc9b18e0e25b7ba9d4e03e30a0997f"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/lifecycle-owner-bridge.patch",
+      "sha256_lf": "667be8134de0ef515326dd3faec826a32f430412f5bc0946588d7e0cbe2558fa"
     },
     {
       "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/manager-exclusion.json",
