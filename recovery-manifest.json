@@ -196,7 +196,7 @@
     },
     {
       "path": "docs/AGENT-WORKFLOW.md",
-      "sha256_lf": "8ca5d56610c981cf0f13736bfaed601509879a3d5620078d19ab8025b77db976"
+      "sha256_lf": "1f7c9de85f67077fe15e7e5b932eb7407ac90052b4cbd019fa1040cd02a9b0af"
     },
     {
       "path": "docs/ARCHIVE-TEMP-CUSTODY.md",
@@ -389,6 +389,10 @@
     {
       "path": "docs/PROCESS-PROBE-EXPERIMENT.md",
       "sha256_lf": "edb401e30b0a137e77f8b5ffc2c477dd44d0a1e033acf013aba2e6cb17887c94"
+    },
+    {
+      "path": "docs/READ-CAPTURE-PREPARATION.md",
+      "sha256_lf": "f87f60c3aa2c01be25267773df1197528f5da2adaec353fdcee10f54f9793d3c"
     },
     {
       "path": "docs/README.md",
@@ -656,7 +660,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/README.md",
-      "sha256_lf": "15664f162f8c23e1a0d1c3161741841fe9178576d9936e58a91075ed623f92c3"
+      "sha256_lf": "4ef6a04f1b73ee7c095d109e6b0e66b4147012b935a75dde9066838980ca48d3"
     },
     {
       "path": "tools/modding/vortex-agent/archive-temp-lease.test.py",
@@ -1469,6 +1473,14 @@
     {
       "path": "tools/modding/vortex-agent/prepare-native-helper.test.mjs",
       "sha256_lf": "db73067bc6a67efbbc1cd60a86503b34477d6250dca11150013093cd0293dea1"
+    },
+    {
+      "path": "tools/modding/vortex-agent/prepare-read-capture.mjs",
+      "sha256_lf": "8e4171e7761017b0f95a4c96b6fbc75bb998830cfd2167efc67702aaa7b5989a"
+    },
+    {
+      "path": "tools/modding/vortex-agent/prepare-read-capture.test.mjs",
+      "sha256_lf": "683bb85ca5eedde773d5ba15fbbda84895d23bc0e0204c230067f2d65665a6fe"
     },
     {
       "path": "tools/modding/vortex-agent/prepare-source-guard.mjs",
