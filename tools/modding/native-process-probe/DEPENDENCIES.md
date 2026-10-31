@@ -51,3 +51,17 @@ signal, not proof that no vulnerability exists.
 Before binary distribution, carry applicable complete license notices and source
 offer, inspect actual PE dependencies and test the downloaded artifact on clean
 Windows. A local developer build does not prove those distribution gates.
+
+## Separate static-CRT qualification
+
+`static-crt.toml` explicitly selects `+crt-static` for the standalone x64 MSVC
+target; it adds no crate dependency. Supply it with `--config` and `--target`,
+clear inherited Rust flags/wrappers and record the actual compiler invocation.
+Do not rely on `--manifest-path` to discover hidden configuration.
+
+The existing MSVC/SDK provide libcmt/libucrt. An experimental static build's
+`dumpbin /dependents` output no longer lists VCRUNTIME or dynamic CRT APIs; it
+lists kernel32, ntdll and the Windows core-synch API set. That is PE-import
+evidence on the maintained host, not proof of all runtime loading behavior or
+clean-machine compatibility. The old dynamic artifact remains retained for
+its original benchmark evidence. No binary is distributed by this source change.

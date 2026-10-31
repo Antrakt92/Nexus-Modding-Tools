@@ -16,6 +16,10 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Add an explicit static-CRT prototype build and bounded PE import inspection.
+  Verify the compiled artifact's declared DLLs before native tests; production
+  packaging and clean-Windows acceptance remain pending.
+
 - Add an alternating PowerShell/native process-probe comparison with full-call
   timings and strict reply/exit checks. Record local component measurements
   without claiming a live installation or renderer speedup.

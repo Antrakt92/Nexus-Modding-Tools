@@ -22,8 +22,8 @@ From this directory, with the pinned compiler available in a developer shell:
 $env:CARGO_TARGET_DIR = 'F:/YourWorkspace/local-state/native-process-probe-target'
 cargo fetch --locked
 cargo fmt --check
-cargo test --locked --offline
-cargo build --release --locked --offline
+cargo test --locked --offline --target x86_64-pc-windows-msvc --config static-crt.toml
+cargo build --release --locked --offline --target x86_64-pc-windows-msvc --config static-crt.toml
 ```
 
 Choose an actual local scratch path rather than the example. The compiler,
@@ -31,13 +31,17 @@ linker and SDK paths can be supplied process-locally; do not alter system PATH
 to make a runtime adapter find this prototype. A missing toolchain must be
 prepared explicitly, not downloaded by a production helper.
 
-The executable is `release/vortex-native-process-probe.exe` below the chosen
+The executable is `x86_64-pc-windows-msvc/release/vortex-native-process-probe.exe` below the chosen
 target directory. Keep its raw SHA-256 separate from LF-normalized source pins.
 No binary belongs in the Git source manifest. A future distribution needs its
 own artifact, source/dependency notices and PE-import/clean-Windows acceptance.
-The reviewed default MSVC build imports `VCRUNTIME140.dll` and Windows CRT APIs;
-it has not been proved self-contained on a clean machine. Static CRT versus a
-declared runtime prerequisite must be decided and tested before distribution.
+The original default MSVC build imports `VCRUNTIME140.dll` and Windows CRT APIs.
+The explicit static-CRT experiment removes those observed external CRT imports;
+clean-machine acceptance remains unproved. Clear inherited `RUSTFLAGS` and
+`CARGO_ENCODED_RUSTFLAGS` before qualification: they override target config flags.
+Pass the config path explicitly when building from another directory; a manifest
+path alone does not select crate-local Cargo configuration. Static CRT does not
+remove Windows OS dependencies, license review or runtime servicing obligations.
 
 ## Protocol
 
@@ -69,8 +73,9 @@ file seal or an atomic guarantee against later process creation.
 From the repository root, set the exact reviewed build and raw pin:
 
 ```powershell
-$env:VORTEX_PROCESS_PROBE_BINARY = 'F:/YourWorkspace/local-state/native-process-probe-target/release/vortex-native-process-probe.exe'
+$env:VORTEX_PROCESS_PROBE_BINARY = 'F:/YourWorkspace/local-state/native-process-probe-target/x86_64-pc-windows-msvc/release/vortex-native-process-probe.exe'
 $env:VORTEX_PROCESS_PROBE_SHA256 = (Get-FileHash -LiteralPath $env:VORTEX_PROCESS_PROBE_BINARY -Algorithm SHA256).Hash.ToLower()
+$env:VORTEX_PROCESS_PROBE_EXPECT_STATIC_CRT = '1'
 node --test tools/modding/vortex-agent/process-probe-native.test.mjs
 ```
 
@@ -79,3 +84,6 @@ download's hash does not authenticate it. The tests launch this read-only CLI,
 check its snapshot through the independent JS parser, and reject malformed input.
 Without both environment variables, native cases explicitly skip. Portable
 contract tests do not establish native integration. No game starts in these tests.
+The static expectation also checks the real binary with the bounded PE inspector
+before launch. Its `systemImportsOnly` result concerns declared imports only;
+it is neither a loader/signature validator nor a clean-Windows runtime proof.
