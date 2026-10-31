@@ -17,6 +17,11 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Prepare shared deployment queue/writer, purge and refresh ownership. Join
+  cancellation and manifest recovery, preserve primary failures and prevent
+  swallowed errors from becoming successful completion. These patches are not
+  installed in Vortex; native registration and installation remain unavailable.
+
 - Prepare shared ownership for native remove/create handlers. Join removal branches
   and cancellation, report partial failures, publish successful sibling records
   and preserve the first error without repeating callbacks or uncertain batches.

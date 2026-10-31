@@ -1,0 +1,23 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/extensions/mod_management/modActivation.ts",
+  "originalSourceSHA256": "cb7aa8614fe9650d69f824f5693baa141baa19635373e11a5dde7bd290deddc6",
+  "inputSHA256": "cb7aa8614fe9650d69f824f5693baa141baa19635373e11a5dde7bd290deddc6",
+  "outputSHA256": "ad198a4d1920950e41a5575e2422165c7ffc4c91e683deda2239a58f2c3832b3",
+  "patchSHA256": "a507c5b42ab4ffab0c6966a0031cf12f1a0a3da4eca97fc1c8619cbaf3552e89",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "globalIdleGuarantee": false,
+  "nativeTerminalGuarantee": false,
+  "installationPermit": false,
+  "limitations": [
+    "Prepared source only; no full application build/typecheck, installed renderer or capability admission.",
+    "Pending deployment intents and actual writers use existing manager activity set; failures stay held.",
+    "Purge/refresh and arbitrary profile/Redux/extension writers remain separate gates.",
+    "No durable dispatch, registration, release or cleanup permit."
+  ]
+}

@@ -1,0 +1,17 @@
+--- a/src/renderer/src/extensions/mod_management/modActivation.ts
++++ b/src/renderer/src/extensions/mod_management/modActivation.ts
+@@ -99,11 +99,13 @@
+       subDir(null),
+       new Set<string>(),
+     );
+   } catch (err) {
+     if (method.cancel !== undefined) {
+-      method.cancel(gameId, destinationPath, installationPath);
++      try { await method.cancel(gameId, destinationPath, installationPath); } catch {
++        try { log("warn", "Deployment cancellation failed after an operation error"); } catch { /* Preserve primary. */ }
++      }
+     }
+     throw err;
+   }
+ 
+   const cb =

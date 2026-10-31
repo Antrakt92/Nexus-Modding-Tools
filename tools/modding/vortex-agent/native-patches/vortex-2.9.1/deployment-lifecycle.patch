@@ -1,0 +1,227 @@
+--- a/src/renderer/src/extensions/mod_management/index.ts
++++ b/src/renderer/src/extensions/mod_management/index.ts
+@@ -624,9 +624,9 @@
+   return Object.keys(modPaths).filter((typeId) => truthy(modPaths[typeId]));
+ }
+ 
+ function genUpdateModDeployment(installManager: InstallManager) {
+-  return (
++  const run = (
+     api: IExtensionApi,
+     manual: boolean,
+     profileId?: string,
+     progressCB?: (text: string, percent: number) => void,
+@@ -723,8 +723,10 @@
+       } // otherwise there should already be a notification
+       return Promise.resolve();
+     }
+ 
++    let deploymentFailed = false;
++    let deploymentError: unknown;
+     const newDeployment: { [typeId: string]: IDeployedFile[] } = {};
+ 
+     // will contain all mods fully overwritten (this also includes mods that didn't
+     // files to begin with)
+@@ -900,8 +902,11 @@
+             });
+             void emitModListSnapshot(api, gameId);
+           } catch (unknownErr) {
+             const err = unknownToError(unknownErr);
++            deploymentFailed = true;
++            deploymentError = err;
++            try {
+             if (err instanceof UserCanceled) {
+               // nop
+             } else if (err instanceof ProcessCanceled) {
+               api.sendNotification({
+@@ -951,16 +956,37 @@
+                   allowReport: err["code"] !== "EPERM" && !isFSErr && err["allowReport"] !== false,
+                 });
+               }
+             }
++            } finally { throw err; }
+           } finally {
+-            api.store.dispatch(stopActivity("mods", "deployment"));
+-            api.store.dispatch(setProgress("mods", "deployment", undefined, 0));
+-            api.dismissNotification(notification.id);
++            try {
++              api.store.dispatch(stopActivity("mods", "deployment"));
++              api.store.dispatch(setProgress("mods", "deployment", undefined, 0));
++              api.dismissNotification(notification.id);
++            } catch (error) {
++              if (deploymentFailed) throw deploymentError;
++              throw error;
++            }
+           }
+         },
+       ),
+     );
++  };
++  return (
++    api: IExtensionApi,
++    manual: boolean,
++    profileId?: string,
++    progressCB?: (text: string, percent: number) => void,
++    deployOptions?: IDeployOptions,
++  ): Promise<void> => {
++    try {
++      return InstallManager.trackNativeLifecycleCall(() => Promise.resolve().then(
++        () => run(api, manual, profileId, progressCB, deployOptions),
++      ));
++    } catch (error) {
++      return Promise.reject(error);
++    }
+   };
+ }
+ 
+ function doSaveActivation(
+@@ -1232,9 +1258,9 @@
+   };
+ }
+ 
+ function onDeploySingleMod(api: IExtensionApi) {
+-  return async (gameId: string, modId: string, enable?: boolean) => {
++  const run = async (gameId: string, modId: string, enable?: boolean) => {
+     const state: IState = api.store.getState();
+     const game = getGame(gameId);
+     const discovery = getSafe(state, ["settings", "gameMode", "discovered", gameId], undefined);
+     if (game === undefined || discovery === undefined || discovery.path === undefined) {
+@@ -1306,12 +1332,15 @@
+           activator.id,
+         );
+         reportRecordedFailures(api, gameId);
+       } catch (unknownErr) {
++        const err = unknownToError(unknownErr);
+         if (activator.cancel !== undefined) {
+-          activator.cancel(gameId, dataPath, stagingPath);
++          try { await activator.cancel(gameId, dataPath, stagingPath); } catch {
++            try { log("warn", "Deployment cancellation failed after an operation error"); } catch { /* Preserve primary. */ }
++          }
+         }
+-        const err = unknownToError(unknownErr);
++        try {
+         if (err instanceof ProcessCanceled) {
+           api.sendNotification({
+             type: "warning",
+             title: "Deployment interrupted",
+@@ -1323,10 +1352,20 @@
+             message: modId,
+             allowReport: !userCanceled,
+           });
+         }
++        } finally { throw err; }
+       }
+     });
++  };
++  return (gameId: string, modId: string, enable?: boolean): Promise<void> => {
++    try {
++      return InstallManager.trackNativeLifecycleCall(() => Promise.resolve().then(
++        () => run(gameId, modId, enable),
++      ));
++    } catch (error) {
++      return Promise.reject(error);
++    }
+   };
+ }
+ 
+ function onNeedToDeploy(api: IExtensionApi, current: any) {
+@@ -1405,8 +1444,79 @@
+     api.dismissNotification("deployment-necessary");
+   }
+ }
+ 
++// Preserve Debouncer identity and its coalescing policy. Each submitted intent
++// owns a separate closure, while actual writers own the same shared registry.
++function ownDeploymentTimer<Args extends unknown[]>(timer: Debouncer<Args>): Debouncer<Args> {
++  const rawSchedule = timer.schedule.bind(timer);
++  const rawRunNow = timer.runNow.bind(timer);
++  const rawWait = timer.wait.bind(timer);
++  const submit = (
++    callback: ((error: Error | null) => void) | undefined,
++    enqueue: (done: (error: Error | null) => void) => void,
++  ): void => {
++    let delivered = false;
++    const notify = (error: Error | null): { failed: boolean; error?: unknown } => {
++      if (delivered) return { failed: false };
++      delivered = true;
++      try {
++        callback?.(error);
++        return { failed: false };
++      } catch (notificationError) {
++        try { log("warn", "Deployment callback failed"); } catch { /* Logging only. */ }
++        return { failed: true, error: notificationError };
++      }
++    };
++    try {
++      void InstallManager.trackNativeLifecycleCall(() => new Promise<void>((resolve, reject) => {
++        let returned = false;
++        let observed = false;
++        let failed = false;
++        let firstError: unknown;
++        const fail = (error: unknown) => {
++          if (!failed) { failed = true; firstError = error; }
++        };
++        const settle = () => { if (failed) reject(firstError); else resolve(); };
++        const done = (error: Error | null) => {
++          if (observed) return;
++          observed = true;
++          if (error !== null) fail(error);
++          const notice = notify(error);
++          if (notice.failed) fail(notice.error);
++          if (returned) settle();
++        };
++        try {
++          enqueue(done);
++          returned = true;
++          if (observed) settle();
++        } catch (error) {
++          // A synchronous success callback followed by startup failure cannot
++          // refund ownership. The original callback is never delivered twice.
++          fail(error);
++          reject(firstError);
++        }
++      })).catch((error) => { notify(error); });
++    } catch (error) {
++      notify(unknownToError(error));
++    }
++  };
++  timer.schedule = (callback, ...args) => submit(callback, (done) => rawSchedule(done, ...args));
++  timer.runNow = (callback, ...args) => submit(callback, (done) => rawRunNow(done, ...args));
++  timer.wait = (callback, immediately) => {
++    let delivered = false;
++    rawWait((error) => {
++      if (delivered) return;
++      delivered = true;
++      try { callback(error); } catch {
++        try { log("warn", "Deployment observer callback failed"); } catch { /* Logging only. */ }
++      }
++    }, immediately);
++  };
++  return timer;
++}
++
++
+ function once(api: IExtensionApi) {
+   const store: Redux.Store<IState> = api.store;
+ 
+   if (installManager === undefined) {
+@@ -1423,17 +1533,17 @@
+     });
+   }
+ 
+   const updateModDeployment = genUpdateModDeployment(installManager);
+-  const deploymentTimer = new Debouncer(
++  const deploymentTimer = ownDeploymentTimer(new Debouncer(
+     (
+       manual: boolean,
+       profileId: string,
+       progressCB: (text: string, percent: number) => void,
+       deployOptions?: IDeployOptions,
+     ) => updateModDeployment(api, manual, profileId, progressCB, deployOptions),
+     2000,
+-  );
++  ));
+ 
+   api.events.on(
+     "deploy-mods",
+     (

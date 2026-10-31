@@ -1,0 +1,38 @@
+--- a/src/renderer/src/extensions/mod_management/util/activationStore.ts
++++ b/src/renderer/src/extensions/mod_management/util/activationStore.ts
+@@ -100,9 +100,33 @@
+   return repairManifest(parsed);
+ }
+ 
++async function joinPurgeOperations(operations: Array<() => Promise<unknown>>): Promise<void> {
++  let failed = false;
++  let firstError: unknown;
++  const capture = (error: unknown) => {
++    if (!failed) {
++      failed = true;
++      firstError = error;
++    }
++  };
++  const started: Array<Promise<void>> = [];
++  for (const operation of operations) {
++    try {
++      started.push(Promise.resolve(operation()).then(() => undefined, capture));
++    } catch (error: unknown) {
++      capture(error);
++      break;
++    }
++  }
++  await Promise.all(started);
++  if (failed) {
++    throw firstError;
++  }
++}
++
+ export function purgeDeployedFiles(basePath: string, files: IDeployedFile[]): Promise<void> {
+-  return Promise.all(
+-    files.map((file) => {
++  return joinPurgeOperations(
++    files.map((file) => () => {
+       const fullPath = path.join(basePath, file.relPath);
+       return fs
+         .statAsync(fullPath)

@@ -1,0 +1,153 @@
+--- a/src/renderer/src/extensions/mod_management/util/deploy.ts
++++ b/src/renderer/src/extensions/mod_management/util/deploy.ts
+@@ -169,6 +169,30 @@
+   );
+ }
+ 
++async function joinPurgeOperations(operations: Array<() => Promise<unknown>>): Promise<void> {
++  let failed = false;
++  let firstError: unknown;
++  const capture = (error: unknown) => {
++    if (!failed) {
++      failed = true;
++      firstError = error;
++    }
++  };
++  const started: Array<Promise<void>> = [];
++  for (const operation of operations) {
++    try {
++      started.push(Promise.resolve(operation()).then(() => undefined, capture));
++    } catch (error: unknown) {
++      capture(error);
++      break;
++    }
++  }
++  await Promise.all(started);
++  if (failed) {
++    throw firstError;
++  }
++}
++
+ async function purgeModsImpl(
+   api: IExtensionApi,
+   activator: IDeploymentMethod,
+@@ -231,6 +255,14 @@
+   const modPaths = game.getModPaths(gameDiscovery.path);
+ 
+   const modTypes = Object.keys(modPaths).filter((typeId) => truthy(modPaths[typeId]));
++  let purgeErrorObserved = false;
++  let purgeError: unknown;
++  const preserveError = (error: unknown) => {
++    if (!purgeErrorObserved) {
++      purgeErrorObserved = true;
++      purgeError = error;
++    }
++  };
+ 
+   try {
+     await withActivationLock(async () => {
+@@ -273,8 +305,8 @@
+ 
+         onProgress(75, "Saving updated manifest");
+ 
+-        await Promise.all(
+-          modTypes.map((typeId) =>
++        await joinPurgeOperations(
++          modTypes.map((typeId) => () =>
+             saveActivation(
+               gameId,
+               typeId,
+@@ -287,38 +319,71 @@
+           ),
+         );
+       } catch (err: unknown) {
+-        if (lastDeployment !== undefined) {
+-          await Promise.all(
+-            modTypes.map((typeId) =>
+-              filterManifest(activator, modPaths[typeId], stagingPath, lastDeployment[typeId]).then(
+-                (files) =>
+-                  saveActivation(
+-                    gameId,
+-                    typeId,
+-                    state.app.instanceId,
+-                    modPaths[typeId],
+-                    stagingPath,
+-                    files,
+-                    activator.id,
+-                  ),
++        if (!(err instanceof ProcessCanceled)) {
++          preserveError(err);
++        }
++        let recoveryFailed = false;
++        let recoveryError: unknown;
++        try {
++          if (lastDeployment !== undefined) {
++            await joinPurgeOperations(
++              modTypes.map((typeId) => () =>
++                filterManifest(activator, modPaths[typeId], stagingPath, lastDeployment[typeId]).then(
++                  (files) =>
++                    saveActivation(
++                      gameId,
++                      typeId,
++                      state.app.instanceId,
++                      modPaths[typeId],
++                      stagingPath,
++                      files,
++                      activator.id,
++                    ),
++                ),
+               ),
+-            ),
+-          );
++            );
++          }
++        } catch (error: unknown) {
++          recoveryFailed = true;
++          recoveryError = error;
+         }
+         if (!(err instanceof ProcessCanceled)) {
+           purgeSucceeded = false;
+           throw err;
+         }
++        if (recoveryFailed) {
++          purgeSucceeded = false;
++          preserveError(recoveryError);
++          throw recoveryError;
++        }
+       } finally {
+-        onProgress(85, "Post purge events");
+-        await activator.postPurge();
+-        if (purgeSucceeded) {
+-          await api.emitAndAwait("did-purge", profile.id);
++        try {
++          onProgress(85, "Post purge events");
++          await activator.postPurge();
++          if (purgeSucceeded) {
++            await api.emitAndAwait("did-purge", profile.id);
++          }
++        } catch (error: unknown) {
++          preserveError(error);
++          throw purgeError;
+         }
+       }
+     }, true);
++  } catch (error: unknown) {
++    preserveError(error);
+   } finally {
+-    api.dismissNotification(notificationId);
+-    api.store.dispatch(stopActivity("mods", "purging"));
++    try {
++      api.dismissNotification(notificationId);
++    } catch (error: unknown) {
++      preserveError(error);
++    }
++    try {
++      api.store.dispatch(stopActivity("mods", "purging"));
++    } catch (error: unknown) {
++      preserveError(error);
++    }
++  }
++  if (purgeErrorObserved) {
++    throw purgeError;
+   }
+ }

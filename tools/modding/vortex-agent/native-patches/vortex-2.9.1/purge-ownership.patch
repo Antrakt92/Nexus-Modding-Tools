@@ -1,0 +1,51 @@
+--- a/src/renderer/src/extensions/mod_management/util/deploy.ts
++++ b/src/renderer/src/extensions/mod_management/util/deploy.ts
+@@ -1,4 +1,5 @@
++import InstallManager from "../InstallManager";
+ import { getErrorCode } from "@vortex/shared";
+ import { generate as shortid } from "shortid";
+ 
+ import { startActivity, stopActivity } from "../../../actions/session";
+@@ -104,8 +105,20 @@
+   api: IExtensionApi,
+   gameId?: string,
+   isUnmanaging?: boolean,
+ ): Promise<void> {
++  try {
++    return InstallManager.trackNativeLifecycleCall(() => purgeModsTracked(api, gameId, isUnmanaging));
++  } catch (error) {
++    return Promise.reject(error);
++  }
++}
++
++function purgeModsTracked(
++  api: IExtensionApi,
++  gameId?: string,
++  isUnmanaging?: boolean,
++): Promise<void> {
+   const state = api.store.getState();
+   let profile =
+     gameId !== undefined
+       ? profileById(state, lastActiveProfileForGame(state, gameId))
+@@ -388,8 +401,21 @@
+   }
+ }
+ 
+ export function purgeModsInPath(
++  api: IExtensionApi,
++  gameId: string,
++  typeId: string,
++  modPath: string,
++): Promise<void> {
++  try {
++    return InstallManager.trackNativeLifecycleCall(() => purgeModsInPathTracked(api, gameId, typeId, modPath));
++  } catch (error) {
++    return Promise.reject(error);
++  }
++}
++
++function purgeModsInPathTracked(
+   api: IExtensionApi,
+   gameId: string,
+   typeId: string,
+   modPath: string,
