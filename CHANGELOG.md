@@ -17,6 +17,11 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Prepare shared ownership for native remove/create handlers. Join removal branches
+  and cancellation, report partial failures, publish successful sibling records
+  and preserve the first error without repeating callbacks or uncertain batches.
+  These source patches are not installed in Vortex.
+
 - Prepare shared install-manager exclusion covering queued installs, simulation,
   dependencies and their completion tails. Native dispatch and registration
   remain disabled; this source patch is not an installed application update.

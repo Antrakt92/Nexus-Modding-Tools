@@ -1,0 +1,27 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/extensions/mod_management/eventHandlers.ts",
+  "originalSourceSHA256": "c45773ac110808acb3a3bf79bdcb1b3cab1ef498c6ddfdf7c29f11abb60733eb",
+  "prerequisitePatch": "lifecycle-owner-bridge.patch",
+  "prerequisitePatchSHA256": "667be8134de0ef515326dd3faec826a32f430412f5bc0946588d7e0cbe2558fa",
+  "inputSHA256": "c45773ac110808acb3a3bf79bdcb1b3cab1ef498c6ddfdf7c29f11abb60733eb",
+  "outputSHA256": "56e3d15ce63e4617ef5aeb475a5cdef41709c49d84352e43b9dca5168512b0e6",
+  "patchSHA256": "3e754806735e77d2522a5bc25c554ac9ebfef41b2be0679c83bf0cb0370b82b0",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "nativeTerminalGuarantee": false,
+  "globalIdleGuarantee": false,
+  "noReplacementGuarantee": false,
+  "ownerReservationGuarantee": false,
+  "installationPermit": false,
+  "limitations": [
+    "Exact-source preparation only; full application build/typecheck and installed renderer acceptance remain unverified.",
+    "No public dispatch, native registration, release or cleanup permit.",
+    "General deployment/purge/refresh, profile/Redux mutations and extension listener completion remain separate gates.",
+    "Failure/unknown startup retains shared ownership; no timeout or reset supplies reconciliation."
+  ]
+}

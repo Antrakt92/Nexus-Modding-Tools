@@ -1,0 +1,338 @@
+--- a/src/renderer/src/extensions/mod_management/eventHandlers.ts
++++ b/src/renderer/src/extensions/mod_management/eventHandlers.ts
+@@ -41,9 +41,9 @@
+ import { setDeploymentNecessary } from "./actions/deployment";
+ import { addMod, removeMod } from "./actions/mods";
+ import { setActivator } from "./actions/settings";
+ import { setInstallPath } from "./actions/settings";
+-import type InstallManager from "./InstallManager";
++import InstallManager from "./InstallManager";
+ import { currentActivator, installPath, installPathForGame } from "./selectors";
+ import { ensureStagingDirectory } from "./stagingDirectory";
+ import type { IDeploymentManifest } from "./types/IDeploymentManifest";
+ import type { IDeployedFile, IDeploymentMethod } from "./types/IDeploymentMethod";
+@@ -604,8 +604,39 @@
+     }
+   }
+ }
+ 
++// Join every already-started branch before propagating the first observed error.
++async function joinNativeLifecycle<T, R>(
++  items: T[],
++  action: (item: T, index: number) => R | PromiseLike<R>,
++): Promise<R[]> {
++  const values: R[] = new Array(items.length);
++  const started: Promise<void>[] = [];
++  let failed = false;
++  let firstError: unknown;
++  const fail = (error: unknown) => {
++    if (!failed) {
++      failed = true;
++      firstError = error;
++    }
++  };
++  items.forEach((item, index) => {
++    if (failed) return;
++    try {
++      started.push(Promise.resolve(action(item, index)).then(
++        (value) => { values[index] = value; },
++        fail,
++      ));
++    } catch (error) {
++      fail(error);
++    }
++  });
++  await Promise.all(started);
++  if (failed) throw firstError;
++  return values;
++}
++
+ async function undeploy(
+   api: IExtensionApi,
+   activators: IDeploymentMethod[],
+   gameMode: string,
+@@ -665,10 +696,10 @@
+ 
+   resetDeploymentFailures(api, gameMode);
+ 
+   try {
+-    await Promise.all(
+-      Object.keys(byModTypes).map(async (typeId) => {
++    await joinNativeLifecycle(
++      Object.keys(byModTypes), async (typeId) => {
+         const subdir = genSubDirFunc(game, getModType(typeId));
+         const deployPath = modPaths[typeId || ""];
+         if (deployPath === undefined) {
+           return;
+@@ -684,20 +715,24 @@
+             stagingPath,
+             activator,
+           );
+           await activator.prepare(deployPath, false, lastActivation, normalize);
+-          await Promise.all(
+-            byModTypes[typeId].map((mod) =>
++          await joinNativeLifecycle(
++            byModTypes[typeId], (mod) =>
+               activator.deactivate(
+                 path.join(stagingPath, mod.installationPath),
+                 subdir(mod),
+                 mod.installationPath,
+               ),
+-            ),
+           );
+         } catch (err) {
+           if (activator.cancel !== undefined) {
+-            activator.cancel(gameMode, deployPath, stagingPath);
++            try {
++              await activator.cancel(gameMode, deployPath, stagingPath);
++            } catch {
++              // Keep the original operation error; the lifecycle owner stays held.
++              log("warn", "Deployment cancellation failed during removal");
++            }
+           }
+           throw err;
+         }
+         const newActivation = await activator.finalize(gameMode, deployPath, stagingPath);
+@@ -709,9 +744,9 @@
+           stagingPath,
+           newActivation,
+           activator.id,
+         );
+-      }),
++      },
+     );
+     reportRecordedFailures(api, gameMode);
+   } finally {
+     log("debug", "done undeploying single mod", {
+@@ -773,13 +808,57 @@
+   modIds: string[],
+   callback?: (error: Error) => void,
+   options?: IRemoveModOptions,
+ ) {
++  let delivered = false;
++  let callbackFailed = false;
++  let callbackHadError = false;
++  const notify = callback === undefined ? undefined : (error: Error) => {
++    if (delivered) return;
++    delivered = true;
++    callbackHadError = error !== null && error !== undefined;
++    try { callback(error); } catch (notificationError) {
++      callbackFailed = true;
++      throw notificationError;
++    }
++  };
++  const report = (error: unknown) => {
++    try {
++      if (delivered && callbackHadError && !callbackFailed) return;
++      if (notify !== undefined && !delivered) {
++        notify(unknownToError(error));
++      } else if (!(error instanceof UserCanceled)) {
++        api.showErrorNotification("Native lifecycle operation failed", unknownToError(error), {
++          allowReport: !(error instanceof ProcessCanceled || error instanceof UserCanceled),
++        });
++      }
++    } catch {
++      // Notification failures cannot detach an unobserved rejected tail.
++      log("warn", "Native lifecycle failure notification failed");
++    }
++  };
++  try {
++    void InstallManager.trackNativeLifecycleCall(() => onRemoveModsTracked(api, activators, installManager, gameId, modIds, notify, options))
++      .catch(report);
++  } catch (error) {
++    report(error);
++  }
++}
++
++function onRemoveModsTracked(
++  api: IExtensionApi,
++  activators: IDeploymentMethod[],
++  installManager: InstallManager,
++  gameId: string,
++  modIds: string[],
++  callback?: (error: Error) => void,
++  options?: IRemoveModOptions,
++): Promise<void> | void {
+   const store = api.store;
+   const state: IState = store.getState();
+ 
+   if (gameId === undefined) {
+-    return callback(new ProcessCanceled("No game id assigned to remove mods from"));
++    return callback?.(new ProcessCanceled("No game id assigned to remove mods from"));
+   }
+ 
+   modIds = modIds.filter((modId) => truthy(modId));
+ 
+@@ -830,9 +909,11 @@
+   //   anyway
+ 
+   store.dispatch(startActivity("mods", `removing_${modIds[0]}`));
+ 
+-  api
++  let removalFailed = false;
++  let removalError: Error;
++  return api
+     .emitAndAwait(
+       "will-remove-mods",
+       gameId,
+       removeMods.map((mod) => mod.id),
+@@ -842,10 +923,15 @@
+     .then(() => {
+       let completedCount = 0;
+       const totalCount = removeMods.length;
+       let batched = [];
+-      return Promise.all(
+-        removeMods.map(async (mod: IMod) => {
++      const flushRemoved = () => {
++        const actions = batched;
++        batched = []; // Reserve before dispatch; never retry an uncertain batch.
++        if (actions.length > 0) batchDispatch(store, actions);
++      };
++      return joinNativeLifecycle(
++        removeMods, async (mod: IMod) => {
+           const forwardOptions = { ...(options || {}), modData: { ...mod } };
+           try {
+             await api.emitAndAwait("will-remove-mod", gameId, mod.id, forwardOptions);
+             if (truthy(mod) && truthy(mod.installationPath)) {
+@@ -868,10 +954,9 @@
+             installManager.markRecentRemoval(mod.installationPath);
+ 
+             batched.push(removeMod(gameId, mod.id));
+             if (batched.length >= 10 || completedCount + 1 === totalCount) {
+-              batchDispatch(store, batched);
+-              batched = [];
++              flushRemoved();
+             }
+ 
+             emitModRemoved(
+               api,
+@@ -888,10 +973,19 @@
+               game: gameId,
+               mod: mod.id,
+               error: getErrorMessageOrDefault(error),
+             });
++            throw error;
+           }
+-        }),
++        },
++      ).then(
++        () => flushRemoved(),
++        (error) => {
++          try { flushRemoved(); } catch {
++            log("warn", "Failed to publish completed removals after another failure");
++          }
++          throw error;
++        },
+       );
+     })
+     .then(() => {
+       if (callback !== undefined) {
+@@ -899,28 +993,24 @@
+       }
+     })
+     .catch((unknownErr) => {
+       const err = unknownToError(unknownErr);
+-      if (callback !== undefined) {
+-        callback(err);
+-      } else if (err instanceof TemporaryError) {
+-        api.showErrorNotification(
+-          "Failed to undeploy mod, please try again",
+-          getErrorMessageOrDefault(err),
+-          { allowReport: false },
+-        );
+-      } else if (err instanceof ProcessCanceled) {
+-        api.showErrorNotification("Failed to remove mod", err, {
+-          allowReport: false,
+-        });
+-      } else if (!(err instanceof UserCanceled)) {
+-        api.showErrorNotification("Failed to remove mod", err);
++      removalFailed = true;
++      removalError = err;
++      try { callback?.(err); } finally { throw err; }
++    })
++    .finally(async () => {
++      try {
++        log("debug", "done removing mods", { game: gameId, mods: modIds });
++        store.dispatch(stopActivity("mods", `removing_${modIds[0]}`));
++        await api.emitAndAwait("did-remove-mods", gameId, removeMods);
++      } catch (error) {
++        if (removalFailed) {
++          log("warn", "Removal finalization failed after an earlier operation error");
++          throw removalError;
++        }
++        throw error;
+       }
+-    })
+-    .finally(() => {
+-      log("debug", "done removing mods", { game: gameId, mods: modIds });
+-      store.dispatch(stopActivity("mods", `removing_${modIds[0]}`));
+-      return api.emitAndAwait("did-remove-mods", gameId, removeMods);
+     });
+ }
+ 
+ export function onRemoveMod(
+@@ -944,20 +1034,61 @@
+   gameId: string,
+   mod: IMod,
+   callback: (err: Error) => void,
+ ) {
++  let delivered = false;
++  let callbackFailed = false;
++  let callbackHadError = false;
++  const notify = callback === undefined ? undefined : (error: Error) => {
++    if (delivered) return;
++    delivered = true;
++    callbackHadError = error !== null && error !== undefined;
++    try { callback(error); } catch (notificationError) {
++      callbackFailed = true;
++      throw notificationError;
++    }
++  };
++  const report = (error: unknown) => {
++    try {
++      if (delivered && callbackHadError && !callbackFailed) return;
++      if (notify !== undefined && !delivered) {
++        notify(unknownToError(error));
++      } else if (!(error instanceof UserCanceled)) {
++        api.showErrorNotification("Native lifecycle operation failed", unknownToError(error), {
++          allowReport: !(error instanceof ProcessCanceled || error instanceof UserCanceled),
++        });
++      }
++    } catch {
++      // Notification failures cannot detach an unobserved rejected tail.
++      log("warn", "Native lifecycle failure notification failed");
++    }
++  };
++  try {
++    void InstallManager.trackNativeLifecycleCall(() => onAddModTracked(api, gameId, mod, notify))
++      .catch(report);
++  } catch (error) {
++    report(error);
++  }
++}
++
++function onAddModTracked(
++  api: IExtensionApi,
++  gameId: string,
++  mod: IMod,
++  callback: ((err: Error) => void) | undefined,
++): Promise<void> | void {
+   const store = api.store;
+   const state: IState = store.getState();
+ 
+   const installationPath = installPathForGame(state, gameId);
+ 
+   store.dispatch(addMod(gameId, mod));
+-  fs.ensureDirAsync(path.join(installationPath, mod.installationPath))
++  return fs.ensureDirAsync(path.join(installationPath, mod.installationPath))
+     .then(() => {
+-      callback(null);
++      callback?.(null);
+     })
+     .catch((err) => {
+-      callback(err);
++      try { callback?.(err); } finally { throw err; }
+     });
+ }
+ 
+ export async function onStartInstallDownload(
