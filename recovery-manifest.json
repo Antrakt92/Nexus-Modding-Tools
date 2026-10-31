@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "c2d52255286f60c5ef5a2057ae16c3069b1fb523f6f637544c6f26381a0133f2"
+      "sha256_lf": "affe0a541e8116eda151d45834d1be925db1ca1c3e77dfdea52dacd656187ab7"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -276,7 +276,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "0f2fe50ef50f07f3a6c4191463c5c7dab4eda451a1501ec2497b0c4448de0e2d"
+      "sha256_lf": "ee2005324e0e1d852e688a137fcaa4b6535c3e1d367815e5ef7db30217f2b0e9"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -296,7 +296,7 @@
     },
     {
       "path": "docs/NATIVE-CRASH-CUSTODY.md",
-      "sha256_lf": "635d22103404dde6bafa0759cb032ae7d0e5fc7394c1bdba70b5826e36ec5639"
+      "sha256_lf": "5ef9830a9494f7857d70c816b10793207eda721b045e78037ff006a4dd5cc28e"
     },
     {
       "path": "docs/NATIVE-DISPATCH-CONTRACT.md",
@@ -855,8 +855,16 @@
       "sha256_lf": "f4a705cf8c9c877046bc9aff4e61c6cc95d40ebec3af2fa009f14a159c1db97a"
     },
     {
+      "path": "tools/modding/vortex-agent/native-custody-intent-fixture.mjs",
+      "sha256_lf": "d5d145bdd91408c16cb7cbfbf78c8cdda186d71b023259c63c5ee80e8051cc5c"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-custody-intent-fixture.test.mjs",
+      "sha256_lf": "6f17a03102d95af7f182c8b17db5ef65311daf6881ae317900e5a9fefdd7cfb1"
+    },
+    {
       "path": "tools/modding/vortex-agent/native-custody-process.test.py",
-      "sha256_lf": "f13040c63c74670fcdbe011a2e3dfb8b9bdc2acecaab87c46f4b9828abb9301c"
+      "sha256_lf": "99e1e3100222cd0e2decdfbc04e5343824c580a770ba76d4c4aac1109bd063ea"
     },
     {
       "path": "tools/modding/vortex-agent/native-dispatch-contract.cjs",
