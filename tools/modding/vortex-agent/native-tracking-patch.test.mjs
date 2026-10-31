@@ -1,62 +1,16 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { stripTypeScriptTypes } from 'node:module';
 import path from 'node:path';
 import test from 'node:test';
 import vm from 'node:vm';
+import { hunks, applyExact, extractClassDeclaration } from './native-patch-test-fixture.mjs';
 
 const base = new URL('./native-patches/vortex-2.9.1/', import.meta.url);
 const manifest = JSON.parse(readFileSync(new URL('ordinary-tracking.json', base), 'utf8'));
 const patch = readFileSync(new URL('ordinary-tracking.patch', base), 'utf8');
 const hash = value => createHash('sha256').update(value).digest('hex');
 const upstreamPath = 'src/renderer/src/extensions/mod_management/InstallManager.ts';
-
-// Deliberately strict, single-file unified diff reader. No subprocess, fuzz,
-// filesystem output or relaxed input fingerprint is involved in applying it.
-function hunks(diff, file) {
-  const lines = diff.split('\n');
-  assert.equal(lines.pop(), '', 'patch must end with LF');
-  assert.equal(lines.shift(), `--- a/${file}`);
-  assert.equal(lines.shift(), `+++ b/${file}`);
-  const result = [];
-  while (lines.length) {
-    const match = /^@@ -(\d+),(\d+) \+(\d+),(\d+) @@$/.exec(lines.shift());
-    assert.ok(match, 'exact unified hunk header required');
-    const [oldStart, oldCount, newStart, newCount] = match.slice(1).map(Number);
-    const body = [];
-    while (lines.length && !lines[0].startsWith('@@ ')) {
-      const line = lines.shift();
-      assert.ok(/^[ +\-]/.test(line), 'invalid hunk line');
-      body.push(line);
-    }
-    assert.equal(body.filter(line => line[0] !== '+').length, oldCount);
-    assert.equal(body.filter(line => line[0] !== '-').length, newCount);
-    result.push({ oldStart, oldCount, newStart, newCount, body });
-  }
-  assert.ok(result.length);
-  return result;
-}
-
-function applyExact(source, diff, file) {
-  const input = source.split('\n');
-  assert.equal(input.pop(), '', 'input must end with LF');
-  const output = [];
-  let cursor = 0;
-  for (const hunk of hunks(diff, file)) {
-    const start = hunk.oldStart - 1;
-    assert.ok(start >= cursor && start <= input.length, 'overlap or range');
-    output.push(...input.slice(cursor, start));
-    cursor = start;
-    assert.equal(output.length, hunk.newStart - 1, 'new offset');
-    for (const line of hunk.body) {
-      if (line[0] !== '+') assert.equal(input[cursor++], line.slice(1), 'exact hunk context');
-      if (line[0] !== '-') output.push(line.slice(1));
-    }
-  }
-  output.push(...input.slice(cursor));
-  return output.join('\n') + '\n';
-}
 
 test('prepared patch pins exact upstream and grants no installed/native guarantees', () => {
   assert.equal(manifest.schema, 'native-source-patch/1');
@@ -107,11 +61,7 @@ function sources() {
 function fixture(source, ids = []) {
   // Transform types only, then evaluate only the original class declaration.
   // Imports, module-level code, constructor and installer operations never run.
-  const stripped = stripTypeScriptTypes(source, { mode: 'transform' });
-  const start = stripped.indexOf('class InstallManager {');
-  const end = stripped.lastIndexOf('export default InstallManager;');
-  assert.ok(start >= 0 && end > start);
-  let classSource = stripped.slice(start, end);
+  let classSource = extractClassDeclaration(source);
   const callbackAnchor = 'this.mActiveInstalls.delete(installId);\n        };';
   assert.equal(classSource.split(callbackAnchor).length, 2, 'unique test observation anchor');
   classSource = classSource.replace(callbackAnchor,
