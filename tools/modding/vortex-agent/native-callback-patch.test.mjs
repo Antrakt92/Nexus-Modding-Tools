@@ -50,7 +50,8 @@ test('callback patch requires exact tracking prerequisite and grants no native g
 // Only the preceding extraction/instruction pipeline is replaced with a supplied
 // resolved/rejected value. No constructor, filesystem API or native event runs.
 function fixture(source, {callback = () => {}, fail, eventFailure, diagnosticFailure = false,
-  successLogFailure = false, recentFailure = false, beforeTail} = {}) {
+  successLogFailure = false, recentFailure = false, beforeTail, missingCallback = false,
+  onFinish, onFailureLog} = {}) {
   const start = source.indexOf('const installationPromise = withTrackedActivity(');
   const filter = source.indexOf('return filterModInfo(fullInfo, destinationPath);', start);
   const success = source.indexOf('.then((modInfo) => {', filter);
@@ -60,7 +61,7 @@ function fixture(source, {callback = () => {}, fail, eventFailure, diagnosticFai
   const tail = source.slice(success, end); assert(suffix.test(tail));
   const pipeline = `installGameId='ownGame';modId='ownMod';destinationPath='ownDestination';installContext=__context;
           const installationPromise = Promise.resolve().then(__start)
-          ${tail.replace(suffix, ');\n\n          ')}`;
+          ${missingCallback ? ';\n\n          ' : tail.replace(suffix, ');\n\n          ')}`;
   let observed = source.slice(0, start) + pipeline + source.slice(end);
   const anchor = observed.indexOf('    if (archiveId != null)', observed.indexOf('const trackedCallback ='));
   assert(anchor > 0);
@@ -79,7 +80,7 @@ function fixture(source, {callback = () => {}, fail, eventFailure, diagnosticFai
     dismissNotification: () => {}, translate: value => value, genMd5Hash: async () => ({}),
     sendNotification: () => events.push('archive-error-notification'),
     events: {emit: name => {assert.equal(name, 'did-install-mod'); events.push(name); if (eventFailure) throw eventFailure; return true;}}};
-  const context = {beginBatch: () => {}, finishInstallCB: outcome => {context.mInstallOutcome = outcome;},
+  const context = {beginBatch: () => {}, finishInstallCB: outcome => {context.mInstallOutcome = outcome; onFinish?.(manager);},
     flushBatch: () => [], reportError: () => {}, stopIndicator: () => events.push('stopIndicator')};
   const globals = {path, shortid: () => 'own-id', Zip: class {}, SetupError, UserCanceled, ProcessCanceled,
     TemporaryError, ArchiveBrokenError, DataInvalid, InsufficientDiskSpace,
@@ -89,7 +90,8 @@ function fixture(source, {callback = () => {}, fail, eventFailure, diagnosticFai
     getErrorCode: () => undefined, getErrorMessageOrDefault: value => value?.message ?? 'ERROR',
     prettifyNodeErrorMessage: value => ({message: value.message, replace: {}}), setError: () => {},
     getSafe: (value, keys, fallback) => keys.reduce((v, k) => v?.[k], value) ?? fallback,
-    log: (...args) => {logs.push(args); if (successLogFailure && args[1] === 'Installation completed successfully'
+    log: (...args) => {logs.push(args); if (args[1] === 'Installation failed') onFailureLog?.(manager);
+      if (successLogFailure && args[1] === 'Installation completed successfully'
       || diagnosticFailure && ['InstallManager: completion callback threw', 'InstallManager: completion bookkeeping failed'].includes(args[1])) throw Error('own log failure');},
     _: {omit: value => value}, batchDispatch: () => {},
     setFileOverride: () => ({}), addModRule: () => ({}), dismissNotification: () => ({}),
@@ -205,6 +207,30 @@ integration('force-clean snapshot skips a row replaced by an earlier collected c
   assert.equal(secondCalls, 0); assert.equal(f.manager.mActiveInstalls.get('second'), foreign);
   assert.equal(f.manager.mActiveInstalls.size, 1);
 });
+integration('real missing-callback fallback preserves a replacement created by synchronous notification dispatch', async () => {
+  const f = fixture(sources().patched, {fail: 'archive'}), foreign = {installId: 'ordinary-own-id', modId: 'foreign'};
+  let dispatches = 0;
+  f.manager.mApi.store.dispatch = () => {dispatches++; f.manager.mActiveInstalls.set(foreign.installId, foreign);};
+  f.install(); assert.equal(await f.tasks[0], 'ownMod'); await tick();
+  assert.equal(dispatches, 1); assert.equal(f.calls.length, 0); assert.equal(f.context.mInstallOutcome, 'failed');
+  assert.equal(f.manager.mActiveInstalls.get(foreign.installId), foreign);
+});
+integration('real missing-callback fallback preserves a replacement created by synchronous finishInstallCB', async () => {
+  const foreign = {installId: 'ordinary-own-id', modId: 'foreign'};
+  const f = fixture(sources().patched, {missingCallback: true,
+    onFinish: manager => manager.mActiveInstalls.set(foreign.installId, foreign)});
+  f.install(); assert.equal(await f.tasks[0], 'ownMod'); await tick();
+  assert.equal(f.calls.length, 0); assert.equal(f.context.mInstallOutcome, 'success');
+  assert.equal(f.manager.mActiveInstalls.get(foreign.installId), foreign);
+});
+integration('late failure fallback preserves a replacement created by synchronous logging and rejects the old job', async () => {
+  const foreign = {installId: 'ordinary-own-id', modId: 'foreign'}, nativeError = Error('own late native failure');
+  const f = fixture(sources().patched, {missingCallback: true, fail: nativeError,
+    onFailureLog: manager => manager.mActiveInstalls.set(foreign.installId, foreign)});
+  f.install(); await assert.rejects(f.tasks[0], error => error === nativeError); await tick();
+  assert.equal(f.calls.length, 1); assert.equal(f.calls[0][0], nativeError);
+  assert.equal(f.manager.mActiveInstalls.get(foreign.installId), foreign);
+});
 integration('duplicate and reentrant completion invokes user callback once and preserves another job', async () => {
   const f = fixture(sources().patched, {callback: (err, id, manager) => {
     manager.__callbacks[0](Error('reentrant'), 'other');
@@ -233,7 +259,11 @@ integration('no synthetic success is added to existing missing-callback recovery
   const {input, patched} = sources();
   const fallback = source => source.slice(source.indexOf('// Handle the installationPromise completion/failure'),
     source.indexOf('  public installDependencies('));
-  assert.equal(fallback(patched).replaceAll('this.mActiveInstalls.get(installId) === installInfo', 'this.mActiveInstalls.has(installId)'), fallback(input));
+  const previousFallback = fallback(patched)
+    .replaceAll('                if (this.mActiveInstalls.get(installId) === installInfo) {\n                  this.mActiveInstalls.delete(installId);\n                }',
+      '                this.mActiveInstalls.delete(installId);')
+    .replaceAll('this.mActiveInstalls.get(installId) === installInfo', 'this.mActiveInstalls.has(installId)');
+  assert.equal(previousFallback, fallback(input));
   const promiseCallback = source => source.slice(source.indexOf('          const promiseCallback ='),
     source.indexOf('          let existingMod:'));
   assert.equal(promiseCallback(patched).replace('if (activeInstall === installInfo)', 'if (activeInstall)'), promiseCallback(input));

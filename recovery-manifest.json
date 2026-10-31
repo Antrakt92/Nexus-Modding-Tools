@@ -252,7 +252,7 @@
     },
     {
       "path": "docs/LICENSES.md",
-      "sha256_lf": "724088f6e9abb3f7e3ae4fb60ed664dbd44870cb20906cfc519a7d3372540fb6"
+      "sha256_lf": "6a88d991908f3391430e955c5b6194e8ce2cf32199c679e36dd454ec3962ae2b"
     },
     {
       "path": "docs/LIFECYCLE-IMPLEMENTATION.md",
@@ -276,7 +276,7 @@
     },
     {
       "path": "docs/NATIVE-CALLBACK-PATCH.md",
-      "sha256_lf": "9410bf3d5fd0fc59dfb1b1ea068494f8b8d4bae8f10ad47fc606e28702a13a29"
+      "sha256_lf": "23b9e8128d7f88e8d67ec050117b172e28b4911c323c13ff67aead8dd0ab6b85"
     },
     {
       "path": "docs/NATIVE-HELPER-PREPARATION.md",
@@ -740,7 +740,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/native-callback-patch.test.mjs",
-      "sha256_lf": "056b6301fc8d478e7d8df8f8f08d86dd37a996eda4fa4b3cafac115980cdead0"
+      "sha256_lf": "bf12b7fd8e1e06d9278f3eebad026c65fef3de6cc93d84e21b4442789e7e841a"
     },
     {
       "path": "tools/modding/vortex-agent/native-conflicts.test.mjs",
@@ -784,11 +784,11 @@
     },
     {
       "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/callback-order.json",
-      "sha256_lf": "4cf07ecebdb120cd491eca85e5d299452ab29a06e06cb734221fcf043b1ab395"
+      "sha256_lf": "12e8a90fa5634e373d849f8a96ac7ad0641d3ec7f927089703f64d057de15b3f"
     },
     {
       "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/callback-order.patch",
-      "sha256_lf": "1b71e5d6c03180f70efda2e9658759c784fd817fac709c054fc6503984cd6f02"
+      "sha256_lf": "76ec9e21c30e8bdd3ec4ae20190e14fab19b5665183f34a17fffb87b990c7784"
     },
     {
       "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/ordinary-tracking.json",

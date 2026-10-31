@@ -7,6 +7,7 @@ MIT-licensed replacement for the upstream Vortex MCP project.
 | Component | Upstream | License and retained material |
 | --- | --- | --- |
 | Vortex MCP source and adapted component | [Alan Tse / vortex-mcp](https://github.com/alandtse/vortex-mcp) | GPL-3.0-only; [upstream license](../dependencies/vortex-mcp/LICENSE.md), source, accepted-file pins and local-change record |
+| Prepared Vortex application source patches | [Nexus-Mods/Vortex, v2.9.1](https://github.com/Nexus-Mods/Vortex/tree/v2.9.1) | [Upstream GPL v3 license](https://github.com/Nexus-Mods/Vortex/blob/v2.9.1/LICENSE.md); exact commit, input, patch and output pins in each patch manifest; no application binary included |
 | Official Nexus uploader | [Nexus-Mods/upload-action](https://github.com/Nexus-Mods/upload-action) | MIT; complete committed source recovered from the pinned bundle in `source-lock.json`, including its upstream license |
 | Community Nexus CLI | [vadimtrifonov/nexusmods-cli](https://github.com/vadimtrifonov/nexusmods-cli) | MIT; exact source commit and executable asset pins retained; source bundle includes its upstream license |
 | MCP core/server/Node runtime packages | Model Context Protocol maintainers | Apache-2.0; full terms and attribution retained in runtime notices |
