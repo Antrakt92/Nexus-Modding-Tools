@@ -1,0 +1,245 @@
+--- a/src/renderer/src/util/transferPath.ts
++++ b/src/renderer/src/util/transferPath.ts
+@@ -111,2 +111,27 @@
+ 
++// Observe every returned operation before propagating the first failure.
++function joinPathOperations<T, R>(
++  items: T[],
++  action: (item: T, index: number) => R | PromiseLike<R>,
++): PromiseBB<R[]> {
++  const values: R[] = new Array(items.length);
++  let failed = false;
++  let firstError: unknown;
++  return PromiseBB.map(items, (item, index) => {
++    if (failed) return PromiseBB.resolve();
++    return PromiseBB.try(() => action(item, index)).then(
++      (value) => { values[index] = value; },
++      (error) => {
++        if (!failed) {
++          failed = true;
++          firstError = error;
++        }
++      },
++    );
++  }).then(() => {
++    if (failed) throw firstError;
++    return values;
++  });
++}
++
+ /**
+@@ -137,3 +162,10 @@
+ 
+-  let exception: Error;
++  let failed = false;
++  let firstError: unknown;
++  const fail = (error: unknown) => {
++    if (!failed) {
++      failed = true;
++      firstError = error;
++    }
++  };
+ 
+@@ -142,6 +174,4 @@
+ 
+-  let isCancelled: boolean = false;
+-
+   const showDialogCallback = () => {
+-    return !isCancelled;
++    return !failed;
+   };
+@@ -159,7 +189,4 @@
+     .then(() =>
+-      PromiseBB.join(
+-        fs.statAsync(source),
+-        fs.statAsync(dest),
+-        (statOld: fs.Stats, statNew: fs.Stats) => PromiseBB.resolve(statOld.dev === statNew.dev),
+-      ),
++      joinPathOperations([source, dest], (target) => fs.statAsync(target))
++        .then(([statOld, statNew]) => statOld.dev === statNew.dev),
+     )
+@@ -173,85 +200,79 @@
+         (entries: IEntry[]) => {
+-          if (moveDown) {
+-            // when moving files into a subdirectory from where they were, the
+-            // walk function may come across the directory that we're moving into.
+-            // obviously we don't want to copy _that_
+-            entries = entries.filter(
+-              (entry) => entry.filePath !== dest && !isChildPath(entry.filePath, dest, normalize),
+-            );
++          // The native walker ignores a returned promise. Keep its callback
++          // synchronous and non-throwing, and retain one immutable batch chain.
++          if (failed) return;
++          try {
++            if (moveDown) {
++              entries = entries.filter(
++                (entry) => entry.filePath !== dest && !isChildPath(entry.filePath, dest, normalize),
++              );
++            }
++            const directories = entries.filter((entry) => entry.isDirectory);
++            const files = entries.filter((entry) => !entry.isDirectory);
++            count += files.length;
++            copyPromise = copyPromise
++              .then(() => {
++                if (failed) return;
++                return PromiseBB.each(directories.sort(longestFirst), (entry) => {
++                  if (failed) return;
++                  if (moveDown && isChildPath(dest, entry.filePath)) return;
++                  removableDirectories.push(entry.filePath);
++                  const destPath = path.join(dest, path.relative(source, entry.filePath));
++                  return fs.ensureDirWritableAsync(destPath).catch((error) => {
++                    if (getErrorCode(error) !== "EEXIST") throw error;
++                  });
++                }).then(() => {});
++              })
++              .then(() => {
++                if (failed) return;
++                return joinPathOperations(files, (entry) => {
++                  if (failed) return;
++                  const sourcePath = entry.filePath;
++                  const destPath = path.join(dest, path.relative(source, entry.filePath));
++                  return PromiseBB.try(() => func(sourcePath, destPath, { showDialogCallback }))
++                    .catch((error) => {
++                      if (error instanceof UserCanceled) {
++                        fail(error);
++                        throw error;
++                      }
++                      const code = getErrorCode(error);
++                      if (code && ["EXDEV", "ENOTSUP", "EISDIR"].includes(code)) {
++                        if (failed) return;
++                        func = fs.copyAsync;
++                        return PromiseBB.try(() => func(sourcePath, destPath, { showDialogCallback }))
++                          .catch((fallbackError) => {
++                            fail(fallbackError);
++                            throw fallbackError;
++                          });
++                      }
++                      if (code !== "ENOENT") {
++                        fail(error);
++                        throw error;
++                      }
++                    })
++                    .then(() => {
++                      if (failed) return;
++                      ++completed;
++                      const perc = Math.floor((completed * 100) / count);
++                      if (perc !== lastPerc || Date.now() - lastProgress > 1000) {
++                        lastPerc = perc;
++                        lastProgress = Date.now();
++                        try {
++                          progress(sourcePath, destPath, perc);
++                        } catch (error) {
++                          fail(error);
++                          throw error;
++                        }
++                      }
++                    })
++                    .catch((error) => {
++                      fail(error);
++                      throw error;
++                    });
++                }).then(() => {});
++              })
++              .catch(fail);
++          } catch (error) {
++            fail(error);
+           }
+-
+-          const directories = entries.filter((entry) => entry.isDirectory);
+-          const files = entries.filter((entry) => !entry.isDirectory);
+-
+-          count += files.length;
+-
+-          copyPromise = isCancelled
+-            ? PromiseBB.resolve()
+-            : copyPromise
+-                .then(() =>
+-                  PromiseBB.each(directories.sort(longestFirst), (entry) => {
+-                    if (moveDown && isChildPath(dest, entry.filePath)) {
+-                      // this catches the case where we transfer .../mods to .../mods/foo/bar
+-                      // and we come across the path .../mods/foo. Wouldn't want to try to remove
+-                      // that, do we?
+-                      return PromiseBB.resolve();
+-                    }
+-                    removableDirectories.push(entry.filePath);
+-                    const destPath = path.join(dest, path.relative(source, entry.filePath));
+-                    return isCancelled
+-                      ? PromiseBB.reject(new UserCanceled())
+-                      : fs
+-                          .ensureDirWritableAsync(destPath)
+-                          .catch((err) =>
+-                            getErrorCode(err) === "EEXIST"
+-                              ? PromiseBB.resolve()
+-                              : PromiseBB.reject(err),
+-                          );
+-                  }).then(() => {}),
+-                )
+-                .then(() =>
+-                  PromiseBB.map(files, (entry) => {
+-                    const sourcePath = entry.filePath;
+-                    const destPath = path.join(dest, path.relative(source, entry.filePath));
+-
+-                    return func(sourcePath, destPath, { showDialogCallback })
+-                      .catch(UserCanceled, () => {
+-                        isCancelled = true;
+-                        copyPromise = PromiseBB.resolve();
+-                      })
+-                      .catch((err) => {
+-                        // EXDEV implies we tried to rename when source and destination are
+-                        //  not in fact on the same volume. This is what comparing the stat.dev
+-                        //  was supposed to prevent.
+-                        // ENOTSUP implies that we attempted to hardlink a file on a file system
+-                        //  which does not support it - copy instead.
+-                        // EISDIR is reported in node 12 if hardlinks aren't supported on the drive
+-                        //  come on...
+-                        const code = getErrorCode(err);
+-                        if (code && ["EXDEV", "ENOTSUP", "EISDIR"].indexOf(code) !== -1) {
+-                          func = fs.copyAsync;
+-                          return func(sourcePath, destPath, {
+-                            showDialogCallback,
+-                          });
+-                        } else if (code === "ENOENT") {
+-                          return PromiseBB.resolve();
+-                        } else {
+-                          return PromiseBB.reject(err);
+-                        }
+-                      })
+-                      .then(() => {
+-                        ++completed;
+-                        const perc = Math.floor((completed * 100) / count);
+-                        if (perc !== lastPerc || Date.now() - lastProgress > 1000) {
+-                          lastPerc = perc;
+-                          lastProgress = Date.now();
+-                          progress(sourcePath, destPath, perc);
+-                        }
+-                      });
+-                  })
+-                    .then(() => {})
+-                    .catch((err) => {
+-                      exception = unknownToError(err);
+-                    }),
+-                );
+         },
+@@ -260,7 +281,12 @@
+     )
+-    .then(() =>
+-      copyPromise.then(() =>
+-        exception !== undefined ? PromiseBB.reject(exception) : PromiseBB.resolve(),
+-      ),
+-    )
++    .then(
++      () => copyPromise,
++      (error) => {
++        fail(error);
++        return copyPromise;
++      },
++    )
++    .then(() => {
++      if (failed) throw firstError;
++    })
+     .then(() => {
+@@ -346,3 +372,3 @@
+   const downloadsTag = path.join(sourceDir, DOWNLOADS_DIR_TAG);
+-  return PromiseBB.all([removeTag(stagingFolderTag), removeTag(downloadsTag)]);
++  return joinPathOperations([stagingFolderTag, downloadsTag], removeTag).then(() => {});
+ }

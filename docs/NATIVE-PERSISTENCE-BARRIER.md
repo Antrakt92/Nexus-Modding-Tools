@@ -73,7 +73,7 @@ All patches are pinned to official `v2.9.1`, commit
 - `renderer-acknowledged-flush` supplies the snapshot helper and hold behavior.
 
 These artifacts live in `tools/modding/vortex-agent/native-patches/vortex-persistence-2.9.1`.
-They are separate from the published 21-patch mod-management source series.
+They are separate from the [mod-management/transfer source series](NATIVE-SOURCE-ASSEMBLY.md).
 Partial application is not a supported host update.
 
 With original pinned source fixtures, the local source-backed suites are:

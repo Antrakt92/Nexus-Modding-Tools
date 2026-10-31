@@ -1,0 +1,22 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/extensions/download_management/index.ts",
+  "originalSourceSHA256": "846c3160f7b4b7bba6d5277dffa3730b566de75fb91def275989d18f2983095f",
+  "inputSHA256": "846c3160f7b4b7bba6d5277dffa3730b566de75fb91def275989d18f2983095f",
+  "outputSHA256": "35cfc7088803515cbd363b73fb70dcd83e970b8791b931a95b89b87eacca1ec4",
+  "patchSHA256": "cea6745f10bfa18fb0042a624a24cae029dcc8fa57f579c81a6836fc2b330ee9",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "nativeTerminalGuarantee": false,
+  "globalIdleGuarantee": false,
+  "installationPermit": false,
+  "limitations": [
+    "Report-only interrupted download-folder transfer warning; ITestResult.automaticFix is optional.",
+    "Does not remove files, clear markers, send notifications, reserve ownership or authorize retry/reset.",
+    "No global pending-marker admission gate, physical cleanup proof, native installation or crash-recovery permit."
+  ]
+}

@@ -12,7 +12,7 @@
     {
       "path": "src/renderer/src/extensions/mod_management/index.ts",
       "originalSHA256": "d895c7614a692242e1921fa0d9fba1a52743bcd9aed5b1bcac9a539d393b2400",
-      "finalSHA256": "c12bdc5d08c95bafa18b44ee758a3d9661ade77ca692cd102d531261197ececd"
+      "finalSHA256": "535f41e8e52c16c3edbac56a8080af03725707340451323ebdf6a4648ade91ee"
     },
     {
       "path": "src/renderer/src/extensions/mod_management/InstallManager.ts",
@@ -33,6 +33,26 @@
       "path": "src/renderer/src/extensions/mod_management/util/deploy.ts",
       "originalSHA256": "f877affe50d147620e3fb5fb010e84410fac1192a678d76f3408643b88e4fae2",
       "finalSHA256": "e2f26f7d4388b2c15f5a6dbb9f5c14a8c01660b74a65106b23c032ec332c9d3a"
+    },
+    {
+      "path": "src/renderer/src/util/transferPath.ts",
+      "originalSHA256": "ee41c5b132fa207d00f746133e35d74f9a5811e0aa36a1ec86857b20a7a50513",
+      "finalSHA256": "0e1c29f43904b0f2aeefc9031de08c228149002f6f03a40a75e00b3b320abad8"
+    },
+    {
+      "path": "src/renderer/src/extensions/mod_management/views/Settings.tsx",
+      "originalSHA256": "9ffc845da22fccb25c664d4f49e11ce87bf1eb09c71a50b74ea7f5f7a6c522c2",
+      "finalSHA256": "a3ed01dedb4463d03e2ad448cafed2a5a6ddda4295d37651729ac29f4b68dddc"
+    },
+    {
+      "path": "src/renderer/src/extensions/download_management/index.ts",
+      "originalSHA256": "846c3160f7b4b7bba6d5277dffa3730b566de75fb91def275989d18f2983095f",
+      "finalSHA256": "35cfc7088803515cbd363b73fb70dcd83e970b8791b931a95b89b87eacca1ec4"
+    },
+    {
+      "path": "src/renderer/src/extensions/download_management/views/Settings.tsx",
+      "originalSHA256": "4a7d38409c276dc8f61f0a2a01e52de8bc47d7e9e1fadcc867812e2c417ee89d",
+      "finalSHA256": "a5d10fefc98115411930cab28b4345d681cb60b51ac16cbe3a44f08c2e24037a"
     }
   ],
   "patches": [
@@ -265,6 +285,83 @@
       "outputSHA256": "c12bdc5d08c95bafa18b44ee758a3d9661ade77ca692cd102d531261197ececd",
       "prerequisitePatch": "deployment-error-types.patch",
       "prerequisitePatchSHA256": "388ab9c0f84ff76105a05f31b61822f8189ab75293725caef4c1e1f8bf6252b3",
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "staging-transfer-join",
+      "path": "src/renderer/src/util/transferPath.ts",
+      "manifestSHA256": "5368bb0df01f046a68e62d8542dc122d74b34cf520ac7187ccfd0c57b2a49670",
+      "patchSHA256": "76d9dc361b4a063a3a915dea5e0d0a0669675770fa0594fcf8006d2efc47c45e",
+      "inputSHA256": "ee41c5b132fa207d00f746133e35d74f9a5811e0aa36a1ec86857b20a7a50513",
+      "outputSHA256": "f4886e06be46c9be06b4f6765bce038c10909688abc02b81849709a44e837a98",
+      "prerequisitePatch": null,
+      "prerequisitePatchSHA256": null,
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "staging-transfer-collision",
+      "path": "src/renderer/src/util/transferPath.ts",
+      "manifestSHA256": "601c2ae50bcc228abe840218691c89fe3f7a085c032128ade022eb113c9adb22",
+      "patchSHA256": "f506444715fc503fb7d3cb6faa44b4bdb6bdc5517982966ae26f4a9069f35cca",
+      "inputSHA256": "f4886e06be46c9be06b4f6765bce038c10909688abc02b81849709a44e837a98",
+      "outputSHA256": "6c22f7b8c4526b7e0beace5697548eec674aee8f666fd36d8981b56c9b38eeae",
+      "prerequisitePatch": "staging-transfer-join.patch",
+      "prerequisitePatchSHA256": "76d9dc361b4a063a3a915dea5e0d0a0669675770fa0594fcf8006d2efc47c45e",
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "staging-cleanup-error",
+      "path": "src/renderer/src/util/transferPath.ts",
+      "manifestSHA256": "6cdbd8f12491b94cff84ba660a41770c0f502e9a151aef07b79108c349cd2848",
+      "patchSHA256": "9623f563fe15af24b494b4d070c1a82b3fc3b5c9bcae65a9f1666b3b4a897265",
+      "inputSHA256": "6c22f7b8c4526b7e0beace5697548eec674aee8f666fd36d8981b56c9b38eeae",
+      "outputSHA256": "0e1c29f43904b0f2aeefc9031de08c228149002f6f03a40a75e00b3b320abad8",
+      "prerequisitePatch": "staging-transfer-collision.patch",
+      "prerequisitePatchSHA256": "f506444715fc503fb7d3cb6faa44b4bdb6bdc5517982966ae26f4a9069f35cca",
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "staging-settings-ownership",
+      "path": "src/renderer/src/extensions/mod_management/views/Settings.tsx",
+      "manifestSHA256": "6f82c0c81944c1196711ad1e0de796218030654e8eaa7a8dde98268afa1e26a7",
+      "patchSHA256": "f8d295a7aceaa5abdf7da18062077d4a03cc38c5f0fec27a102bd638ddf31408",
+      "inputSHA256": "9ffc845da22fccb25c664d4f49e11ce87bf1eb09c71a50b74ea7f5f7a6c522c2",
+      "outputSHA256": "a3ed01dedb4463d03e2ad448cafed2a5a6ddda4295d37651729ac29f4b68dddc",
+      "prerequisitePatch": null,
+      "prerequisitePatchSHA256": null,
+      "requiredManagerPatchSHA256": "dbcac46a4b9814ee33f899d6d8697e4d3aeb966c2b5f9bda931b12ae3064e9d7"
+    },
+    {
+      "name": "staging-pending-transfer-hold",
+      "path": "src/renderer/src/extensions/mod_management/index.ts",
+      "manifestSHA256": "ce94b479be3f82e2f33712510b72f95776375c5c101fdbe8c4d21112b09ffe77",
+      "patchSHA256": "c2f07109e654a3c9f2dec5b86518992e575bc95399b84536125262fe5a66b10b",
+      "inputSHA256": "c12bdc5d08c95bafa18b44ee758a3d9661ade77ca692cd102d531261197ececd",
+      "outputSHA256": "535f41e8e52c16c3edbac56a8080af03725707340451323ebdf6a4648ade91ee",
+      "prerequisitePatch": "startup-cleanup-ownership.patch",
+      "prerequisitePatchSHA256": "f4f98440a276e726f54cb4ead95fcad718a52fe50a68c809efc74d3569aee27f",
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "download-pending-transfer-hold",
+      "path": "src/renderer/src/extensions/download_management/index.ts",
+      "manifestSHA256": "c4a8e98828079a2927474a6a9d515e1ba06f7595c786c2e14b00ac2aa2006d06",
+      "patchSHA256": "cea6745f10bfa18fb0042a624a24cae029dcc8fa57f579c81a6836fc2b330ee9",
+      "inputSHA256": "846c3160f7b4b7bba6d5277dffa3730b566de75fb91def275989d18f2983095f",
+      "outputSHA256": "35cfc7088803515cbd363b73fb70dcd83e970b8791b931a95b89b87eacca1ec4",
+      "prerequisitePatch": null,
+      "prerequisitePatchSHA256": null,
+      "requiredManagerPatchSHA256": null
+    },
+    {
+      "name": "download-transfer-cleanup-hold",
+      "path": "src/renderer/src/extensions/download_management/views/Settings.tsx",
+      "manifestSHA256": "b3c878f87e768633877abee8d60132c7556de15d890600a4754efa2cdaebb11f",
+      "patchSHA256": "ea32c6feeb28dae5264933757e1c175d5716bfe3c2ce9821b3e7e7f86c7fe14c",
+      "inputSHA256": "4a7d38409c276dc8f61f0a2a01e52de8bc47d7e9e1fadcc867812e2c417ee89d",
+      "outputSHA256": "a5d10fefc98115411930cab28b4345d681cb60b51ac16cbe3a44f08c2e24037a",
+      "prerequisitePatch": null,
+      "prerequisitePatchSHA256": null,
       "requiredManagerPatchSHA256": null
     }
   ]

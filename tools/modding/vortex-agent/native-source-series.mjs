@@ -9,7 +9,7 @@ import {applyExact} from './native-patch-test-fixture.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PACKET = path.join(HERE, 'native-patches/vortex-2.9.1');
-const SERIES_SHA256 = 'cece9f4851a18672594c61b74b76eb2909ea5d7261396c234f410d75a9c4dad1';
+const SERIES_SHA256 = '10bdad2475070b457c7c53783aa19aeeead1c4197b98c9ae26aa633819e6eb65';
 export const NATIVE_SOURCE_PATHS = Object.freeze([
   'src/renderer/src/extensions/mod_management/eventHandlers.ts',
   'src/renderer/src/extensions/mod_management/index.ts',
@@ -17,6 +17,10 @@ export const NATIVE_SOURCE_PATHS = Object.freeze([
   'src/renderer/src/extensions/mod_management/modActivation.ts',
   'src/renderer/src/extensions/mod_management/util/activationStore.ts',
   'src/renderer/src/extensions/mod_management/util/deploy.ts',
+  'src/renderer/src/util/transferPath.ts',
+  'src/renderer/src/extensions/mod_management/views/Settings.tsx',
+  'src/renderer/src/extensions/download_management/index.ts',
+  'src/renderer/src/extensions/download_management/views/Settings.tsx',
 ]);
 export const NATIVE_SOURCE_LIMITS = Object.freeze({fileBytes: 2*1024*1024, totalBytes: 8*1024*1024});
 const fail = code => {throw Error('NATIVE_SOURCE_SERIES_' + code);};
@@ -90,8 +94,8 @@ function readPacket() {
   const raw = read(path.join(HERE, 'native-source-series.json'), 64*1024);
   need(sha(raw) === SERIES_SHA256, 'SERIES');
   const series = strict.parseStrictJSON(raw, {maxBytes: 64*1024, maxDepth: 8, maxTokens: 8000});
-  need(series.schema === 'native-source-series/1' && series.files.length === 6
-    && series.patches.length === 21 && exact(Object.fromEntries(series.files.map(row => [row.path, true])), NATIVE_SOURCE_PATHS), 'SERIES');
+  need(series.schema === 'native-source-series/1' && series.files.length === 10
+    && series.patches.length === 28 && exact(Object.fromEntries(series.files.map(row => [row.path, true])), NATIVE_SOURCE_PATHS), 'SERIES');
   const names = series.patches.flatMap(row => [row.name+'.json', row.name+'.patch']).sort();
   const inventory = () => {
     const directory = fs.opendirSync(PACKET), actual = [];

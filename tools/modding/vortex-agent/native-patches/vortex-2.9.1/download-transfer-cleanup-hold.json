@@ -1,0 +1,27 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/extensions/download_management/views/Settings.tsx",
+  "originalSourceSHA256": "4a7d38409c276dc8f61f0a2a01e52de8bc47d7e9e1fadcc867812e2c417ee89d",
+  "inputSHA256": "4a7d38409c276dc8f61f0a2a01e52de8bc47d7e9e1fadcc867812e2c417ee89d",
+  "outputSHA256": "a5d10fefc98115411930cab28b4345d681cb60b51ac16cbe3a44f08c2e24037a",
+  "patchSHA256": "ea32c6feeb28dae5264933757e1c175d5716bfe3c2ce9821b3e7e7f86c7fe14c",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "nativeTerminalGuarantee": false,
+  "globalIdleGuarantee": false,
+  "noReplacementGuarantee": false,
+  "ownerReservationGuarantee": false,
+  "installationPermit": false,
+  "testSourceEnvironment": "VORTEX_NATIVE_DOWNLOAD_SETTINGS_SOURCE",
+  "limitations": [
+    "Exact source compatibility safeguard only; full renderer build/installed acceptance remain separate.",
+    "Failed/canceled transfers retain the partial/preexisting target and pending marker; only UI busy state is reset.",
+    "Ordinary success and copy-complete source-cleanup-failure handling keep existing path/marker semantics.",
+    "Whole Downloads Settings ownership, context drift, telemetry error precedence and all other downloads mutations remain separate gates.",
+    "No automatic cleanup permission, physical path ownership, native install or crash-recovery authority."
+  ]
+}

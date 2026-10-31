@@ -1,0 +1,24 @@
+--- a/src/renderer/src/util/transferPath.test.ts
++++ b/src/renderer/src/util/transferPath.test.ts
+@@ -42,2 +42,21 @@
+ vi.mock("fs", () => ({
++  constants: { COPYFILE_EXCL: 1 },
++  copyFile: (src: string, dest: string, flags: number, callback: (error: Error | null) => void) => {
++    if (flags !== 1) throw new Error("Exclusive copy flag required");
++    queueMicrotask(() => {
++      let error: Error | null = null;
++      try {
++        if (getFake(dest) !== undefined) {
++          throw Object.assign(new Error("Destination exists"), { code: "EEXIST" });
++        }
++        const info = getFake(src);
++        if (info === undefined) throw Object.assign(new Error("Source missing"), { code: "ENOENT" });
++        if (info.fail !== undefined) throw info.fail;
++        insertFake(dest, { ...info, type: "copied" });
++      } catch (value) {
++        error = value as Error;
++      }
++      callback(error);
++    });
++  },
+   statfsSync: (checkPath: string) => {

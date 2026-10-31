@@ -1,0 +1,412 @@
+--- a/src/renderer/src/extensions/mod_management/views/Settings.tsx
++++ b/src/renderer/src/extensions/mod_management/views/Settings.tsx
+@@ -54,11 +54,12 @@
+ import opn from "../../../util/opn";
+ import * as selectors from "../../../util/selectors";
+ import { getSafe } from "../../../util/storeHelper";
+-import { cleanFailedTransfer, testPathTransfer, transferPath } from "../../../util/transferPath";
++import { testPathTransfer, transferPath } from "../../../util/transferPath";
+ import { ciEqual, isChildPath, isPathValid, isReservedDirectory } from "../../../util/util";
+ import { currentGame, currentGameDiscovery } from "../../gamemode_management/selectors";
+ import type { IDiscoveryResult } from "../../gamemode_management/types/IDiscoveryResult";
+ import type { IGameStored } from "../../gamemode_management/types/IGameStored";
++import InstallManager from "../InstallManager";
+ import { setDeploymentNecessary } from "../actions/deployment";
+ import { setActivator, setInstallPath, setInstallPathMode } from "../actions/settings";
+ import { setTransferMods } from "../actions/transactions";
+@@ -117,6 +118,18 @@
+   currentActivator: string;
+   changingActivator: boolean;
+   appPath: string;
++}
++
++interface IStagingPathOperation {
++  readonly gameMode: string;
++  readonly oldSetting: string | undefined;
++  readonly newSetting: string;
++  readonly oldInstallPath: string;
++  readonly newInstallPath: string;
++  readonly gamePath: string | undefined;
++  readonly instanceId: string;
++  readonly activeProfileId: string | undefined;
++  readonly configuredActivator: string | undefined;
+ }
+ 
+ type IProps = IBaseProps & IActionProps & IConnectedProps;
+@@ -308,10 +321,28 @@
+     );
+   }
+ 
+-  private transferPath() {
+-    const { t, gameMode, onSetTransfer, onShowDialog } = this.props;
+-    const oldPath = getInstallPath(this.props.installPath, gameMode);
+-    const newPath = getInstallPath(this.state.installPath, gameMode);
++  private assertStagingOperation(operation: IStagingPathOperation, committed: boolean = false): void {
++    const state = this.context.api.getState();
++    const setting = state.settings.mods.installPath[operation.gameMode];
++    const profile = state.persistent.profiles[operation.activeProfileId];
++    if (selectors.activeGameId(state) !== operation.gameMode
++        || selectors.activeProfileId(state) !== operation.activeProfileId
++        || state.settings.mods.activator?.[operation.gameMode] !== operation.configuredActivator
++        || this.props.currentActivator !== operation.configuredActivator
++        || (profile !== undefined && profile.gameId !== operation.gameMode)
++        || setting !== (committed ? operation.newSetting : operation.oldSetting)
++        || getInstallPath(setting, operation.gameMode) !== (committed
++          ? operation.newInstallPath : operation.oldInstallPath)
++        || state.settings.gameMode.discovered[operation.gameMode]?.path !== operation.gamePath
++        || state.app.instanceId !== operation.instanceId) {
++      throw new ProcessCanceled("Staging transfer context changed");
++    }
++  }
++
++  private transferPath(operation: IStagingPathOperation) {
++    const { t, onSetTransfer, onShowDialog } = this.props;
++    const { gameMode, oldInstallPath: oldPath, newInstallPath: newPath } = operation;
++    this.assertStagingOperation(operation);
+ 
+     return withTrackedActivity(
+       "vortex.mod-management",
+@@ -339,6 +370,7 @@
+               : Promise.reject(err);
+           })
+           .then((stats) => {
++            this.assertStagingOperation(operation);
+             const queryReset =
+               stats !== undefined
+                 ? Promise.resolve(false)
+@@ -367,7 +399,9 @@
+                   );
+ 
+             return queryReset.then((didReset) => {
++              this.assertStagingOperation(operation);
+               onSetTransfer(gameMode, newPath);
++              this.assertStagingOperation(operation);
+               return transferPath(
+                 oldPath,
+                 newPath,
+@@ -395,11 +429,12 @@
+     );
+   }
+ 
+-  private applyPaths = (normalize: (input: string) => string) => {
+-    const { t, discovery, gameMode, onSetInstallPath, onShowDialog, onShowError, onSetTransfer } =
+-      this.props;
+-
+-    if (discovery === undefined || discovery.path === undefined) {
++  private applyPaths = (normalize: (input: string) => string, operation: IStagingPathOperation, markReported: () => void) => {
++    const { t, onSetInstallPath, onShowDialog, onShowError, onSetTransfer } = this.props;
++    const { gameMode, oldInstallPath, newInstallPath, newSetting, gamePath } = operation;
++    this.assertStagingOperation(operation);
++
++    if (gamePath === undefined) {
+       return onShowDialog(
+         "error",
+         "Not discovered",
+@@ -412,8 +447,6 @@
+       );
+     }
+ 
+-    const newInstallPath: string = getInstallPath(this.state.installPath, gameMode);
+-    const oldInstallPath: string = getInstallPath(this.props.installPath, gameMode);
+     log("info", "changing staging directory", {
+       from: oldInstallPath,
+       to: newInstallPath,
+@@ -435,6 +468,7 @@
+         );
+       }
+     } catch (err) {
++      if (getErrorCode(err) !== "ENOENT") throw err;
+       // new directory doesn't exist. good
+     }
+ 
+@@ -467,7 +501,7 @@
+       );
+     }
+ 
+-    if (isChildPath(newInstallPath, discovery.path, normalize)) {
++    if (isChildPath(newInstallPath, gamePath, normalize)) {
+       return onShowDialog(
+         "error",
+         "Invalid path selected",
+@@ -533,39 +567,60 @@
+ 
+     this.nextState.progress = 0;
+     this.nextState.busy = t("Calculating required disk space");
+-    let deleteOldDestination = true;
++    let primaryFailed = false;
++    let primaryError: unknown;
++    let committed = false;
+     return testPathTransfer(oldInstallPath, newInstallPath)
+-      .then(() => fs.ensureDirAsync(newInstallPath))
+-      .then(() => this.checkTargetEmpty(oldInstallPath, newInstallPath))
+       .then(() => {
++        this.assertStagingOperation(operation);
++        return fs.ensureDirAsync(newInstallPath);
++      })
++      .then(() => {
++        this.assertStagingOperation(operation);
++        return this.checkTargetEmpty(oldInstallPath, newInstallPath);
++      })
++      .then(() => {
++        this.assertStagingOperation(operation);
+         this.nextState.busy = t("Purging previous deployment");
+         return doPurge();
+       })
+       .then(() => {
++        this.assertStagingOperation(operation);
+         if (oldInstallPath !== newInstallPath) {
+           this.nextState.busy = t("Moving mod staging folder");
+-          return this.transferPath();
++          return this.transferPath(operation);
+         } else {
+           return Promise.resolve();
+         }
+       })
+       .then(() => {
++        this.assertStagingOperation(operation);
+         onSetTransfer(gameMode, undefined);
+-        onSetInstallPath(gameMode, this.state.installPath);
++        this.assertStagingOperation(operation);
++        onSetInstallPath(gameMode, newSetting);
++        committed = true;
++        this.assertStagingOperation(operation, committed);
+       })
+-      .catch((err) => {
++      .catch(async (err) => {
++        primaryFailed = true;
++        primaryError = err;
++        try {
+         if (err instanceof TemporaryError) {
+           onShowError("Failed to move directories, please try again", err, false);
++          markReported();
+           return;
+         }
+         if (err instanceof UserCanceled) {
+           return;
+         }
+         if (err instanceof CleanupFailedException) {
+-          deleteOldDestination = false;
++          this.assertStagingOperation(operation);
+           onSetTransfer(gameMode, undefined);
+-          onSetInstallPath(gameMode, this.state.installPath);
+-          onShowDialog(
++          this.assertStagingOperation(operation);
++          onSetInstallPath(gameMode, newSetting);
++          committed = true;
++          this.assertStagingOperation(operation, committed);
++          await onShowDialog(
+             "info",
+             "Cleanup failed",
+             {
+@@ -580,13 +635,16 @@
+             [{ label: "Close", action: () => Promise.resolve() }],
+           );
+ 
++          markReported();
++          this.assertStagingOperation(operation, committed);
+           if (!(err.errorObject instanceof UserCanceled)) {
+             this.context.api.showErrorNotification("Clean-up failed", err.errorObject);
+           }
+           return;
+         }
+         if (err instanceof InsufficientDiskSpace) {
+-          notEnoughDiskSpace();
++          await notEnoughDiskSpace();
++          markReported();
+           return;
+         }
+         if (err instanceof UnsupportedOperatingSystem) {
+@@ -595,6 +653,7 @@
+             "This functionality is currently unavailable for your operating system!",
+             false,
+           );
++          markReported();
+           return;
+         }
+         if (err instanceof NotFound) {
+@@ -604,6 +663,7 @@
+               "destination",
+             false,
+           );
++          markReported();
+           return;
+         }
+         if (err !== null) {
+@@ -613,8 +673,10 @@
+               "You need to select directories that the current user account can write to!",
+               false,
+             );
++            markReported();
+           } else if (err.code === "EINVAL") {
+             onShowError("Invalid path", err.message, false);
++            markReported();
+           } else if (err.code === "EIO") {
+             // Input/Output file operations have been interrupted.
+             //  this is not a bug in Vortex but rather a hardware/networking
+@@ -634,6 +696,7 @@
+               false,
+               true,
+             );
++            markReported();
+           } else if (err.code === "UNKNOWN" && err?.["nativeCode"] === 1392) {
+             // The file or directory is corrupted and unreadable.
+             onShowError(
+@@ -647,45 +710,27 @@
+               ),
+               false,
+             );
++            markReported();
+           } else {
+             onShowError("Failed to move directories", err, !(err instanceof ProcessCanceled));
++            markReported();
+           }
+         }
++        } finally { throw err; }
+       })
+       .finally(() => {
+-        const state = this.context.api.store.getState();
+-        // Any transfers would've completed at this point.
+-        //  Check if we still have the transfer state populated,
+-        //  if it is - that means that the user has cancelled the transfer,
+-        //  we need to cleanup.
+-        const pendingTransfer: string[] = ["persistent", "transactions", "transfer", gameMode];
+-        if (getSafe(state, pendingTransfer, undefined) !== undefined && deleteOldDestination) {
+-          return cleanFailedTransfer(newInstallPath)
+-            .then(() => {
+-              onSetTransfer(gameMode, undefined);
+-              this.nextState.busy = undefined;
+-            })
+-            .catch((err) => {
+-              this.nextState.busy = undefined;
+-              if (err instanceof UserCanceled) {
+-                return;
+-              }
+-              if (err.code === "ENOENT") {
+-                // Folder is already gone, that's fine.
+-                onSetTransfer(gameMode, undefined);
+-              } else if (err.code === "EPERM") {
+-                onShowError(
+-                  "Destination folder is not writable",
+-                  "Vortex is unable to clean up " +
+-                    "the destination folder due to a permissions issue.",
+-                  false,
+-                );
+-              } else {
+-                onShowError("Transfer clean-up failed", err, true);
+-              }
+-            });
+-        } else {
++        try {
+           this.nextState.busy = undefined;
++          this.assertStagingOperation(operation, committed);
++          // A merge target may contain pre-existing data. Keep partial output and
++          // its transaction marker; whole-directory removal needs separate authority.
++          const state = this.context.api.getState();
++          if (getSafe(state, ["persistent", "transactions", "transfer", gameMode], undefined) !== undefined) {
++            throw new ProcessCanceled("Staging transfer requires reconciliation");
++          }
++        } catch (error) {
++          if (primaryFailed) throw primaryError;
++          throw error;
+         }
+       });
+   };
+@@ -721,12 +766,10 @@
+         });
+     }
+     // ensure the destination directories are empty
+-    return queue.then(
+-      () =>
+-        new Promise((resolve, reject) => {
++    return queue.then(async () => {
+           if (fileCount > 0 && tagInstance !== this.props.instanceId) {
+             if (tagInstance !== undefined) {
+-              return this.props.onShowDialog(
++              const result = await this.props.onShowDialog(
+                 "question",
+                 "Confirm",
+                 {
+@@ -742,14 +785,14 @@
+                 [
+                   {
+                     label: "Cancel",
+-                    action: () => reject(new UserCanceled()),
+                     default: true,
+                   },
+-                  { label: "Continue", action: () => resolve(undefined) },
++                  { label: "Continue" },
+                 ],
+               );
++              if (result.action !== "Continue") throw new UserCanceled();
+             } else {
+-              this.props.onShowDialog(
++              await this.props.onShowDialog(
+                 "info",
+                 "Invalid Destination",
+                 {
+@@ -758,17 +801,14 @@
+                 [
+                   {
+                     label: "Ok",
+-                    action: () => reject(new UserCanceled()),
+                     default: true,
+                   },
+                 ],
+               );
++              throw new UserCanceled();
+             }
+-          } else {
+-            resolve(undefined);
+           }
+-        }),
+-    );
++    });
+   }
+ 
+   private purgeActivation(): Promise<void> {
+@@ -1032,11 +1072,40 @@
+     }
+   };
+ 
+-  private onApply = async () => {
+-    const normalize = await getNormalizeFunc(
+-      getInstallPath(this.state.installPath, this.props.gameMode),
+-    );
+-    this.applyPaths(normalize);
++  private onApply = (): void => {
++    let reported = false;
++    const report = (error: unknown) => {
++      if (reported || error instanceof UserCanceled) return;
++      reported = true;
++      try {
++        this.props.onShowError("Failed to move directories", unknownToError(error), !(error instanceof ProcessCanceled));
++      } catch {
++        try { log("warn", "Staging transfer failure could not be reported"); } catch { /* Reporting only. */ }
++      }
++    };
++    try {
++      void InstallManager.trackNativeLifecycleCall(async () => {
++        const gameMode = this.props.gameMode;
++        const oldSetting = this.props.installPath;
++        const newSetting = this.state.installPath;
++        const state = this.context.api.getState();
++        const activeProfileId = selectors.activeProfileId(state);
++        const configuredActivator = state.settings.mods.activator?.[gameMode];
++        const operation: IStagingPathOperation = Object.freeze({
++          gameMode, oldSetting, newSetting, activeProfileId, configuredActivator,
++          oldInstallPath: getInstallPath(oldSetting, gameMode),
++          newInstallPath: getInstallPath(newSetting, gameMode),
++          gamePath: this.props.discovery?.path,
++          instanceId: this.props.instanceId,
++        });
++        this.assertStagingOperation(operation);
++        const normalize = await getNormalizeFunc(operation.newInstallPath);
++        this.assertStagingOperation(operation);
++        return this.applyPaths(normalize, operation, () => { reported = true; });
++      }).catch(report);
++    } catch (error) {
++      report(error);
++    }
+   };
+ 
+   private suggestPath = async () => {

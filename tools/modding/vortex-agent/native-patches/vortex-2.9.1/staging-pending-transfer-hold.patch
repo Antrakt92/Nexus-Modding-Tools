@@ -1,0 +1,33 @@
+--- a/src/renderer/src/extensions/mod_management/index.ts
++++ b/src/renderer/src/extensions/mod_management/index.ts
+@@ -1907,27 +1907,10 @@
+     description: {
+       short: "Folder transfer was interrupted",
+       long:
+-        "An attempt to move the staging folder was interrupted. You should let " +
+-        "Vortex clean up now, otherwise you may be left with unnecessary copies of files.",
++        "An attempt to move the staging folder was interrupted. Review the source and " +
++        "destination folders before changing or removing files. Vortex has kept the " +
++        "transfer marker; this warning does not automatically clean up either folder.",
+     },
+-    automaticFix: () =>
+-      new Promise<void>((fixResolve, fixReject) => {
+-        return fs
+-          .removeAsync(transferDestination)
+-          .then(() => {
+-            api.store.dispatch(setTransferMods(gameMode, undefined));
+-            fixResolve();
+-          })
+-          .catch((err) => {
+-            if (err.code === "ENOENT") {
+-              // Destination is already gone, that's fine.
+-              api.store.dispatch(setTransferMods(gameMode, undefined));
+-              fixResolve();
+-            } else {
+-              fixReject(err);
+-            }
+-          });
+-      }),
+   };
+ 
+   return Promise.resolve(result);

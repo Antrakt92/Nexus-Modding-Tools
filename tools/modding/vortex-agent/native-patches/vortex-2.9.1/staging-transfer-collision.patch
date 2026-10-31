@@ -1,0 +1,69 @@
+--- a/src/renderer/src/util/transferPath.ts
++++ b/src/renderer/src/util/transferPath.ts
+@@ -149,3 +149,3 @@
+ ): PromiseBB<void> {
+-  let func = fs.copyAsync;
++  let func = copyFileExclusive;
+ 
+@@ -171,2 +171,39 @@
+ 
++  // Refuse an existing destination in the actual copy operation, not a stat precheck.
++  // This does not reserve ancestors or supply a physical ownership permit.
++  function copyFileExclusive(
++    source: string,
++    dest: string,
++    options?: { showDialogCallback?: () => boolean },
++  ): PromiseBB<void> {
++    const check = () => {
++      if (options?.showDialogCallback?.() === false) throw new UserCanceled();
++    };
++    return PromiseBB.try(check)
++      .then(() => {
++        check();
++        return fs.ensureDirAsync(path.dirname(dest));
++      })
++      .then(() => {
++        check();
++        return new PromiseBB<void>((resolve, reject) => {
++          try {
++            nodeFs.copyFile(source, dest, nodeFs.constants.COPYFILE_EXCL, (error) => {
++              if (error) {
++                fail(error);
++                reject(error);
++              } else resolve();
++            });
++          } catch (error) {
++            fail(error);
++            reject(error);
++          }
++        });
++      }).catch((error) => {
++        fail(error);
++        throw error;
++      });
++  }
++
++
+   let normalize: Normalize;
+@@ -193,3 +230,3 @@
+     .then((sameVolume: boolean) => {
+-      func = sameVolume ? linkFile : fs.copyAsync;
++      func = sameVolume ? linkFile : copyFileExclusive;
+       return PromiseBB.resolve();
+@@ -240,3 +277,3 @@
+                         if (failed) return;
+-                        func = fs.copyAsync;
++                        func = copyFileExclusive;
+                         return PromiseBB.try(() => func(sourcePath, destPath, { showDialogCallback }))
+@@ -388,8 +425,6 @@
+ function linkFile(source: string, dest: string, options?: fs.ILinkFileOptions): PromiseBB<void> {
++  if (options?.showDialogCallback?.() === false) return PromiseBB.reject(new UserCanceled());
+   return fs.ensureDirAsync(path.dirname(dest)).then(() => {
+-    return fs
+-      .linkAsync(source, dest, options)
+-      .catch((err) =>
+-        getErrorCode(err) !== "EEXIST" ? PromiseBB.reject(err) : PromiseBB.resolve(),
+-      );
++    if (options?.showDialogCallback?.() === false) throw new UserCanceled();
++    return fs.linkAsync(source, dest, options);
+   });

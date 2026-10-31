@@ -1,0 +1,20 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/util/transferPath.test.ts",
+  "originalSourceSHA256": "9f82b7a7fd3f4e47272a834b4b06ac0cc396b4daa774744ec2f4da8323abb059",
+  "inputSHA256": "9f82b7a7fd3f4e47272a834b4b06ac0cc396b4daa774744ec2f4da8323abb059",
+  "outputSHA256": "df2b173633aecf658a70423590c123e0d83175a594e0620d4a02c7cb514de472",
+  "patchSHA256": "49679b263b034f52688c00e1e2424c9df88d56313fb27b63cf9021bb495876f0",
+  "testOnly": true,
+  "testBodiesAndExpectationsUnchanged": true,
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "limitations": [
+    "Extends the upstream in-memory fs mock for the new Node copyFile callback API and exclusive flag.",
+    "Not part of the runtime source packet; no native filesystem or installation acceptance."
+  ]
+}

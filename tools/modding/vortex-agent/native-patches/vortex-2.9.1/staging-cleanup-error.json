@@ -1,0 +1,28 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/util/transferPath.ts",
+  "originalSourceSHA256": "ee41c5b132fa207d00f746133e35d74f9a5811e0aa36a1ec86857b20a7a50513",
+  "prerequisitePatch": "staging-transfer-collision.patch",
+  "prerequisitePatchSHA256": "f506444715fc503fb7d3cb6faa44b4bdb6bdc5517982966ae26f4a9069f35cca",
+  "inputSHA256": "6c22f7b8c4526b7e0beace5697548eec674aee8f666fd36d8981b56c9b38eeae",
+  "outputSHA256": "0e1c29f43904b0f2aeefc9031de08c228149002f6f03a40a75e00b3b320abad8",
+  "patchSHA256": "9623f563fe15af24b494b4d070c1a82b3fc3b5c9bcae65a9f1666b3b4a897265",
+  "scope": "Preserve the source cleanup exception when diagnostic logging throws.",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "nativeTerminalGuarantee": false,
+  "globalIdleGuarantee": false,
+  "noReplacementGuarantee": false,
+  "ownerReservationGuarantee": false,
+  "installationPermit": false,
+  "testSourceEnvironment": "VORTEX_NATIVE_TRANSFER_PATH",
+  "limitations": [
+    "Prepared exact source only; full renderer and installed acceptance remain separate.",
+    "Preserves CleanupFailedException(error) classification, not physical cleanup completion or rollback.",
+    "Surrounding telemetry/activity wrappers, arbitrary callback failures and physical path ownership remain separate gates."
+  ]
+}

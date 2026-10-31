@@ -1,0 +1,24 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/extensions/mod_management/index.ts",
+  "originalSourceSHA256": "d895c7614a692242e1921fa0d9fba1a52743bcd9aed5b1bcac9a539d393b2400",
+  "prerequisitePatch": "startup-cleanup-ownership.patch",
+  "prerequisitePatchSHA256": "f4f98440a276e726f54cb4ead95fcad718a52fe50a68c809efc74d3569aee27f",
+  "inputSHA256": "c12bdc5d08c95bafa18b44ee758a3d9661ade77ca692cd102d531261197ececd",
+  "outputSHA256": "535f41e8e52c16c3edbac56a8080af03725707340451323ebdf6a4648ade91ee",
+  "patchSHA256": "c2f07109e654a3c9f2dec5b86518992e575bc95399b84536125262fe5a66b10b",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "nativeTerminalGuarantee": false,
+  "globalIdleGuarantee": false,
+  "installationPermit": false,
+  "limitations": [
+    "Report-only interrupted-transfer warning; ITestResult.automaticFix is optional in the pinned upstream interface.",
+    "Does not remove files, clear transaction markers, reserve ownership, or authorize retry/reset.",
+    "No global pending-marker admission gate, physical cleanup proof, native installation or crash-recovery permit."
+  ]
+}

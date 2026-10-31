@@ -1,0 +1,35 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/util/transferPath.ts",
+  "originalSourceSHA256": "ee41c5b132fa207d00f746133e35d74f9a5811e0aa36a1ec86857b20a7a50513",
+  "inputSHA256": "ee41c5b132fa207d00f746133e35d74f9a5811e0aa36a1ec86857b20a7a50513",
+  "outputSHA256": "f4886e06be46c9be06b4f6765bce038c10909688abc02b81849709a44e837a98",
+  "patchSHA256": "76d9dc361b4a063a3a915dea5e0d0a0669675770fa0594fcf8006d2efc47c45e",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "nativeTerminalGuarantee": false,
+  "globalIdleGuarantee": false,
+  "noReplacementGuarantee": false,
+  "ownerReservationGuarantee": false,
+  "installationPermit": false,
+  "testSourceEnvironment": "VORTEX_NATIVE_TRANSFER_PATH",
+  "limitations": [
+    "Exact-source preparation only; full renderer compilation and installed acceptance remain separate.",
+    "Joins returned copy/directory/stat/removal promises and the walker promise; no guarantee for hidden native work or a walker that never reports completion.",
+    "A synchronous nonthrowing walker callback retains its own serial batch chain; first failure stops subsequent copy/fallback/progress starts and prevents source cleanup.",
+    "UserCanceled now rejects after joined work rather than replacing the copy chain or continuing source cleanup.",
+    "No physical path ownership, no-clobber transfer, rollback, cancellation/termination permit or native installation authority."
+  ],
+  "walkerSource": {
+    "repository": "https://github.com/Nexus-Mods/node-turbowalk",
+    "commit": "3502f6ffc3f9eb55fe1c9c097b4e4772edce0c0f",
+    "path": "index.js",
+    "sha256": "af122d4220b525f727a6e20cffd777f48dc5089f29d37812db086b354e56789b",
+    "version": "3.1.1",
+    "testBinding": "Exact JavaScript wrapper; native WalkDir is an owned event facade, not native execution."
+  }
+}
