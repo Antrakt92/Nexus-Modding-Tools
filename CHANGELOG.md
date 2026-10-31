@@ -17,6 +17,10 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Prepare explicit job-owned extraction with a fixed archive/destination tuple,
+  bounded launches and cancellation that blocks later attempts. Ownership stays
+  attached to the instance across asynchronous callbacks. This is an uninstalled
+  source integration; it does not enable native installation through MCP.
 - Add an internal passive child-resource observer with status independent of
   caller promises. It waits for consistent child and pipe close observations;
   cancellation or a timeout cannot manufacture completion. Native installation

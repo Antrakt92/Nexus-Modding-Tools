@@ -23,6 +23,10 @@ shape validation does not establish source admission, native identity, durable
 intent or exclusion against another child using the same job ID. The existing
 executor/consumed-ID contract remains responsible for those checks.
 
+The internal `copyChildBinding` export supplies that same detached shape check
+before an owned factory can launch a process. It observes no resource and grants
+no admission or replay permission.
+
 Each child can be observed once by this module instance. Repeated attachment
 refuses rather than replacing the first observer. There is no retry, takeover,
 expiry or independent job catalog. The owner must not reload the module to

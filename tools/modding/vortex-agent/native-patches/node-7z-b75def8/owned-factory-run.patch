@@ -1,0 +1,88 @@
+--- a/util/run.js
++++ b/util/run.js
+@@ -4,6 +4,7 @@
+ var path  = require('path');
+ var Promise = require('bluebird');
+ var utilSwitches = require('./switches');
++var ownership = require('./owned-extractor-scope.cjs');
+ 
+ var errRE = new RegExp('Error:' + os.EOL + '?(.*)', 'g');
+ 
+@@ -43,7 +44,11 @@
+  * @reject {Error} The error issued by 7-Zip.
+  * @reject {number} Exit code issued by 7-Zip.
+  */
+-module.exports = function(cmd, args, switches, progress) {
++function execute(owner, cmd, args, switches, progress) {
++  if (owner !== undefined) {
++    var prepared = ownership.prepareRun(owner, args, switches);
++    args = prepared.args; switches = prepared.switches;
++  }
+   try {
+     assert(typeof(cmd) === 'string', 'Command must be a string');
+     assert(Array.isArray(args), 'args should be an array');
+@@ -60,9 +65,20 @@
+     // of the stdout create an new error with the 7-Zip error message as the
+     // error's message. Otherwise progress with stdout message.
+     var errors = [];
+-    var run = cp.spawn(cmd, args);
+-    var failureObserved = false;
+-    var firstFailure;
++    var ticket;
++    if (owner !== undefined) ticket = ownership.reserveSpawn(owner, args);
++    var run;
++    try {
++      run = owner === undefined ? cp.spawn(cmd, args) : cp.spawn(cmd, args,
++        { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'], shell: false });
++    }
++    catch (err) {
++      if (ticket !== undefined) ownership.spawnFailed(ticket);
++      throw err;
++    }
++    var ownershipAccepted = ticket === undefined || ownership.adoptChild(ticket, run);
++    var failureObserved = !ownershipAccepted;
++    var firstFailure = ownershipAccepted ? undefined : new Error("OWNED_EXTRACTOR_OBSERVER_FAILED");
+     var closed = false;
+     var killRequested = false;
+     function requestKill() {
+@@ -77,6 +93,7 @@
+         failureObserved = true;
+         firstFailure = err;
+       }
++      if (owner !== undefined) ownership.wrapperFailed(owner);
+       try { requestKill(); } catch (killError) { /* Preserve the first failure. */ }
+     }
+     try {
+@@ -96,6 +113,7 @@
+         try {
+           var errout = feedStdout(progress, data.toString(), run.stdin, function () {
+             canceled = true;
++            if (owner !== undefined) owner.cancel();
+             try { requestKill(); } catch (err) { fail(err); }
+           });
+           if (errout) {
+@@ -116,6 +134,7 @@
+           fail(err);
+         }
+       });
++      if (!ownershipAccepted) fail(firstFailure);
+     } catch (err) {
+       // A child already exists. Setup failure is not evidence that it closed.
+       fail(err);
+@@ -123,3 +142,16 @@
+ 
+   });
+ };
++
++// Internal explicit factory; executable selection remains the pinned SDK literal.
++module.exports = function(cmd, args, switches, progress) {
++  return execute(undefined, cmd, args, switches, progress);
++};
++module.exports.createOwned = function(owner) {
++  ownership.assertOwner(owner);
++  var command = require('7z-bin');
++  command = command.replace('app.asar' + path.sep, 'app.asar.unpacked' + path.sep);
++  return function(args, switches, progress) {
++    return execute(owner, command, args, switches, progress);
++  };
++};

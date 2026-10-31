@@ -1,0 +1,40 @@
+--- a/util/run7z.js
++++ b/util/run7z.js
+@@ -2,17 +2,32 @@
+ var path = require('path');
+ var parser = require('./outputParse');
+ var run = require('./run');
++var ownership = require('./owned-extractor-scope.cjs');
+ 
+ cli = cli.replace('app.asar' + path.sep, 'app.asar.unpacked' + path.sep);
+ 
+-module.exports = function(args, options, outputMarker, progress) {
+-  options = Object.assign({ 'bb3': true }, options);
++function invoke(runImpl, owner, args, options, outputMarker, progress) {
++  options = owner === undefined ? Object.assign({ 'bb3': true }, options) : ownership.copyOptions(owner, options);
+ 
+   if (typeof(outputMarker) === 'function') {
+-    return run(cli, args, options, outputMarker);
++    return runImpl(cli, args, options, outputMarker);
+   } else if ((outputMarker !== undefined) && (progress !== undefined)) {
+-    return run(cli, args, options, parser(progress, outputMarker));
++    return runImpl(cli, args, options, parser(progress, outputMarker));
+   } else {
+-    return run(cli, args, options);
++    return runImpl(cli, args, options);
+   }
+ }
++
++module.exports = function(args, options, outputMarker, progress) {
++  return invoke(run, undefined, args, options, outputMarker, progress);
++};
++module.exports.createOwned = function(owner) {
++  ownership.assertOwner(owner);
++  var ownedRun = run.createOwned(owner);
++  var fixedRun = function(_command, args, switches, progress) {
++    return ownedRun(args, switches, progress);
++  };
++  return function(args, options, outputMarker, progress) {
++    return invoke(fixedRun, owner, args, options, outputMarker, progress);
++  };
++};

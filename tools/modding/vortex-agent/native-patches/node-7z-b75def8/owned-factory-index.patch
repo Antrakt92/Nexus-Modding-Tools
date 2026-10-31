@@ -1,0 +1,13 @@
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -11,3 +11,10 @@
+ Zip.prototype.update = require('./update');
+ 
+ module.exports = Zip;
++
++// Extraction-only explicit capability; never inherit unowned Zip methods.
++Zip.createOwned = function(owner) {
++  var result = Object.create(null);
++  result.extractFull = require('./extractFull').createOwned(owner);
++  return Object.freeze(result);
++};

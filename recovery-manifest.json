@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "5515c19334778cd5cb13217d9b4f5f03cb1c88b74754b0051de45b6e96078702"
+      "sha256_lf": "69e958227f79a382082116350bcaaf565d4d3c50b0011fa6aeff7a9709a63d6e"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -212,7 +212,7 @@
     },
     {
       "path": "docs/CHILD-TERMINAL-OBSERVER.md",
-      "sha256_lf": "b34967e5b35625e3855debaa614e328dc139ebee34fbf1b5f672cec64222a8fa"
+      "sha256_lf": "aa7e6725df7050c751438feda751a91184d5577101a9ce493d95d7e8fef590a0"
     },
     {
       "path": "docs/COLLECTION-DOWNLOADS.md",
@@ -256,7 +256,7 @@
     },
     {
       "path": "docs/LICENSES.md",
-      "sha256_lf": "0ebe271bad52d491f2363b3a89f19ecda7a364b22b1c90aeeac70832fe3d473a"
+      "sha256_lf": "0517ae770c892445fcce08770d5af91547f70691a0f064d66e99db5a2d8bb0bc"
     },
     {
       "path": "docs/LIFECYCLE-IMPLEMENTATION.md",
@@ -272,7 +272,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "b738a75e4b763aa481089539cece8da9406baf6d27d2951351b54708922887b9"
+      "sha256_lf": "4a703559b4a6b14f33cf8d10b503291e8d258fbbdfa3157c1671221f96f186ea"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -305,6 +305,10 @@
     {
       "path": "docs/NATIVE-LIFECYCLE-GATES.md",
       "sha256_lf": "4389ce1bf97ac2fe43d120a732fa2133a51e8e1e1d6e71d3f091330cec02513a"
+    },
+    {
+      "path": "docs/NATIVE-OWNED-EXTRACTOR.md",
+      "sha256_lf": "510a42cb0a51d516cf4377c5ebc797aba1f445964a33ffbf492924df7f4ebc39"
     },
     {
       "path": "docs/NATIVE-STRICT-SELECTION.md",
@@ -636,11 +640,11 @@
     },
     {
       "path": "tools/modding/vortex-agent/child-terminal-observer.cjs",
-      "sha256_lf": "bb5aa0b3f219b62a0398d60f1c4d52f4768e1deeba2c3bf256cfd0a2143a0e67"
+      "sha256_lf": "0b59978e89d8393d4a0f1965ee1097de0b8ff6db34630538bb223816e448f119"
     },
     {
       "path": "tools/modding/vortex-agent/child-terminal-observer.test.cjs",
-      "sha256_lf": "aea526ed07a85cb9920b601fb7980cc1d8fd713aa177e33821d95e94d140b9b9"
+      "sha256_lf": "b10f3425548931d517df89416fb6c6eaa8b027c0ba9e16a851c6baf839fc673b"
     },
     {
       "path": "tools/modding/vortex-agent/collection-downloads.mjs",
@@ -907,6 +911,26 @@
       "sha256_lf": "5382cae6427faa9206ed28ec94c5d9d3e7bb0279ab83fdee25b0ec9c040e4c15"
     },
     {
+      "path": "tools/modding/vortex-agent/native-patches/node-7z-b75def8/owned-factory-extract-full.patch",
+      "sha256_lf": "1f87e7eafb7b114719d8e8090599cc17186d9f6b6ce360b2ac6a576eb6b36f55"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/node-7z-b75def8/owned-factory-index.patch",
+      "sha256_lf": "51bfd7615aa986ca27ba998cf78f688fa5be25555b3d6dc89312178ea59b085e"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/node-7z-b75def8/owned-factory-run.patch",
+      "sha256_lf": "fcfad925a2e0b123aee0709a054f728d40fd00905cda9bf78542c2be32128d16"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/node-7z-b75def8/owned-factory-run7z.patch",
+      "sha256_lf": "991dbd4c0454d5b57859ce2eeb8eb8ecc1a86062407384ab821780043145d82f"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/node-7z-b75def8/owned-factory.json",
+      "sha256_lf": "68dfa32a753e835d813a42692bae1bb7920e8c0dc1c9642c23199bcb03373ddf"
+    },
+    {
       "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/callback-order.json",
       "sha256_lf": "12e8a90fa5634e373d849f8a96ac7ad0641d3ec7f927089703f64d057de15b3f"
     },
@@ -985,6 +1009,14 @@
     {
       "path": "tools/modding/vortex-agent/own-install-preflight.test.mjs",
       "sha256_lf": "dfee9ac88e4d0638fff047dc7eccabc4ef62ab597b68cf835956922f3a6ebd80"
+    },
+    {
+      "path": "tools/modding/vortex-agent/owned-extractor-scope.cjs",
+      "sha256_lf": "2a5200be844a4bab0b1b3c15de00441876039a674e9c871e7bf29b7a0217bfec"
+    },
+    {
+      "path": "tools/modding/vortex-agent/owned-extractor-scope.test.cjs",
+      "sha256_lf": "845efc49f9f435e6f16d7c209b3528fe8c5719e28cb30dea7b625d846719ab5a"
     },
     {
       "path": "tools/modding/vortex-agent/owned-file-transfer.py",

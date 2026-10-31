@@ -136,4 +136,4 @@ function observeChildTerminal(child, inputBinding) {
       nativeInstallAccepted: false, persistenceVerified: false, descendantsVerified: false});
   }});
 }
-module.exports = {observeChildTerminal};
+module.exports = {observeChildTerminal, copyChildBinding: bindingCopy};
