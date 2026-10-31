@@ -46,9 +46,11 @@ writers. The prepared [manager admission](NATIVE-MANAGER-EXCLUSION.md) rejects
 unresolved persisted transfer markers; an issued owner remains invalid after
 observed uncertainty, even if the marker disappears.
 
-The runtime packet contains 30 patches for ten original sources. Its exact-file
-inventory rejects extra files, including the separately pinned upstream test
-adapter. Exact assembly and modeled callback regressions do not prove the full
+The transfer series qualified here contains 30 patches for ten original sources.
+Its original exact-file inventory rejected extra files, including the separately
+pinned upstream test adapter. The current [complete source recipe](NATIVE-SOURCE-ASSEMBLY.md)
+includes that series and later startup/persistence layers; use its complete
+original-source list and current packet inventories when assembling. Exact assembly and modeled callback regressions do not prove the full
 renderer build, native filesystem completion, crash recovery or installation.
 The installed application remains separate.
 
@@ -59,7 +61,7 @@ staging context/dispatch reentrancy, retained data/markers and read-only warning
 They execute pinned source with test-owned filesystem/native facades. All 55
 cases and 18 additional Downloads Settings cases passed for the preceding
 29-patch graph, along with its then-current 14 graph checks and two test-adapter
-checks. The current 30-patch graph passed all 15 graph checks and 13 additional
+checks. The 30-patch transfer graph passed all 15 graph checks and 13 additional
 persisted-marker regressions; see [source qualification](NATIVE-SOURCE-ASSEMBLY.md).
 
 The actual renderer TypeScript and webpack targets also passed. All ten source

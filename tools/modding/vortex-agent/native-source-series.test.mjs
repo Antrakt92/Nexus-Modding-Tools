@@ -19,7 +19,7 @@ const dummy = () => Object.fromEntries(NATIVE_SOURCE_PATHS.map(file => [file, Bu
 const reject = (input, code = 'INPUT') => assert.throws(() => assembleNativeSources(input),
   error => error.message === 'NATIVE_SOURCE_SERIES_'+code);
 const integration = (name, action) => test(name, {
-  skip: process.env.VORTEX_NATIVE_SOURCE_ROOT ? false : 'Set VORTEX_NATIVE_SOURCE_ROOT to the exact original 23-file source root',
+  skip: process.env.VORTEX_NATIVE_SOURCE_ROOT ? false : 'Set VORTEX_NATIVE_SOURCE_ROOT to the exact original 24-file source root',
 }, action);
 const originals = () => Object.fromEntries(NATIVE_SOURCE_PATHS.map(file => [file,
   fs.readFileSync(path.join(process.env.VORTEX_NATIVE_SOURCE_ROOT, file))]));
@@ -96,7 +96,7 @@ test('fixed packet is checked, but an unpinned original can never assemble', () 
 });
 
 test('pinned series closes all fixed nodes, exact source chains and cross-file manager dependencies', () => {
-  assert.equal(series.patches.length, 52); assert.equal(series.files.length, 23);
+  assert.equal(series.patches.length, 55); assert.equal(series.files.length, 24);
   assert.equal(series.schema, 'native-source-series/2');
   assert.deepEqual([...series.files.map(row => row.path)].sort(), [...NATIVE_SOURCE_PATHS].sort());
   const done = new Map(), current = new Map(series.files.map(row => [row.path, row.originalSHA256]));
@@ -187,7 +187,7 @@ test('a previously read packet changing before read verification is refused', as
   assert(mutated);
 });
 
-integration('all 23 final sources equal independent exact application and return detached immutable observations', () => {
+integration('all 24 final sources equal independent exact application and return detached immutable observations', () => {
   const input = originals(), result = assembleNativeSources(input);
   assert(Object.isFrozen(result)); assert(Object.isFrozen(result.sources)); assert(Object.isFrozen(result.receipt));
   const expected = Object.fromEntries(Object.entries(input).map(([file, bytes]) => [file, bytes.toString('utf8')]));

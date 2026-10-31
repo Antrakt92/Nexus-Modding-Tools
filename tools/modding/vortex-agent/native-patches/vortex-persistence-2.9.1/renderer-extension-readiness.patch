@@ -1,0 +1,103 @@
+--- a/src/renderer/src/ExtensionManager.ts
++++ b/src/renderer/src/ExtensionManager.ts
+@@ -690,5 +690,93 @@
+  * @class ExtensionManager
+  */
++interface NativeRendererLoadAttempt {
++  owner: object;
++  api: IExtensionApi;
++  store: unknown;
++  raw?: Promise<void>;
++  completion: Promise<void>;
++  settle: () => void;
++  held: boolean;
++  ready: boolean;
++}
++
+ class ExtensionManager {
++  private mNativeRendererLoad: NativeRendererLoadAttempt | undefined;
++
++  private holdNativeRendererLoad(attempt: NativeRendererLoadAttempt): void {
++    attempt.held = true;
++    attempt.settle();
++  }
++
++  private checkNativeRendererLoadAttempt(attempt: NativeRendererLoadAttempt): void {
++    try {
++      if (this.mNativeRendererLoad !== attempt || attempt.held || this.mApi !== attempt.api) throw new Error();
++      const descriptor = Object.getOwnPropertyDescriptor(this.mApi, "store");
++      if (descriptor === undefined || !("value" in descriptor) || descriptor.value !== attempt.store
++          || this.mNativeRendererLoad !== attempt || attempt.held || this.mApi !== attempt.api) throw new Error();
++    } catch {
++      this.holdNativeRendererLoad(attempt);
++      throw new Error("NATIVE_RENDERER_LOAD_UNAVAILABLE");
++    }
++  }
++
++  // Source-owned producer hooks; no startup hold or native dispatch authority.
++  public beginNativeRendererLoad(store: unknown): object {
++    if (this.mNativeRendererLoad !== undefined) {
++      this.holdNativeRendererLoad(this.mNativeRendererLoad);
++      return this.mNativeRendererLoad.owner;
++    }
++    let settle = () => {};
++    const completion = new Promise<void>((resolve) => { settle = resolve; });
++    const attempt: NativeRendererLoadAttempt = { owner: Object.freeze({}), api: this.mApi, store, completion, settle, held: false, ready: false };
++    this.mNativeRendererLoad = attempt;
++    try {
++      if (store === undefined || store === null) throw new Error();
++      this.checkNativeRendererLoadAttempt(attempt);
++    } catch { this.holdNativeRendererLoad(attempt); }
++    return attempt.owner;
++  }
++
++  public failNativeRendererLoad(owner: object): void {
++    const attempt = this.mNativeRendererLoad;
++    if (attempt !== undefined && attempt.owner === owner) this.holdNativeRendererLoad(attempt);
++  }
++
++  public observeNativeRendererLoad(owner: object, raw: Promise<void>): void {
++    const attempt = this.mNativeRendererLoad;
++    if (attempt === undefined) return;
++    try {
++      this.checkNativeRendererLoadAttempt(attempt);
++      if (attempt.owner !== owner || attempt.raw !== undefined) throw new Error();
++      attempt.raw = raw;
++      void raw.then(() => {
++        try {
++          this.checkNativeRendererLoadAttempt(attempt);
++          attempt.ready = true;
++        } catch { this.holdNativeRendererLoad(attempt); }
++        attempt.settle();
++      }, () => this.holdNativeRendererLoad(attempt));
++    } catch { this.holdNativeRendererLoad(attempt); }
++  }
++
++  public async waitForNativeRendererLoadReady(): Promise<object> {
++    const attempt = this.mNativeRendererLoad;
++    if (attempt === undefined) throw new Error("NATIVE_RENDERER_LOAD_UNAVAILABLE");
++    await attempt.completion;
++    this.checkNativeRendererLoadReady(attempt.owner, attempt.store);
++    return attempt.owner;
++  }
++
++  public checkNativeRendererLoadReady(owner: object, store: unknown): void {
++    const attempt = this.mNativeRendererLoad;
++    if (attempt === undefined || attempt.owner !== owner) throw new Error("NATIVE_RENDERER_LOAD_UNAVAILABLE");
++    this.checkNativeRendererLoadAttempt(attempt);
++    if (!attempt.ready || attempt.store !== store) {
++      this.holdNativeRendererLoad(attempt);
++      throw new Error("NATIVE_RENDERER_LOAD_UNAVAILABLE");
++    }
++  }
++
++
+   public static registerUIAPI(name: string) {
+     ExtensionManager.sUIAPIs.add(name);
+@@ -1002,5 +1090,6 @@
+    */
+   public setStore<S extends IState>(store: ThunkStore<S>) {
++    if (this.mNativeRendererLoad !== undefined) this.holdNativeRendererLoad(this.mNativeRendererLoad);
+     this.mReduxWatcher = new ReduxWatcher(store, this.watcherError);
+ 
+     // Process any pending actions that were deferred during construction

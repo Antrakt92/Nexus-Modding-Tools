@@ -1,7 +1,7 @@
 # Assemble the reviewed Vortex source patches
 
-`native-source-series.mjs` applies the fixed sequence of 52 reviewed patches to
-23 original files from Vortex `v2.9.1`, commit
+`native-source-series.mjs` applies the fixed sequence of 55 reviewed patches to
+24 original files from Vortex `v2.9.1`, commit
 `c80326367cbe6d96621ad6cf4a5488ef49bac110`. It replaces manually composing separate
 patch chains before compilation. It does not change an installed application or
 make native installation available through MCP.
@@ -34,8 +34,8 @@ final source hashes, patch/manifest hashes and cross-file prerequisites must
 match the pinned series. Patch application requires exact offsets and context;
 it has no fuzzy matching or hash-refresh mode.
 
-The fixed graph combines the 30-patch mod-management/transfer packet with the
-22-patch persistence packet. The latter includes renderer target admission and
+The fixed graph combines the 31-patch mod-management/transfer packet with the
+24-patch persistence packet. The latter includes renderer target admission and
 acknowledged diffs, main/preload/shared IPC, backend reservations and managed SQL
 ownership. Both runtime packet directories have separate closed inventories;
 test-only adapters are excluded. A cross-file companion must already have been
@@ -99,8 +99,8 @@ node --test tools/modding/vortex-agent/native-source-series.test.mjs
 
 The first command covers portable input and packet checks. The second also
 exercises exact original-source assembly and output isolation. The fixture root
-must contain all 23 original files, not their patched replacements. Earlier
-ten-file and 22-file fixtures are incomplete for this graph and are refused.
+must contain all 24 original files, not their patched replacements. Earlier
+partial fixtures are incomplete for this graph and are refused.
 Neither command proves compilation, host loading or a successful mod install.
 
 ## Renderer qualification — 31 October 2026
@@ -267,3 +267,22 @@ unchanged baseline; those targets were not rebuilt. All 23 graph outputs matched
 the qualified tree. No installed application was changed and no readiness result
 grants queue, SQL, filesystem or installation authority. See the
 [readiness contract](NATIVE-ADOPTION-BOUNDARY.md#main-initialization-readiness).
+
+
+## Renderer and manager startup readiness — 31 October 2026
+
+The 55-patch / 24-source recipe adds ExtensionManager's exact load-attempt
+observation, the renderer producer call and the specific mod-management once
+completion. Manager startup belongs to the lifecycle packet; the ExtensionManager
+and renderer producer layers belong to persistence. Their fixed inventories now
+contain 31 and 24 patch pairs respectively. No packet discovers optional scripts.
+
+Nineteen new source-backed cases passed, including exact predecessor controls and
+actual APIProxyHandler/Bluebird doOnce behavior; the combined run passed 141 cases
+without skips. Controlled external dependencies and prototype fixtures do not
+establish full ExtensionManager construction or native startup. The actual renderer
+TypeScript and webpack targets passed with unchanged configurations/lockfile.
+Fifteen renderer inputs matched the fresh Program/map; ten main/preload/shared
+inputs retained unchanged baselines. All 24 graph outputs matched the qualified
+tree. This adds no installed-host, global-idle, persistence-flush or installation
+permit. See the [startup boundaries](NATIVE-ADOPTION-BOUNDARY.md#renderer-and-manager-startup-readiness).

@@ -12,7 +12,7 @@
     {
       "path": "src/renderer/src/extensions/mod_management/index.ts",
       "originalSHA256": "d895c7614a692242e1921fa0d9fba1a52743bcd9aed5b1bcac9a539d393b2400",
-      "finalSHA256": "535f41e8e52c16c3edbac56a8080af03725707340451323ebdf6a4648ade91ee"
+      "finalSHA256": "8debec02b20f08f1a2294e17b9ad6d8e03e1b39c5792149eaf2cb6a285d06c0f"
     },
     {
       "path": "src/renderer/src/extensions/mod_management/InstallManager.ts",
@@ -117,7 +117,12 @@
     {
       "path": "src/renderer/src/renderer.tsx",
       "originalSHA256": "e7554a3ca81d3d540e15661ccacb839b3b3f0bfdac95cc764abce6e9f76bde40",
-      "finalSHA256": "0ae6036e6dc5fdb0d14dc29e79ea1038656fa9ee20c374cfad0e42c9188d830d"
+      "finalSHA256": "ffa70bef5033ea5323ff78554486bab151a820139bea921c6f90997ff04e1905"
+    },
+    {
+      "path": "src/renderer/src/ExtensionManager.ts",
+      "originalSHA256": "5d0de2194cf413938e61a398494196af07677dc6d0d014216ba3b25b5a211b95",
+      "finalSHA256": "fb39e4270de69b2529872b624e16499a9a25517ba3fe6a739750b8f7473757af"
     }
   ],
   "patches": [
@@ -896,6 +901,51 @@
       "outputSHA256": "90e5a0c97eb1d02360de088a9ebe897021b825bf2cb0a6888bdac8f94c01b904",
       "prerequisitePatch": "native-query-owner-binding.patch",
       "prerequisitePatchSHA256": "cf72d7931b4a02071a40f53db1873b48ad4a64605b1f760d76ee6ac678d98ef3",
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "renderer-extension-readiness",
+      "packet": "persistence",
+      "path": "src/renderer/src/ExtensionManager.ts",
+      "manifestSHA256": "a5fdaed619d4d98ab8c0a8ed83e2eb60e9920036d1818d9df2d3d835f9b7b4ea",
+      "patchSHA256": "83bf53f8a597466d6f18a79cf6d66fea98853d129c76a91bd2872412bc61be0b",
+      "inputSHA256": "5d0de2194cf413938e61a398494196af07677dc6d0d014216ba3b25b5a211b95",
+      "outputSHA256": "fb39e4270de69b2529872b624e16499a9a25517ba3fe6a739750b8f7473757af",
+      "prerequisitePatch": null,
+      "prerequisitePatchSHA256": null,
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "renderer-load-readiness",
+      "packet": "persistence",
+      "path": "src/renderer/src/renderer.tsx",
+      "manifestSHA256": "b3a118bb4001aa7bc026bd7e61c76a4a31c2d5d1dc59dd54aa4e8b32f85376b7",
+      "patchSHA256": "c425f94bfe7eb5deca1fac7382cb71b54b50fb09e8d63d875358ab8d3e516af8",
+      "inputSHA256": "0ae6036e6dc5fdb0d14dc29e79ea1038656fa9ee20c374cfad0e42c9188d830d",
+      "outputSHA256": "ffa70bef5033ea5323ff78554486bab151a820139bea921c6f90997ff04e1905",
+      "prerequisitePatch": "renderer-store-initialization.patch",
+      "prerequisitePatchSHA256": "6c43d4a263ae58fe729911c53d20bb7d2d56ffe36362b627ad82143eee793dfb",
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": "renderer-extension-readiness.patch",
+      "requiredCompanionPatchSHA256": "83bf53f8a597466d6f18a79cf6d66fea98853d129c76a91bd2872412bc61be0b",
+      "requiredCompanionOutputSHA256": "fb39e4270de69b2529872b624e16499a9a25517ba3fe6a739750b8f7473757af"
+    },
+    {
+      "name": "manager-startup-readiness",
+      "packet": "lifecycle",
+      "path": "src/renderer/src/extensions/mod_management/index.ts",
+      "manifestSHA256": "4f619e24954bfa9d95291243760c36c23e2e5a9cae35d668359be19e715e59fe",
+      "patchSHA256": "6ee00d64c0a140e340a3668fcaa3a04c5d4fb56f99b2e48514bd2afc2cc66113",
+      "inputSHA256": "535f41e8e52c16c3edbac56a8080af03725707340451323ebdf6a4648ade91ee",
+      "outputSHA256": "8debec02b20f08f1a2294e17b9ad6d8e03e1b39c5792149eaf2cb6a285d06c0f",
+      "prerequisitePatch": "staging-pending-transfer-hold.patch",
+      "prerequisitePatchSHA256": "c2f07109e654a3c9f2dec5b86518992e575bc95399b84536125262fe5a66b10b",
       "requiredManagerPatchSHA256": null,
       "requiredCompanionPatch": null,
       "requiredCompanionPatchSHA256": null,

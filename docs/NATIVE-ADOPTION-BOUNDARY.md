@@ -333,6 +333,54 @@ before and after, with no installer message. The Node-only `original-fs` alias
 uses a private qualification config; it is not ASAR or native Electron proof.
 Install-script suppression alone does not prevent import-time installers.
 
+## Renderer and manager startup readiness
+
+The prepared startup layer observes two separate production boundaries. The
+actual `renderer()` function captures its already-created Redux store and starts
+an instance-local attempt on the actual `ExtensionManager`. It observes the exact
+`load(extensions)` promise without returning it from ordinary nonblocking startup.
+`startupFinished()` occurs before later subscription/render setup; the outer
+startup chain does not await load. Neither earlier signal certifies its tail.
+
+The internal methods are `waitForNativeRendererLoadReady()` and
+`checkNativeRendererLoadReady(owner, store)`, with source-owned begin/observe/fail
+producer hooks. Repeated entry, API/store drift, rejection or observed validation
+failure permanently holds the attempt and settles waiting observers. Matching
+failure hooks preserve primary setup errors even if secondary diagnostics fail.
+
+Mod-management separately observes its specific `context.once` callback. It
+records success only after `once(api)`, `extendApi` assignment and `history.init()`
+all return. Generic `ExtensionManager.doOnce()` catches callback failures, so its
+fulfilment cannot replace this observation. Ordinary callback failures retain
+their original error; a passive stamp failure only disables native eligibility.
+The module's `waitForNativeManagerStartupReady(store)` and
+`checkNativeManagerStartupReady(owner, store)` retain the actual manager and
+private API proxy. Callers supply the shared store and opaque owner, not the
+private proxy: `ExtensionManager.getApi()` returns the underlying raw API instead.
+
+The official `APIProxyHandler` forwards `store` unchanged. Rejecting every API
+proxy would break the actual production path. Store reads through this reviewed
+proxy are a trusted source boundary; identities and sticky invalidation are
+rechecked after callbacks. Renderer and manager checks must use the same store.
+
+This is setup-tail observation, not constructor attestation, UI paint, successful
+completion of every handled startup warning, global idle or a persistence flush.
+History callbacks and fire-and-forget work started during once remain live work;
+ordinary extension cleanup is not joined by this receipt. Future operation-time
+admission still needs actual window/sender identity, lifecycle exclusion, fresh
+store checks, acknowledged diffs and main readiness/SQL owners. No startup receipt
+reserves lifecycle/persistence ownership or exposes a new MCP/IPC operation.
+
+Nineteen source-backed cases passed without skips. They execute the actual
+renderer/load functions, the specific once wrapper and APIProxyHandler, with
+controlled external dependencies and an ExtensionManager prototype fixture rather
+than its full constructor. Exact prior renderer and pinned Bluebird doOnce
+controls prove the earlier completion gaps. The combined source/assembly suite
+passed 141 cases without skips. The actual renderer TypeScript and webpack targets
+passed with unchanged configurations and lockfile: 15 renderer inputs matched
+the fresh Program/map, while ten main/preload/shared inputs retained unchanged
+baselines. These are isolated development-build checks, not installed acceptance.
+
 ## Renderer target fence
 
 The prepared `renderer-target-fence.patch` wraps the actual root reducer, inside

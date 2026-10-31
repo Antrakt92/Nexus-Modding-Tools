@@ -1,0 +1,58 @@
+--- a/src/renderer/src/renderer.tsx
++++ b/src/renderer/src/renderer.tsx
+@@ -923,25 +923,35 @@
+   }
+ 
+-  initializeZoom(store);
+-  applyReduceMotion(reduceMotionFromState(store.getState()));
+-
+-  ReactDOM.render(<LoadingScreen extensions={extensions} />, document.getElementById("content"));
+-  ipcRenderer.send("show-window");
+-
+-  store.dispatch(setNetworkConnected(navigator.onLine));
+-  window.addEventListener("online", () => {
+-    store.dispatch(setNetworkConnected(true));
+-  });
+-  window.addEventListener("offline", () => {
+-    store.dispatch(setNetworkConnected(false));
+-  });
+-
+-  // prevent the page from being changed through drag&drop
+-  document.ondragover = document.ondrop = (ev) => {
+-    ev.preventDefault();
+-  };
+-
+-  load(extensions).catch((err) => log("error", "error setting up renderer", err));
++  const attempt = extensions.beginNativeRendererLoad(store);
++  try {
++    initializeZoom(store);
++    applyReduceMotion(reduceMotionFromState(store.getState()));
++
++    ReactDOM.render(<LoadingScreen extensions={extensions} />, document.getElementById("content"));
++    ipcRenderer.send("show-window");
++
++    store.dispatch(setNetworkConnected(navigator.onLine));
++    window.addEventListener("online", () => {
++      store.dispatch(setNetworkConnected(true));
++    });
++    window.addEventListener("offline", () => {
++      store.dispatch(setNetworkConnected(false));
++    });
++
++    // prevent the page from being changed through drag&drop
++    document.ondragover = document.ondrop = (ev) => {
++      ev.preventDefault();
++    };
++
++    const rawLoad = load(extensions);
++    extensions.observeNativeRendererLoad(attempt, rawLoad);
++    void rawLoad.catch((err) => {
++      try { log("error", "error setting up renderer", err); } catch { /* Secondary diagnostics only. */ }
++    });
++  } catch (err) {
++    try { extensions.failNativeRendererLoad(attempt); } catch { /* Secondary observer failure only. */ }
++    throw err;
++  }
+ }
+ 
+ initGlobals()
