@@ -113,3 +113,26 @@ The fresh preference-discovery proof includes `excludedLogLinks` (an array of at
 A fresh independently reviewed `expectedDeploymentTargets` binding is required; held kits leave it null. At most 32 exact native mod-type IDs (including the default empty ID) may alias the canonical game root. Initial and final native maps must have exactly the reviewed keys and every path must resolve lexically to that same root. Other target roots remain unsupported. The capture includes the admitted `reviewedDeploymentTargets` map; no managed file is read through an additional target path.
 
 A missing review, unsupported map or changed key set first writes `TARGET-MAP-DIAGNOSTIC.json` once (`wx`) in the bound control directory, then refuses capture. It contains bounded safe IDs, value kinds and root-equality flags; invalid keys, URI strings, outside-root path strings and arbitrary values are not serialized. This marker blocks subsequent entry replay even if writing the usual failure receipt is interrupted. No current native map or runtime acceptance is implied by preparing a kit.
+
+## Installed-host acceptance â€” 31 October 2026
+
+A newly bound zero-package capture completed in Vortex 2.9.1 with adapter 1.1.0.
+The independently observed default, DInput and ENB type IDs all resolved to the
+same game root. The five completion outputs agreed on their baseline, inventory
+and native-state digests. The capture observed ten profiles and 344 staging
+providers; it named two additional unregistered staging directories without
+claiming that their contents were fully hashed.
+
+Independent physical passes before capture, after capture and after helper
+retirement matched all 1,396 deployed file pairs, 79 settings pins, preference
+discovery and the deployment manifest. Curated active-mod and download snapshots
+also matched. The exact nine-file helper was moved out of active plugins after
+normal host exit; the permanent adapter loaded again with the same bundle and
+context. The game was not launched and no mod install, enable, removal or deploy ran.
+
+This run used externally reviewed materialization and host controllers, fresh
+per-phase process/window approvals, and a complete JS/CJS source-inventory check
+around the host phases. These checks remain point-in-time observations. The
+public preparer still produces held code; it does not supply a generic activation
+writer or an installation permit. Resulting install bindings remain held and
+require a new operation-specific review, current context and native safety gates.

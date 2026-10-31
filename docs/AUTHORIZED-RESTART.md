@@ -103,3 +103,14 @@ Read fresh health after startup and compare the actual loaded adapter/package,
 active profile/game/root identities, dialogs and protected state. Installed bytes,
 source tests and loaded runtime acceptance are separate observations. Confirm a
 retired helper is no longer active. Never launch the game to validate this route.
+
+## Imported Node client readers
+
+A private host reader using `node -e` must not put the imported `session.mjs`
+path in `process.argv[1]`. That module's CLI entry guard can treat the import as
+direct execution, run `main([])` and return a usage error before the intended
+read. Use a separate script entry, or a fixed sentinel in argv[1] and import the
+module path from argv[2]. Exercise the real module import without network calls
+before binding a controller; a mocked transport alone does not cover this case.
+An already bound controller remains frozen: create a new reviewed generation
+for the repair rather than editing its source pins or a previous attempt.

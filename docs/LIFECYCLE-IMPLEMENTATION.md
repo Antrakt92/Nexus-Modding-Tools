@@ -109,6 +109,14 @@ actual target map and updater status without another temporary extension. Its
 source/wire/package checks and installed-host acceptance remain separate; these
 observations alone do not accept the native ZIP installation path.
 
+A later newly bound zero-package capture passed installed-host acceptance on
+31 October using the actual same-root aliases. Its five completion outputs and
+native digests agreed, and independent before/after/retirement disk passes
+matched 1,396 deployed pairs, 79 settings pins and preference discovery. The
+helper was retired and adapter 1.1.0 restored in the same active context. This
+closes that read-capture gate, not the native ZIP installation gate. Details and
+remaining limits are in [capture acceptance](READ-CAPTURE-PREPARATION.md#installed-host-acceptance--31-october-2026).
+
 ## Stage 2 verification — 30 October 2026
 
 Reviewed plans now return a stable full `planId`. Apply reserves an immutable
