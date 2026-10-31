@@ -41,6 +41,13 @@ The [source-reviewed native gates](NATIVE-LIFECYCLE-GATES.md) document the exact
 replacement, dependency-ignore and permanent-removal branches that keep effects
 held. A new archive basename alone does not exclude silent replacement.
 
+The [strict dispatch preparation](NATIVE-DISPATCH-CONTRACT.md) now includes a
+closed full-plan request, a bounded synchronous consumed-ID model and immutable
+intent storage with digest-bound readback. Process-exit tests and root-replacement
+regressions verify this storage scope. Power-loss publication, shared durable
+job exclusion and native no-replacement/ownership remain open; stage 4 is not
+accepted for installation.
+
 The current bottleneck evidence and architectural constraints are in
 [Lifecycle performance](LIFECYCLE-PERFORMANCE.md). This checklist does not replace
 the [agent workflow](AGENT-WORKFLOW.md) or task-specific native admission.

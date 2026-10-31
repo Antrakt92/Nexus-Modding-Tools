@@ -2,15 +2,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import paths from './paths.cjs';
-import strictJSON from './strict-json.cjs';
+import {createImmutableRecordIO, identity, generation} from './immutable-records.mjs';
 import { validatePlan, planQueue } from './plan-contract.mjs';
 
 const MAX_BYTES = 1024 * 1024, MAX_EVENTS = 205;
 const id = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const need = (ok, code) => { if (!ok) throw Error(code); };
-const identity = stat => `${stat.dev}:${stat.ino}`;
-const generation = stat => [stat.dev, stat.ino, stat.size, stat.mtimeNs, stat.ctimeNs, stat.nlink].join(':');
 const exact = (value, names) => object(value) && Object.keys(value).length === names.length && names.every(n => Object.hasOwn(value, n));
 const at = value => typeof value === 'string' && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(value) && Number.isFinite(Date.parse(value));
 const code = value => typeof value === 'string' && /^[A-Z][A-Z0-9_]{1,99}$/.test(value);
@@ -37,44 +35,7 @@ function frozenPlan(value) {
 export function canonicalPlanId(value) {
   return crypto.createHash('sha256').update(encoded(frozenPlan(value))).digest('hex');
 }
-function ancestry(value, create = false) {
-  const nodes = new Map(), chain = [];
-  for (let p = value; ; p = path.dirname(p)) { chain.unshift(p); if (p === path.dirname(p)) break; }
-  for (const dir of chain) {
-    let stat;
-    try { stat = fs.lstatSync(dir, { bigint: true }); }
-    catch (error) {
-      if (error.code !== 'ENOENT') throw error;
-      if (!create) return null;
-      try { fs.mkdirSync(dir, { mode: 0o700 }); }
-      catch (error) { if (error.code !== 'EEXIST') throw error; }
-      stat = fs.lstatSync(dir, { bigint: true });
-    }
-    need(stat.isDirectory() && !stat.isSymbolicLink(), 'PLAN_JOURNAL_UNSAFE_PATH'); nodes.set(dir, identity(stat));
-  }
-  return nodes;
-}
-function sameAncestry(value, pins) {
-  const current = ancestry(value);
-  need(current && current.size === pins.size && [...pins].every(([p, node]) => current.get(p) === node), 'PLAN_JOURNAL_PATH_CHANGED');
-}
-function readJSON(file, observations, expected) {
-  const stat = fs.lstatSync(file, { bigint: true });
-  need(stat.isFile() && !stat.isSymbolicLink() && stat.size <= BigInt(MAX_BYTES), 'PLAN_JOURNAL_CORRUPT');
-  const fd = fs.openSync(file, 'r');
-  try {
-    const before = fs.fstatSync(fd, { bigint: true });
-    need(generation(before) === generation(stat), 'PLAN_JOURNAL_PATH_CHANGED');
-    const bytes = Buffer.alloc(Number(before.size) + 1); let used = 0, count;
-    while (used < bytes.length && (count = fs.readSync(fd, bytes, used, bytes.length - used, null)) > 0) used += count;
-    need(used === Number(before.size) && generation(fs.fstatSync(fd, { bigint: true })) === generation(before)
-      && generation(fs.lstatSync(file, { bigint: true })) === generation(before), 'PLAN_JOURNAL_PATH_CHANGED');
-    if (expected) need(bytes.subarray(0, used).equals(expected), 'PLAN_JOURNAL_CHANGED');
-    observations?.set(file, generation(before));
-    try { return strictJSON.parseStrictJSON(bytes.subarray(0, used), { maxBytes: MAX_BYTES }); }
-    catch { throw Error('PLAN_JOURNAL_CORRUPT'); }
-  } finally { fs.closeSync(fd); }
-}
+const {ancestry, sameAncestry, readJSON, publish} = createImmutableRecordIO({maxBytes: MAX_BYTES, prefix: 'PLAN_JOURNAL_'});
 const eventName = number => String(number).padStart(6, '0') + '.json';
 function transitions(planId, queue, events) {
   let observed = 0, pending = null, terminal = null;
@@ -122,6 +83,7 @@ export function createPlanJournal(options = {}) {
       }
       need(directory.isDirectory() && !directory.isSymbolicLink(), 'PLAN_JOURNAL_UNSAFE_PATH');
       const pins = ancestry(dir), names = fs.readdirSync(dir).sort();
+      sameAncestry(root, rootPins);
       need(names.length > 0 && names.length <= MAX_EVENTS + 1 && names.includes('plan.json')
         && names.every(n => n === 'plan.json' || /^\d{6}\.json$/.test(n)), 'PLAN_JOURNAL_CORRUPT');
       const observations = new Map(), record = readJSON(path.join(dir, 'plan.json'), observations);
@@ -148,6 +110,8 @@ export function createPlanJournal(options = {}) {
       try { fs.mkdirSync(dir, { mode: 0o700 }); }
       catch (error) { if (error.code === 'EEXIST') throw Error('PLAN_JOURNAL_EXISTS_HOLD'); throw error; }
       const pins = ancestry(dir), files = new Map(), events = []; let held = false;
+      // Reservation must not adopt a replacement root as its new authority.
+      sameAncestry(root, rootPins);
       seen.add(planId);
       function guard() {
         need(!held, 'PLAN_JOURNAL_HELD'); sameAncestry(dir, pins);
@@ -159,32 +123,9 @@ export function createPlanJournal(options = {}) {
         }
       }
       function write(name, value) {
-        const bytes = encoded(value); guard();
-        const pending = path.join(dir, '.' + name + '.pending-' + crypto.randomUUID()), final = path.join(dir, name);
-        let fd;
-        try {
-          fd = fs.openSync(pending, 'wx', 0o600); fs.writeFileSync(fd, bytes); fs.fsyncSync(fd);
-          const after = fs.fstatSync(fd, { bigint: true }), pendingStat = fs.lstatSync(pending, { bigint: true });
-          sameAncestry(dir, pins);
-          need(after.isFile() && after.size === BigInt(bytes.length) && generation(after) === generation(pendingStat), 'PLAN_JOURNAL_CHANGED');
-          fs.linkSync(pending, final);
-          need(identity(fs.lstatSync(final, { bigint: true })) === identity(after)
-            && identity(fs.lstatSync(pending, { bigint: true })) === identity(after), 'PLAN_JOURNAL_CHANGED');
-          fs.unlinkSync(pending);
-          const complete = fs.lstatSync(final, { bigint: true });
-          need(complete.isFile() && !complete.isSymbolicLink() && generation(complete) === generation(fs.fstatSync(fd, { bigint: true })), 'PLAN_JOURNAL_CHANGED');
-          // Windows can finalize ChangeTime on closing the writer handle.
-          // Reopen and verify every byte before pinning that finalized generation.
-          const closing = fd; fd = undefined; fs.closeSync(closing);
-          const finalized = new Map(); readJSON(final, finalized, bytes);
-          need(identity(fs.lstatSync(final, { bigint: true })) === identity(after), 'PLAN_JOURNAL_CHANGED');
-          files.set(name, finalized.get(final));
-        } catch (error) { held = true; throw error; }
-        finally {
-          if (fd !== undefined) {
-            try { fs.closeSync(fd); } catch (error) { held = true; throw error; }
-          }
-        }
+        const bytes = encoded(value);
+        try {files.set(name, publish(dir, name, bytes, pins, guard));}
+        catch (error) {held = true; throw error;}
       }
       try {
         write('plan.json', { schema: 'mod-plan-journal/1', planId, at: new Date().toISOString(),

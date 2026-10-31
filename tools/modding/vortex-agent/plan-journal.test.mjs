@@ -168,6 +168,40 @@ test('an externally modified immutable event halts later appends and cannot be o
   assert.throws(() => writer.observed(0), /PLAN_JOURNAL_CHANGED/); assert(fs.readFileSync(file, 'utf8').endsWith(' '));
   assert(!fs.existsSync(eventPath(root, writer.planId, 2)));
 });
+test('root replacement during reservation cannot redirect a write into the foreign directory', t => {
+  const {root, store} = fixture(t), value = plan(), id = canonicalPlanId(value);
+  const mkdir = fs.mkdirSync; let swapped = false;
+  fs.mkdirSync = (file, ...args) => {
+    const result = mkdir(file, ...args);
+    if (!swapped && String(file) === path.join(root, id)) {
+      swapped = true; fs.renameSync(root, root + '-original'); mkdir(root);
+      mkdir(path.join(root, id));
+    }
+    return result;
+  };
+  try {assert.throws(() => store.begin(value), /PLAN_JOURNAL_PATH_CHANGED/);}
+  finally {fs.mkdirSync = mkdir;}
+  assert.equal(swapped, true);
+  assert.deepEqual(fs.readdirSync(path.join(root, id)), []);
+  assert.deepEqual(fs.readdirSync(path.join(root + '-original', id)), []);
+});
+
+test('reading cannot adopt a replacement root even if the original child directory is moved into it', t => {
+  const {root, store} = fixture(t), writer = store.begin(plan()), dir = path.join(root, writer.planId);
+  const original = fs.lstatSync; let swapped = false;
+  fs.lstatSync = (file, ...args) => {
+    const result = original(file, ...args);
+    if (!swapped && String(file) === dir) {
+      swapped = true; fs.renameSync(root, root + '-old'); fs.mkdirSync(root);
+      fs.renameSync(path.join(root + '-old', writer.planId), dir);
+    }
+    return result;
+  };
+  try {assert.throws(() => store.read(writer.planId), /PLAN_JOURNAL_PATH_CHANGED/);}
+  finally {fs.lstatSync = original;}
+  assert.equal(swapped, true); assert(fs.existsSync(path.join(dir, 'plan.json')));
+});
+
 test('default journal root follows the configured runtime workspace rather than current/source directory', t => {
   const { workspace } = fixture(t), prior = process.env.NEXUS_WORKSPACE; process.env.NEXUS_WORKSPACE = workspace;
   try {

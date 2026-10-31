@@ -75,6 +75,60 @@ replay. Shape checks and matching caller-supplied hashes prove no external facts
 
 ## Required executor ordering
 
+### Immutable intent storage
+
+`native-intent-journal.mjs` supplies `createNativeIntentJournal({root})`, with
+`begin(requestBytes)` and `read(operationId, expectedRequestSHA256)`. The default
+root is `<runtime>/local-state/vortex-agent-build/native-install-intents`, beside
+the existing plan journals and flat receipts. It is not inside the receipts
+directory, whose installer inventory does not accept subdirectories.
+
+`begin` validates and detaches the entire request before creating anything. It
+exclusively reserves `<operationId>` and publishes one fixed `intent.json` record
+containing the full semantic request, canonical digest and root/directory
+identities. Both journals share the internal `immutable-records.mjs` I/O:
+exclusive temporary file creation, file flush, no-overwrite hardlink publication,
+pending-name removal, writer close and exact reopened-byte verification. The
+record budget is 1 MiB + 8 KiB, including the bounded request wrapper. The native
+reader inspects at most two directory entries to detect unexpected files.
+
+Partial directories, pending files, write errors or an existing reservation hold
+the operation; nothing is deleted to retry. Root identity is checked again after
+child-directory discovery/reservation, so a replacement root cannot become new
+authority. Existing enable/deploy journals receive the same repair, including
+readback when the original operation directory was moved into a foreign root.
+These are observed namespace checks, not an OS-enforced boundary against a
+hostile process with write access to the workspace.
+
+Fresh readback requires the caller's independently retained request digest. A
+matching digest calculated from the same stored record is not independent
+binding. Missing binding, mismatched requests and inconsistent records refuse;
+the caller must retain the original binding for recovery. A missing operation
+returns `not_observed`, with `dispatchState:unknown`, `canReplay:false` and
+`reconcileRequired:true`. A valid intent also has unknown dispatch state. Neither
+state proves whether an external effect occurred.
+
+This storage layer has no append/resume, acknowledgement, dispatch token,
+cancellation or cleanup API. Every status retains `effectsAllowed:false` and
+`powerLossPersistenceVerified:false`. File flush and process-exit readback tests
+do not establish survival of directory publication after OS crash/power loss.
+The journal reserves operation IDs only; the future executor still needs shared
+durable job exclusion, authoritative renderer lifetime, capability admission,
+effect ordering and the remaining native gates. No caller option can promote
+the observed intent into an installation permit.
+
+Synthetic tests cover ten real child-process exit windows (reservation through
+post-return), two simultaneous reserving processes, injected I/O failures,
+partial/corrupt and coherently replaced records, root replacement and a near-limit
+request whose complete record exceeds the older journal's 1 MiB limit. They
+exercise local filesystem mechanics, not Vortex or hardware power loss:
+
+```powershell
+node --test tools/modding/vortex-agent/native-intent-journal.test.mjs tools/modding/vortex-agent/plan-journal.test.mjs
+```
+
+### Native invocation remains held
+
 Required order:
 
 1. Exclusively create the durable operation and verify native capability/source

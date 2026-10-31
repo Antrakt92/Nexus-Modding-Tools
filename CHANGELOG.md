@@ -17,6 +17,12 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Add an immutable full-request install-intent journal with exact digest-bound
+  readback and process-exit/failure tests. It grants no native effects or replay;
+  power-loss persistence and the durable executor remain unproved.
+- Fix plan-journal root replacement races during reservation and reading. A
+  moved operation directory cannot make a replacement root authoritative. Share
+  the immutable record I/O between both journal schemas.
 - Add an offline native-dispatch request model with complete-plan binding and a
   synchronous 1,024-operation consumed-ID registry. Both operation and job IDs
   prevent replay within the modeled lifetime; native dispatch, durable intents
