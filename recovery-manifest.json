@@ -276,7 +276,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "6322feda02e2fbee277f3e95b30643fc9a018bba934a59a4abfc2bfe5236c5be"
+      "sha256_lf": "501721d840ee1f420238eeed51ed258d7d18537eb9136e0aae2315cd976f81b5"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -285,6 +285,10 @@
     {
       "path": "docs/NATIVE-ACTIVITY-PATCH.md",
       "sha256_lf": "89e4a61aae084d84e640d6b343c5842467e4f49f2f1e7076a008baa951e2598e"
+    },
+    {
+      "path": "docs/NATIVE-ADOPTION-BOUNDARY.md",
+      "sha256_lf": "9f0e15390c9ff5c0e901e165590bc935c28097c02d9f90a4faf1b5e94e99b551"
     },
     {
       "path": "docs/NATIVE-CALLBACK-PATCH.md",
@@ -705,6 +709,10 @@
     {
       "path": "tools/modding/vortex-agent/download-identity.cjs",
       "sha256_lf": "8e23a7b6fbe7f2842f83186db38446c85c212caba77cde21eccf4c245b0dd247"
+    },
+    {
+      "path": "tools/modding/vortex-agent/extension-admission-source-probe.test.mjs",
+      "sha256_lf": "ea8e098bfeab2d0df0481159b855c93dda3f006f7671ae06e3364f049a462a8b"
     },
     {
       "path": "tools/modding/vortex-agent/extension.cjs",
@@ -1173,6 +1181,18 @@
     {
       "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/transfer-join.patch",
       "sha256_lf": "20e5e5bbf5e8a814fc89fbb16f75147d3b7b26b4b3be6f47c3dba6765caf700f"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-persistence-2.9.1/batch-acknowledgement.json",
+      "sha256_lf": "b72611d9b18e27b99132c1a845df2446f2aab02f7b78eabec32c6a933fea83a7"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-persistence-2.9.1/batch-acknowledgement.patch",
+      "sha256_lf": "0a96d2660397fd24b09360b1f0360838339aee3ca2f6e86cca0a50d2fda02bed"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-persistence-ack-patch.test.mjs",
+      "sha256_lf": "bc47fc9acaeb7a8f0d1266837d6bb3d37bee56af0c3b924196d066f755b9f393"
     },
     {
       "path": "tools/modding/vortex-agent/native-purge-join-patch.test.mjs",
