@@ -1,0 +1,43 @@
+--- a/src/main/src/store/persistenceIPC.ts
++++ b/src/main/src/store/persistenceIPC.ts
+@@ -19,12 +19,40 @@
+ import { registerAllPersistedHives } from "./mainPersistence";
+ import type ReduxPersistorIPC from "./ReduxPersistorIPC";
+ 
++let acknowledgementOwner: WebContents | undefined;
++
++/** Main-process-only binding; renderer messages never select this owner. */
++export function bindPersistenceAcknowledgementSender(owner: WebContents | undefined): void {
++  if (owner === undefined || owner.isDestroyed()
++      || (acknowledgementOwner !== undefined && acknowledgementOwner !== owner)) {
++    throw new Error("Persistence acknowledgement owner cannot be bound");
++  }
++  acknowledgementOwner = owner;
++}
++
+ /**
+  * Set up IPC handlers for persistence operations.
+  *
+  * @param persistor - The ReduxPersistorIPC instance to use for persistence
+  */
+ export function setupPersistenceIPC(persistor: ReduxPersistorIPC): void {
++  // This channel acknowledges its exact barrier, not arbitrary queue drainage.
++  betterIpcMain.handle("persist:diffs-acknowledged", async (event, batches) => {
++    const owner = acknowledgementOwner;
++    const frame = event.senderFrame;
++    const assertOwner = () => {
++      if (owner === undefined || owner !== acknowledgementOwner || owner.isDestroyed()
++          || event.sender !== owner || frame == null || event.senderFrame !== frame
++          || frame !== owner.mainFrame) {
++        throw new Error("Persistence acknowledgement sender is not the owned main frame");
++      }
++    };
++    assertOwner();
++    await persistor.flushPersistenceAcknowledged(batches);
++    // A completed backend write cannot acknowledge a frame replaced while waiting.
++    assertOwner();
++  });
++
+   // Handle incoming diff operations from renderer
+   betterIpcMain.on("persist:diff", (_event, hive, operations) => {
+     log("debug", "Received persist:diff", {

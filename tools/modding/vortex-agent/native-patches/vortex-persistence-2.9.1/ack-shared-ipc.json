@@ -1,0 +1,17 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/shared/src/types/ipc.ts",
+  "upstreamGitBlob": "b5b9ac5af7984cf265a8af2934cbe2d7b4399392",
+  "originalSourceSHA256": "cb34be45e8b87cca3480ad1805a358b8e2604ac8938b71e4a0594f7f6885521d",
+  "inputSHA256": "cb34be45e8b87cca3480ad1805a358b8e2604ac8938b71e4a0594f7f6885521d",
+  "outputSHA256": "66575ffc3b71c3e4f7617b2ff445f7c678d212bddf92c83c937c6cb0c3fb6dbe",
+  "patchSHA256": "797c91a7ccef9943be9059298867daa235b1afb3c35c2731c6cdade481a6110b",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "powerLossPersistenceVerified": false
+}

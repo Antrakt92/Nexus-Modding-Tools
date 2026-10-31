@@ -91,8 +91,10 @@ also refuse. A read error is never converted into absence. Bounded returned data
 does not establish an indexed query or constant execution time.
 
 This covers the persistor queue, not all database writers. Startup/admin/import/
-repair paths that write directly still need admission. A main queue drain also
-does not flush delayed renderer diffs. A future registration must coordinate and
+repair paths that write directly still need admission. The separate
+[acknowledged renderer snapshot](NATIVE-PERSISTENCE-BARRIER.md) now prepares an
+explicit pending-diff flush and detects older failed main writes. It still does
+not freeze future renderer changes. A registration must coordinate and
 resynchronize the renderer before any safe release; a late diff cannot become
 permission to overwrite the new record. Neither reservation nor a clean database
 snapshot establishes filesystem custody, crash recovery or an installation permit.

@@ -1,0 +1,22 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/store/persistDiffMiddleware.ts",
+  "inputSHA256": "d4dbc85a48739c30239bda2b6b091ef9631b5e9df6b3affcd935a4a3a5cf0262",
+  "outputSHA256": "326a2d53c9d08d7b56f436319675dc65be5ecc34977c5097e46511b56e7536dd",
+  "patchSHA256": "4db4ecd26a180915c18f0176e9986853183b1a011ac10bf1618a91698637a43c",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "powerLossPersistenceVerified": false,
+  "limitations": [
+    "Detached renderer snapshot acknowledgement only; not a freeze of later changes, native reservation or installation permit.",
+    "Unknown or failed completion retains lifetime evidence and holds without replay; restart reconciliation remains separate.",
+    "Quit-sync remains queue-only. Hydration/push/quit while a flight is pending invalidates coherence.",
+    "Only this renderer middleware instance is flushed; other renderers and raw database writers need separate admission.",
+    "Explicit acknowledged flights pause legacy timer/quit sends while pending or held; fresh changes stay queued until reconciliation. Normal paths before this helper is used are unchanged."
+  ]
+}

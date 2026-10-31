@@ -1,0 +1,20 @@
+--- a/src/shared/src/types/preload.ts
++++ b/src/shared/src/types/preload.ts
+@@ -21,6 +21,7 @@
+ import type { FlagContext, FlagMetricsBucket } from "./ipc";
+ import type {
+   DiffOperation,
++  PersistenceBatch,
+   AppInitMetadata,
+   HashAlgorithm,
+   Serializable,
+@@ -379,6 +380,9 @@
+    */
+   sendDiff(hive: PersistedHive, operations: DiffOperation[]): void;
+ 
++  /** Reject on any failed batch; this is not a power-loss durability guarantee. */
++  sendDiffAcknowledged(batches: PersistenceBatch[]): Promise<void>;
++
+   /**
+    * Synchronously send diff operations to main, blocking until they are queued.
+    * Used only on quit (from a beforeunload handler) so the final debounced batch

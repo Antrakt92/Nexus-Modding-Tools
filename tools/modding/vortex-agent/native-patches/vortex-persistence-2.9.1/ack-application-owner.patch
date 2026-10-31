@@ -1,0 +1,18 @@
+--- a/src/main/src/Application.ts
++++ b/src/main/src/Application.ts
+@@ -50,6 +50,7 @@
+   finalizeMainWrite,
+ } from "./store/mainPersistence";
+ import SubPersistor from "./store/SubPersistor";
++import { bindPersistenceAcknowledgementSender } from "./store/persistenceIPC";
+ import { isTelemetryEnabled, setTelemetryEnabled, setTelemetryInstanceId } from "./telemetry/state";
+ import TrayIcon from "./TrayIcon";
+ import { UnleashClient } from "./unleash/client";
+@@ -182,6 +183,7 @@
+     // so getHandle() works immediately. The returned promise resolves
+     // once the window is ready to be shown.
+     this.mMainWindowReady = this.mMainWindow.create();
++    bindPersistenceAcknowledgementSender(this.mMainWindow.getHandle()?.webContents);
+   }
+ 
+   private async awaitMainWindowReady(): Promise<void> {
