@@ -9,14 +9,17 @@ import {assembleNativeSources, NATIVE_SOURCE_PATHS, NATIVE_SOURCE_LIMITS} from '
 import {applyExact} from './native-patch-test-fixture.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const PACKET = path.join(HERE, 'native-patches/vortex-2.9.1');
+const PACKETS = {lifecycle: path.join(HERE, 'native-patches/vortex-2.9.1'),
+  persistence: path.join(HERE, 'native-patches/vortex-persistence-2.9.1')};
+const PACKET = PACKETS.lifecycle;
+const rowFile = (row, suffix, packets = PACKETS) => path.join(packets[row.packet], row.name+suffix);
 const series = JSON.parse(fs.readFileSync(path.join(HERE, 'native-source-series.json'), 'utf8'));
 const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const dummy = () => Object.fromEntries(NATIVE_SOURCE_PATHS.map(file => [file, Buffer.from('x\n')]));
 const reject = (input, code = 'INPUT') => assert.throws(() => assembleNativeSources(input),
   error => error.message === 'NATIVE_SOURCE_SERIES_'+code);
 const integration = (name, action) => test(name, {
-  skip: process.env.VORTEX_NATIVE_SOURCE_ROOT ? false : 'Set VORTEX_NATIVE_SOURCE_ROOT to the exact original ten-file source root',
+  skip: process.env.VORTEX_NATIVE_SOURCE_ROOT ? false : 'Set VORTEX_NATIVE_SOURCE_ROOT to the exact original 22-file source root',
 }, action);
 const originals = () => Object.fromEntries(NATIVE_SOURCE_PATHS.map(file => [file,
   fs.readFileSync(path.join(process.env.VORTEX_NATIVE_SOURCE_ROOT, file))]));
@@ -33,10 +36,14 @@ function clonePacket(t) {
   });
   for (const name of ['native-source-series.mjs', 'native-source-series.json',
     'native-patch-test-fixture.mjs', 'strict-json.cjs']) fs.copyFileSync(path.join(HERE, name), path.join(root, name));
-  const packet = path.join(root, 'native-patches/vortex-2.9.1');
-  fs.mkdirSync(packet, {recursive: true});
-  for (const name of fs.readdirSync(PACKET)) fs.copyFileSync(path.join(PACKET, name), path.join(packet, name));
-  return {root, packet, load: async () => (await import(pathToFileURL(path.join(root, 'native-source-series.mjs')).href)).assembleNativeSources};
+  const packets = {};
+  for (const [id, source] of Object.entries(PACKETS)) {
+    const target = path.join(root, 'native-patches', path.basename(source));
+    fs.mkdirSync(target, {recursive: true});
+    for (const name of fs.readdirSync(source)) fs.copyFileSync(path.join(source, name), path.join(target, name));
+    packets[id] = target;
+  }
+  return {root, packet: packets.lifecycle, packets, load: async () => (await import(pathToFileURL(path.join(root, 'native-source-series.mjs')).href)).assembleNativeSources};
 }
 
 test('closed input rejects accessors, proxies, symbols and inherited maps without executing caller code', () => {
@@ -89,16 +96,23 @@ test('fixed packet is checked, but an unpinned original can never assemble', () 
 });
 
 test('pinned series closes all fixed nodes, exact source chains and cross-file manager dependencies', () => {
-  assert.equal(series.patches.length, 30); assert.equal(series.files.length, 10);
+  assert.equal(series.patches.length, 49); assert.equal(series.files.length, 22);
+  assert.equal(series.schema, 'native-source-series/2');
   assert.deepEqual([...series.files.map(row => row.path)].sort(), [...NATIVE_SOURCE_PATHS].sort());
   const done = new Map(), current = new Map(series.files.map(row => [row.path, row.originalSHA256]));
   for (const row of series.patches) {
-    const raw = fs.readFileSync(path.join(PACKET, row.name+'.json'));
+    const raw = fs.readFileSync(rowFile(row, '.json'));
     assert.equal(sha(raw), row.manifestSHA256);
     const manifest = JSON.parse(raw);
-    assert.equal(sha(fs.readFileSync(path.join(PACKET, row.name+'.patch'))), row.patchSHA256);
+    assert.equal(sha(fs.readFileSync(rowFile(row, '.patch'))), row.patchSHA256);
     assert.equal(current.get(row.path), row.inputSHA256, row.name);
     if (row.prerequisitePatch) assert.equal(done.get(row.prerequisitePatch.slice(0, -6))?.patchSHA256, row.prerequisitePatchSHA256);
+    if (row.requiredCompanionPatch) {
+      const companion = done.get(row.requiredCompanionPatch.slice(0,-6));
+      assert.equal(companion?.packet, row.packet);
+      assert.equal(companion?.patchSHA256, row.requiredCompanionPatchSHA256);
+      assert.equal(companion?.outputSHA256, row.requiredCompanionOutputSHA256);
+    }
     if (row.requiredManagerPatchSHA256) assert([...done.values()].some(parent =>
       parent.patchSHA256 === row.requiredManagerPatchSHA256 && parent.path.endsWith('/InstallManager.ts')));
     assert.equal(manifest.upstreamPath, row.path); current.set(row.path, row.outputSHA256); done.set(row.name, row);
@@ -152,7 +166,7 @@ test('altered source context, redirected manifest and rewritten series cannot re
 
 test('a previously read packet changing before read verification is refused', async t => {
   const fixture = clonePacket(t), assemble = await fixture.load();
-  const last = path.join(fixture.packet, series.patches.at(-1).name+'.patch');
+  const last = rowFile(series.patches.at(-1), '.patch', fixture.packets);
   const first = path.join(fixture.packet, series.patches[0].name+'.patch');
   const open = fs.openSync, close = fs.closeSync;
   let lastFd, mutated = false;
@@ -173,12 +187,12 @@ test('a previously read packet changing before read verification is refused', as
   assert(mutated);
 });
 
-integration('all ten final sources equal independent exact application and return detached immutable observations', () => {
+integration('all 22 final sources equal independent exact application and return detached immutable observations', () => {
   const input = originals(), result = assembleNativeSources(input);
   assert(Object.isFrozen(result)); assert(Object.isFrozen(result.sources)); assert(Object.isFrozen(result.receipt));
   const expected = Object.fromEntries(Object.entries(input).map(([file, bytes]) => [file, bytes.toString('utf8')]));
   for (const row of series.patches) expected[row.path] = applyExact(expected[row.path],
-    fs.readFileSync(path.join(PACKET, row.name+'.patch'), 'utf8'), row.path);
+    fs.readFileSync(rowFile(row, '.patch'), 'utf8'), row.path);
   assert.deepEqual(Object.keys(result.sources).sort(), [...NATIVE_SOURCE_PATHS].sort());
   for (const row of series.files) {
     assert.equal(sha(result.sources[row.path]), row.finalSHA256);
@@ -189,7 +203,7 @@ integration('all ten final sources equal independent exact application and retur
   assert(Object.isFrozen(result.receipt.sources)); assert(Object.isFrozen(result.receipt.sources[0]));
   assert(Object.isFrozen(result.receipt.patches[0])); assert.equal(result.receipt.patches.length, series.patches.length);
   assert.equal(result.receipt.preparedOnly, true);
-  for (const flag of ['nativeAdmission', 'effectsAllowed', 'typecheckVerified', 'nativeAcceptanceVerified', 'installed'])
+  for (const flag of ['nativeAdmission', 'effectsAllowed', 'typecheckVerified', 'nativeAcceptanceVerified', 'installed', 'installationPermit', 'globalSQLIsolationVerified', 'powerLossPersistenceVerified'])
     assert.equal(result.receipt[flag], false);
 });
 
@@ -231,7 +245,7 @@ integration('both added download originals require their independently pinned by
 test('Git index and LF checkout preserve strict packet pins from CRLF working inputs', async t => {
   const copy = clonePacket(t);
   const textFiles = ['native-source-series.mjs', 'native-source-series.json', 'native-patch-test-fixture.mjs', 'strict-json.cjs',
-    ...fs.readdirSync(copy.packet).map(name => path.join('native-patches/vortex-2.9.1', name))];
+    ...Object.values(copy.packets).flatMap(packet => fs.readdirSync(packet).map(name => path.join('native-patches', path.basename(packet), name)))];
   for (const relative of textFiles) {
     const file = path.join(copy.root, relative);
     fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replaceAll('\r\n', '\n').replaceAll('\n', '\r\n'));
@@ -254,5 +268,76 @@ test('Git index and LF checkout preserve strict packet pins from CRLF working in
     const result = assemble(originals());
     assert.equal(result.receipt.patches.length, series.patches.length);
     for (const row of series.files) assert.equal(sha(result.sources[row.path]), row.finalSHA256);
+  }
+});
+
+function resealFixture(copy, update) {
+  const file = path.join(copy.root, 'native-source-series.json');
+  const value = JSON.parse(fs.readFileSync(file));
+  update(value);
+  const bytes = Buffer.from(JSON.stringify(value, null, 2)+'\n');
+  fs.writeFileSync(file, bytes);
+  const module = path.join(copy.root, 'native-source-series.mjs');
+  fs.writeFileSync(module, fs.readFileSync(module, 'utf8').replace(/const SERIES_SHA256 = '[a-f0-9]{64}';/,
+    "const SERIES_SHA256 = '"+sha(bytes)+"';"));
+}
+function changeManifest(copy, graph, name, update) {
+  const row = graph.patches.find(row => row.name === name), file = rowFile(row, '.json', copy.packets);
+  const value = JSON.parse(fs.readFileSync(file)); update(value, row);
+  const bytes = Buffer.from(JSON.stringify(value, null, 2)+'\n');
+  fs.writeFileSync(file, bytes); row.manifestSHA256 = sha(bytes);
+}
+
+test('second fixed packet rejects missing/extra/drift and test-only intake before original reads', async t => {
+  for (const mode of ['missing','extra','drift','test-only']) {
+    const copy = clonePacket(t), packet = copy.packets.persistence;
+    if (mode === 'missing') fs.unlinkSync(path.join(packet,'native-query-source-admission.patch'));
+    if (mode === 'extra') fs.writeFileSync(path.join(packet,'EMPTY.sql'),'');
+    if (mode === 'drift') fs.appendFileSync(path.join(packet,'native-singleton-sql-admission.json'),' ');
+    if (mode === 'test-only') fs.copyFileSync(path.join(HERE,'native-patches/vortex-tests-2.9.1/main-persistence-path-intake.patch'),path.join(packet,'main-persistence-path-intake.patch'));
+    const assemble = await copy.load(); assert.throws(()=>assemble(dummy()), /^Error: NATIVE_SOURCE_SERIES_PACKET$/);
+  }
+});
+
+test('closed packet ID and companion field triples cannot be omitted or redirected', async t => {
+  for (const mode of ['packet','missing-companion']) {
+    const copy = clonePacket(t);
+    resealFixture(copy, graph => {
+      const row = graph.patches.find(row => row.name === 'target-reservation');
+      if (mode === 'packet') row.packet = '../vortex-tests-2.9.1';
+      else delete row.requiredCompanionOutputSHA256;
+    });
+    const assemble = await copy.load(); assert.throws(()=>assemble(dummy()), error =>
+      error.message === 'NATIVE_SOURCE_SERIES_'+(mode === 'packet' ? 'SERIES' : 'GRAPH'));
+  }
+});
+
+integration('already-applied intermediate companion and cross-file lifecycle dependency are valid', () => {
+  const result = assembleNativeSources(originals());
+  const target = result.receipt.patches.find(row=>row.name==='target-reservation');
+  const level = result.receipt.sources.find(row=>row.path==='src/main/src/store/LevelPersist.ts');
+  assert.equal(target.requiredCompanionOutputSHA256,'789e8cc72682d65def311535ce20d36d4fc992cd01cdb0f9b58084696848f7e0');
+  assert.notEqual(target.requiredCompanionOutputSHA256,level.finalSHA256);
+  const bridge = result.receipt.patches.find(row=>row.name==='lifecycle-handler-ownership');
+  const prerequisite = result.receipt.patches.find(row=>row.name===bridge.prerequisitePatch.slice(0,-6));
+  assert.notEqual(bridge.path, prerequisite.path);
+  assert.equal(prerequisite.patchSHA256,bridge.prerequisitePatchSHA256);
+  assert.equal(result.receipt.schema,'native-source-assembly-receipt/2');
+});
+
+integration('later, wrong-hash and final-instead-of-intermediate companions fail despite test-only resealing', async t => {
+  for (const mode of ['later','hash','output']) {
+    const copy = clonePacket(t);
+    resealFixture(copy, graph => {
+      if (mode==='later') {
+        const index=graph.patches.findIndex(row=>row.name==='new-mod-conflict-query');
+        const [query]=graph.patches.splice(index,1);
+        graph.patches.splice(graph.patches.findIndex(row=>row.name==='target-reservation')+1,0,query);
+      } else changeManifest(copy,graph,'target-reservation',(manifest,row)=>{
+        const field=mode==='hash'?'requiredCompanionPatchSHA256':'requiredCompanionOutputSHA256';
+        manifest[field]=row[field]=mode==='hash'?'0'.repeat(64):graph.files.find(row=>row.path==='src/main/src/store/LevelPersist.ts').finalSHA256;
+      });
+    });
+    const assemble=await copy.load();assert.throws(()=>assemble(originals()),/^Error: NATIVE_SOURCE_SERIES_GRAPH$/);
   }
 });

@@ -1,5 +1,5 @@
 {
-  "schema": "native-source-series/1",
+  "schema": "native-source-series/2",
   "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
   "upstreamTag": "v2.9.1",
   "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
@@ -53,6 +53,66 @@
       "path": "src/renderer/src/extensions/download_management/views/Settings.tsx",
       "originalSHA256": "4a7d38409c276dc8f61f0a2a01e52de8bc47d7e9e1fadcc867812e2c417ee89d",
       "finalSHA256": "0c47662eaad2bb7c1a5f1fb919bd53ed81050500d19c1bde64e6a3bbe2820faa"
+    },
+    {
+      "path": "src/main/src/Application.ts",
+      "originalSHA256": "25c00338c5cece8bad93822ac1ed548928284e2f1922f0406026d2fc01ce98ce",
+      "finalSHA256": "bdbf8bcd4d1ae41fa8d9615a18327115f081d3668d8e88ac5382dcc7f024f39d"
+    },
+    {
+      "path": "src/main/src/store/DuckDBSingleton.ts",
+      "originalSHA256": "d11e7ca11c9bc0b0ee9659b4a4d26c7fba14e6a56ccae03b25df33d91e4589a0",
+      "finalSHA256": "2f78d0bbd1ccfede3b0b9a9fb5f136a0dc5ad0ab24c7bfe13703582ded5b8344"
+    },
+    {
+      "path": "src/main/src/store/LevelPersist.ts",
+      "originalSHA256": "742929670876a79c7332a13d16381cf2098ee55f57f838e3e35668853d1455a1",
+      "finalSHA256": "ef39796be6ba9aa2f8d4030686ef1a3f30175db8c289fdce80301c5c5ba1d00f"
+    },
+    {
+      "path": "src/main/src/store/QueryRegistry.ts",
+      "originalSHA256": "f7c78fd586349761f077ac178ecee3745dd027911021dc6a3978bfcd7ca31839",
+      "finalSHA256": "6c304abb07fe9074d26866f3635c9f203b70b77b6fbb6463d4437d37301019a5"
+    },
+    {
+      "path": "src/main/src/store/ReduxPersistorIPC.ts",
+      "originalSHA256": "2a86c8e57e643172e8babf3474bd2e697a1cf8b3f3e3f3ea1f44934781a737e3",
+      "finalSHA256": "85a0340ccc4927875d65e3c8a34b8ad8654120c6bb2d6bee8859c2d4b144bc04"
+    },
+    {
+      "path": "src/main/src/store/mainPersistence.ts",
+      "originalSHA256": "7d3e28cb829914fb092774eca3fc357645fa7ef508177d1a0e3b32eed58f05fe",
+      "finalSHA256": "be4459bd40b79b7223cb3f29b1605bb309e6ef7e8dc780c6d10167c9e41b218f"
+    },
+    {
+      "path": "src/main/src/store/persistenceIPC.ts",
+      "originalSHA256": "a570597ae00396259d1ebbb37c7fe7ddb0a01ff3dcecd231cabde1059e9723ae",
+      "finalSHA256": "c95c67ceabcdcbff52f5893965abd06943a132b8cf3e681f5cbcea6f07fc29b6"
+    },
+    {
+      "path": "src/preload/src/index.ts",
+      "originalSHA256": "9f49d7900fedc1aaeac771711644bc2e1fcd71f77640bb43c4959a52f2093e42",
+      "finalSHA256": "b4dd5f70c4f98d1589111a7e2cda20cbb4afd1f7473469c0ffd2cfdc806d8b51"
+    },
+    {
+      "path": "src/renderer/src/reducers/index.ts",
+      "originalSHA256": "e59a69384003bade4d1216ee28a8347b38d27291f9b3688c82dc488c168a4e22",
+      "finalSHA256": "6cbd67e632d3f9bce384f9659bdf699b0b120663aed09eb2b7e51d45241fec7b"
+    },
+    {
+      "path": "src/renderer/src/store/persistDiffMiddleware.ts",
+      "originalSHA256": "d4dbc85a48739c30239bda2b6b091ef9631b5e9df6b3affcd935a4a3a5cf0262",
+      "finalSHA256": "326a2d53c9d08d7b56f436319675dc65be5ecc34977c5097e46511b56e7536dd"
+    },
+    {
+      "path": "src/shared/src/types/ipc.ts",
+      "originalSHA256": "cb34be45e8b87cca3480ad1805a358b8e2604ac8938b71e4a0594f7f6885521d",
+      "finalSHA256": "66575ffc3b71c3e4f7617b2ff445f7c678d212bddf92c83c937c6cb0c3fb6dbe"
+    },
+    {
+      "path": "src/shared/src/types/preload.ts",
+      "originalSHA256": "06493d6bfd8db9ed898fbadcd565f4881566984969a6f0fbb300ea70fd8ba45a",
+      "finalSHA256": "3ef95ee06161d43796a73b4221207321164924243d6ca72fbb58d13803dfc469"
     }
   ],
   "patches": [
@@ -65,7 +125,11 @@
       "outputSHA256": "3a82d810f47409332262b204f4cde3ff11e7cbf0acbc9036715048a25594a050",
       "prerequisitePatch": null,
       "prerequisitePatchSHA256": null,
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "callback-order",
@@ -76,7 +140,11 @@
       "outputSHA256": "f0caab882f695df5827261f973bc4589070530eb33c28879e2480657e68e21d1",
       "prerequisitePatch": "ordinary-tracking.patch",
       "prerequisitePatchSHA256": "c9d5711ac1c5ce3e8c01aebc9f4ffcc0c5fa5640da189753b34e3178e9205af3",
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "native-activity",
@@ -87,7 +155,11 @@
       "outputSHA256": "0a6cd70aeea38c761af7e50c193f9a11dbaf159e378b2bc9f810585bf5e2a028",
       "prerequisitePatch": "callback-order.patch",
       "prerequisitePatchSHA256": "76ec9e21c30e8bdd3ec4ae20190e14fab19b5665183f34a17fffb87b990c7784",
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "strict-selection",
@@ -98,7 +170,11 @@
       "outputSHA256": "004ceae2a4e02d0abef1e39c1c888718ab0c140116d221b533e2a31c46e41baf",
       "prerequisitePatch": "native-activity.patch",
       "prerequisitePatchSHA256": "518d18897c281bc72fb47c597e2b154bbaecc2072d1951f4932af08e6a9b959a",
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "copy-error",
@@ -109,7 +185,11 @@
       "outputSHA256": "cba7e1fda1580ba57c14308e89be46e3b9de8ed2c290ee21d3e74288b30ba9bd",
       "prerequisitePatch": "strict-selection.patch",
       "prerequisitePatchSHA256": "c91b8ffe9e6061fa2bb756d97954024dd478a977e664fecb5d0e950618db6ea3",
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "transfer-join",
@@ -120,7 +200,11 @@
       "outputSHA256": "61abf69a0a11579da830a93c04cba7ca7dac36faf090d4685ed026c9bf385480",
       "prerequisitePatch": "copy-error.patch",
       "prerequisitePatchSHA256": "15f73ef8333782d1eaf4841e5fd7013dd6a4140723c96ac2a7e29025e9823955",
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "manager-exclusion",
@@ -131,7 +215,11 @@
       "outputSHA256": "ab3aa908239f13f753801bdc1c3a4a57da5ec750b3cc67430be3d9429c750f67",
       "prerequisitePatch": "transfer-join.patch",
       "prerequisitePatchSHA256": "20e5e5bbf5e8a814fc89fbb16f75147d3b7b26b4b3be6f47c3dba6765caf700f",
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "lifecycle-owner-bridge",
@@ -142,7 +230,11 @@
       "outputSHA256": "7b69e1ce675b889611ceb319b5b0f329600efca37b5407224af9c6008b14533d",
       "prerequisitePatch": "manager-exclusion.patch",
       "prerequisitePatchSHA256": "baf14e57097fe39f4a42ce5b3bda594e3b90d1f39d27885215b212bf5b300fa3",
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "lifecycle-result-bridge",
@@ -153,7 +245,11 @@
       "outputSHA256": "c6bc608b1eb16a2da570fdc95a4dac405ab470d0dfe70ef56da943279ddf1827",
       "prerequisitePatch": "lifecycle-owner-bridge.patch",
       "prerequisitePatchSHA256": "667be8134de0ef515326dd3faec826a32f430412f5bc0946588d7e0cbe2558fa",
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "lifecycle-handler-ownership",
@@ -164,7 +260,11 @@
       "outputSHA256": "56e3d15ce63e4617ef5aeb475a5cdef41709c49d84352e43b9dca5168512b0e6",
       "prerequisitePatch": "lifecycle-owner-bridge.patch",
       "prerequisitePatchSHA256": "667be8134de0ef515326dd3faec826a32f430412f5bc0946588d7e0cbe2558fa",
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "refresh-lifecycle",
@@ -175,7 +275,11 @@
       "outputSHA256": "ec749f966eaa909fdcb7c5efba24da758174bc0d00978ff078165849ccb2023b",
       "prerequisitePatch": "lifecycle-handler-ownership.patch",
       "prerequisitePatchSHA256": "3e754806735e77d2522a5bc25c554ac9ebfef41b2be0679c83bf0cb0370b82b0",
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "deployment-cancel",
@@ -186,7 +290,11 @@
       "outputSHA256": "ad198a4d1920950e41a5575e2422165c7ffc4c91e683deda2239a58f2c3832b3",
       "prerequisitePatch": null,
       "prerequisitePatchSHA256": null,
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "deployment-lifecycle",
@@ -197,7 +305,11 @@
       "outputSHA256": "6216f75fd7ab07dea3ac466e43bbd803618a9f73e7e6d9d8bf96d25e63aded6c",
       "prerequisitePatch": "lifecycle-owner-bridge.patch",
       "prerequisitePatchSHA256": "667be8134de0ef515326dd3faec826a32f430412f5bc0946588d7e0cbe2558fa",
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "activation-join",
@@ -208,7 +320,11 @@
       "outputSHA256": "c6c86dd6a84a4925a30954d140972d26a37a12153004ed5f07bc63d3bdb655f6",
       "prerequisitePatch": null,
       "prerequisitePatchSHA256": null,
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "activation-ownership",
@@ -219,7 +335,11 @@
       "outputSHA256": "580490862738a404e204755c05aa3ed203248141297561d86a1a59d4ee71050b",
       "prerequisitePatch": "activation-join.patch",
       "prerequisitePatchSHA256": "097f02e0ecb437b3f147de385a58071557a93c8827db4520aaaf370d87a18785",
-      "requiredManagerPatchSHA256": "dbcac46a4b9814ee33f899d6d8697e4d3aeb966c2b5f9bda931b12ae3064e9d7"
+      "requiredManagerPatchSHA256": "dbcac46a4b9814ee33f899d6d8697e4d3aeb966c2b5f9bda931b12ae3064e9d7",
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "purge-join",
@@ -230,7 +350,11 @@
       "outputSHA256": "4500ed7578015989281edc6492f5b7e651a3ede533e892912b579909a7638e26",
       "prerequisitePatch": null,
       "prerequisitePatchSHA256": null,
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "purge-ownership",
@@ -241,7 +365,11 @@
       "outputSHA256": "e2f26f7d4388b2c15f5a6dbb9f5c14a8c01660b74a65106b23c032ec332c9d3a",
       "prerequisitePatch": "purge-join.patch",
       "prerequisitePatchSHA256": "fe4d6d56f153ddc4f142034dd907f4d5c7d075c806839e1e534f73270b1fa575",
-      "requiredManagerPatchSHA256": "dbcac46a4b9814ee33f899d6d8697e4d3aeb966c2b5f9bda931b12ae3064e9d7"
+      "requiredManagerPatchSHA256": "dbcac46a4b9814ee33f899d6d8697e4d3aeb966c2b5f9bda931b12ae3064e9d7",
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "handler-promise-types",
@@ -252,7 +380,11 @@
       "outputSHA256": "2d2a7247a50ad6e010c2018b970bf54ab6d205a2a8cf6fed89e070258f39f9d0",
       "prerequisitePatch": "refresh-lifecycle.patch",
       "prerequisitePatchSHA256": "4dedbd7082685052f440e7dcfd41af83d7c41eeab9bede69a55b39ce413d3902",
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "deployment-error-types",
@@ -263,7 +395,11 @@
       "outputSHA256": "d41e40fb3319e44053644050015f3095d7a52444ba8b92f4dbaabb14d4526cb6",
       "prerequisitePatch": "deployment-lifecycle.patch",
       "prerequisitePatchSHA256": "4607775fd2b426dfa0bbd960d6275659a60fd4e168b8eb7d6a3950c9c7718286",
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "activation-promise-types",
@@ -274,7 +410,11 @@
       "outputSHA256": "e96a7ae63e95d9a7fe2596c2e7626fb9bdc7d304dd8db6112aee0a5f8a08bfe5",
       "prerequisitePatch": "activation-ownership.patch",
       "prerequisitePatchSHA256": "b4deb74b1ea49c94a8b751698a9569eec85055f913a8c14b8c9c418de22f5f75",
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "startup-cleanup-ownership",
@@ -285,7 +425,11 @@
       "outputSHA256": "c12bdc5d08c95bafa18b44ee758a3d9661ade77ca692cd102d531261197ececd",
       "prerequisitePatch": "deployment-error-types.patch",
       "prerequisitePatchSHA256": "388ab9c0f84ff76105a05f31b61822f8189ab75293725caef4c1e1f8bf6252b3",
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "staging-transfer-join",
@@ -296,7 +440,11 @@
       "outputSHA256": "f4886e06be46c9be06b4f6765bce038c10909688abc02b81849709a44e837a98",
       "prerequisitePatch": null,
       "prerequisitePatchSHA256": null,
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "staging-transfer-collision",
@@ -307,7 +455,11 @@
       "outputSHA256": "6c22f7b8c4526b7e0beace5697548eec674aee8f666fd36d8981b56c9b38eeae",
       "prerequisitePatch": "staging-transfer-join.patch",
       "prerequisitePatchSHA256": "76d9dc361b4a063a3a915dea5e0d0a0669675770fa0594fcf8006d2efc47c45e",
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "staging-cleanup-error",
@@ -318,7 +470,11 @@
       "outputSHA256": "0e1c29f43904b0f2aeefc9031de08c228149002f6f03a40a75e00b3b320abad8",
       "prerequisitePatch": "staging-transfer-collision.patch",
       "prerequisitePatchSHA256": "f506444715fc503fb7d3cb6faa44b4bdb6bdc5517982966ae26f4a9069f35cca",
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "staging-settings-ownership",
@@ -329,7 +485,11 @@
       "outputSHA256": "a3ed01dedb4463d03e2ad448cafed2a5a6ddda4295d37651729ac29f4b68dddc",
       "prerequisitePatch": null,
       "prerequisitePatchSHA256": null,
-      "requiredManagerPatchSHA256": "dbcac46a4b9814ee33f899d6d8697e4d3aeb966c2b5f9bda931b12ae3064e9d7"
+      "requiredManagerPatchSHA256": "dbcac46a4b9814ee33f899d6d8697e4d3aeb966c2b5f9bda931b12ae3064e9d7",
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "staging-pending-transfer-hold",
@@ -340,7 +500,11 @@
       "outputSHA256": "535f41e8e52c16c3edbac56a8080af03725707340451323ebdf6a4648ade91ee",
       "prerequisitePatch": "startup-cleanup-ownership.patch",
       "prerequisitePatchSHA256": "f4f98440a276e726f54cb4ead95fcad718a52fe50a68c809efc74d3569aee27f",
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "download-pending-transfer-hold",
@@ -351,7 +515,11 @@
       "outputSHA256": "35cfc7088803515cbd363b73fb70dcd83e970b8791b931a95b89b87eacca1ec4",
       "prerequisitePatch": null,
       "prerequisitePatchSHA256": null,
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "download-transfer-cleanup-hold",
@@ -362,7 +530,11 @@
       "outputSHA256": "a5d10fefc98115411930cab28b4345d681cb60b51ac16cbe3a44f08c2e24037a",
       "prerequisitePatch": null,
       "prerequisitePatchSHA256": null,
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "download-settings-ownership",
@@ -373,7 +545,11 @@
       "outputSHA256": "0c47662eaad2bb7c1a5f1fb919bd53ed81050500d19c1bde64e6a3bbe2820faa",
       "prerequisitePatch": "download-transfer-cleanup-hold.patch",
       "prerequisitePatchSHA256": "ea32c6feeb28dae5264933757e1c175d5716bfe3c2ce9821b3e7e7f86c7fe14c",
-      "requiredManagerPatchSHA256": "dbcac46a4b9814ee33f899d6d8697e4d3aeb966c2b5f9bda931b12ae3064e9d7"
+      "requiredManagerPatchSHA256": "dbcac46a4b9814ee33f899d6d8697e4d3aeb966c2b5f9bda931b12ae3064e9d7",
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     },
     {
       "name": "native-transfer-marker-admission",
@@ -384,7 +560,296 @@
       "outputSHA256": "a4f1b06cacdfd499e884f7fbe4b139166ecdac315c85d1493955c1284978c084",
       "prerequisitePatch": "lifecycle-result-bridge.patch",
       "prerequisitePatchSHA256": "dbcac46a4b9814ee33f899d6d8697e4d3aeb966c2b5f9bda931b12ae3064e9d7",
-      "requiredManagerPatchSHA256": null
+      "requiredManagerPatchSHA256": null,
+      "packet": "lifecycle",
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "ack-shared-ipc",
+      "packet": "persistence",
+      "path": "src/shared/src/types/ipc.ts",
+      "manifestSHA256": "2697094abf00204b87618c80e6e8862747bf65fb68b4725cf3c4e692f22ae58e",
+      "patchSHA256": "797c91a7ccef9943be9059298867daa235b1afb3c35c2731c6cdade481a6110b",
+      "inputSHA256": "cb34be45e8b87cca3480ad1805a358b8e2604ac8938b71e4a0594f7f6885521d",
+      "outputSHA256": "66575ffc3b71c3e4f7617b2ff445f7c678d212bddf92c83c937c6cb0c3fb6dbe",
+      "prerequisitePatch": null,
+      "prerequisitePatchSHA256": null,
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "ack-shared-preload",
+      "packet": "persistence",
+      "path": "src/shared/src/types/preload.ts",
+      "manifestSHA256": "98307d4de9bd17b1154b405b3e72f09f21c01501a721aa41ec93757305afe12c",
+      "patchSHA256": "ac5286f03a513cad6b92091a9fc52a15ae910b3ae8888c8f36a889c8e8a44a0e",
+      "inputSHA256": "06493d6bfd8db9ed898fbadcd565f4881566984969a6f0fbb300ea70fd8ba45a",
+      "outputSHA256": "3ef95ee06161d43796a73b4221207321164924243d6ca72fbb58d13803dfc469",
+      "prerequisitePatch": null,
+      "prerequisitePatchSHA256": null,
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "batch-acknowledgement",
+      "packet": "persistence",
+      "path": "src/main/src/store/ReduxPersistorIPC.ts",
+      "manifestSHA256": "b72611d9b18e27b99132c1a845df2446f2aab02f7b78eabec32c6a933fea83a7",
+      "patchSHA256": "0a96d2660397fd24b09360b1f0360838339aee3ca2f6e86cca0a50d2fda02bed",
+      "inputSHA256": "2a86c8e57e643172e8babf3474bd2e697a1cf8b3f3e3f3ea1f44934781a737e3",
+      "outputSHA256": "889c85856fc5ef4f14b9c66dbae06f48a7a07d9a2d1cf601a80696d3daa050a2",
+      "prerequisitePatch": null,
+      "prerequisitePatchSHA256": null,
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "new-mod-conflict-query",
+      "packet": "persistence",
+      "path": "src/main/src/store/LevelPersist.ts",
+      "manifestSHA256": "8757f44aa813fd06057b050d9fa681cc81ec2c2dd1b263bd82d9b8cfe1ca8205",
+      "patchSHA256": "5c77c9092b375508450d5a783518b7fb1006d5352af68054227536ab7d2b765f",
+      "inputSHA256": "742929670876a79c7332a13d16381cf2098ee55f57f838e3e35668853d1455a1",
+      "outputSHA256": "789e8cc72682d65def311535ce20d36d4fc992cd01cdb0f9b58084696848f7e0",
+      "prerequisitePatch": null,
+      "prerequisitePatchSHA256": null,
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "target-reservation",
+      "packet": "persistence",
+      "path": "src/main/src/store/ReduxPersistorIPC.ts",
+      "manifestSHA256": "9ca6e118bb6c4362a3033fdd93cedce422c3f114f27c176c6d6b12bfae8ab2fd",
+      "patchSHA256": "db20272f9dacf0d927f6740b3e4d2149016c74a1251d5a123e3eff0239c684fb",
+      "inputSHA256": "889c85856fc5ef4f14b9c66dbae06f48a7a07d9a2d1cf601a80696d3daa050a2",
+      "outputSHA256": "ddc2ff79896e311bef88834521fa8c45c32c5fd371becfe3da9895ca1580764c",
+      "prerequisitePatch": "batch-acknowledgement.patch",
+      "prerequisitePatchSHA256": "0a96d2660397fd24b09360b1f0360838339aee3ca2f6e86cca0a50d2fda02bed",
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": "new-mod-conflict-query.patch",
+      "requiredCompanionPatchSHA256": "5c77c9092b375508450d5a783518b7fb1006d5352af68054227536ab7d2b765f",
+      "requiredCompanionOutputSHA256": "789e8cc72682d65def311535ce20d36d4fc992cd01cdb0f9b58084696848f7e0"
+    },
+    {
+      "name": "acknowledged-packet",
+      "packet": "persistence",
+      "path": "src/main/src/store/ReduxPersistorIPC.ts",
+      "manifestSHA256": "60447e64bf375aebdef9a40261c2e87b3be387a470d7a1b82d0023b19f381f5a",
+      "patchSHA256": "879ad8234776f01f7128da73953b4de911df2f0c22765df8c33384f0ede68a70",
+      "inputSHA256": "ddc2ff79896e311bef88834521fa8c45c32c5fd371becfe3da9895ca1580764c",
+      "outputSHA256": "005308ebd857eec2e28b4a8c3bb86f2ba791ceb3c5c7ddf8683071b1550beb2e",
+      "prerequisitePatch": "target-reservation.patch",
+      "prerequisitePatchSHA256": "db20272f9dacf0d927f6740b3e4d2149016c74a1251d5a123e3eff0239c684fb",
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "backend-write-admission",
+      "packet": "persistence",
+      "path": "src/main/src/store/LevelPersist.ts",
+      "manifestSHA256": "086cab156be71f0a85fcc1114cbd9aa99683ea972b88a109025d23cfc2de3ada",
+      "patchSHA256": "9cdf70626318a53bb92dc467e056274efa83a60dcec65ea3d7067de403dedca3",
+      "inputSHA256": "789e8cc72682d65def311535ce20d36d4fc992cd01cdb0f9b58084696848f7e0",
+      "outputSHA256": "f26dc362445ea63ad6df32a9c6c1cd67a8c8490005b161c0e4186bd157b38487",
+      "prerequisitePatch": "new-mod-conflict-query.patch",
+      "prerequisitePatchSHA256": "5c77c9092b375508450d5a783518b7fb1006d5352af68054227536ab7d2b765f",
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "backend-reservation-admission",
+      "packet": "persistence",
+      "path": "src/main/src/store/ReduxPersistorIPC.ts",
+      "manifestSHA256": "e3b0ef9c6b412caa23fb0eb8800e2fa8087bd7cc62c7c169c022ade9dbf741d2",
+      "patchSHA256": "c44d679ade390fef8cec0ce7d5438ef72243e499d9ccc7cdca1f21d255a2a59c",
+      "inputSHA256": "005308ebd857eec2e28b4a8c3bb86f2ba791ceb3c5c7ddf8683071b1550beb2e",
+      "outputSHA256": "56b2ac3982a980b193d30a46960e21379a3c855362e6dd374d9424ff5d8b7d07",
+      "prerequisitePatch": "acknowledged-packet.patch",
+      "prerequisitePatchSHA256": "879ad8234776f01f7128da73953b4de911df2f0c22765df8c33384f0ede68a70",
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": "backend-write-admission.patch",
+      "requiredCompanionPatchSHA256": "9cdf70626318a53bb92dc467e056274efa83a60dcec65ea3d7067de403dedca3",
+      "requiredCompanionOutputSHA256": "f26dc362445ea63ad6df32a9c6c1cd67a8c8490005b161c0e4186bd157b38487"
+    },
+    {
+      "name": "legacy-rollback-primary",
+      "packet": "persistence",
+      "path": "src/main/src/store/ReduxPersistorIPC.ts",
+      "manifestSHA256": "4a2df44a89d1fc20d8a2c9a198c37ad74c23ee795507dade660044c7401756f2",
+      "patchSHA256": "c7afb5b293fd5fe6c62864e7a9c8076be24f8d67f7aa0ba1d8e44ad1be5bc069",
+      "inputSHA256": "56b2ac3982a980b193d30a46960e21379a3c855362e6dd374d9424ff5d8b7d07",
+      "outputSHA256": "80003bc3b33b688066ae41d50c73d8713dea4960df7d9aa386336eb23c976ff6",
+      "prerequisitePatch": "backend-reservation-admission.patch",
+      "prerequisitePatchSHA256": "c44d679ade390fef8cec0ce7d5438ef72243e499d9ccc7cdca1f21d255a2a59c",
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "native-query-source-admission",
+      "packet": "persistence",
+      "path": "src/main/src/store/QueryRegistry.ts",
+      "manifestSHA256": "602b6e5e61af2eb8650f351475479dcecf986626c3d2c216d4798af514cec5c8",
+      "patchSHA256": "35090f46fe6410f6597788edf58adaffccd31cd3cdbedc5adbbc195c73c37816",
+      "inputSHA256": "f7c78fd586349761f077ac178ecee3745dd027911021dc6a3978bfcd7ca31839",
+      "outputSHA256": "6c304abb07fe9074d26866f3635c9f203b70b77b6fbb6463d4437d37301019a5",
+      "prerequisitePatch": null,
+      "prerequisitePatchSHA256": null,
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "native-singleton-sql-admission",
+      "packet": "persistence",
+      "path": "src/main/src/store/DuckDBSingleton.ts",
+      "manifestSHA256": "86f113f472174a064355e084b9b3c0e62f5a65f2107d2d57d7885e5f226ca5e7",
+      "patchSHA256": "aff6e9868e6a9a7f3e4bf93c1c1bb30320b2886cbe5f9858b6a490027e9105c1",
+      "inputSHA256": "d11e7ca11c9bc0b0ee9659b4a4d26c7fba14e6a56ccae03b25df33d91e4589a0",
+      "outputSHA256": "2f78d0bbd1ccfede3b0b9a9fb5f136a0dc5ad0ab24c7bfe13703582ded5b8344",
+      "prerequisitePatch": null,
+      "prerequisitePatchSHA256": null,
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": "native-query-source-admission.patch",
+      "requiredCompanionPatchSHA256": "35090f46fe6410f6597788edf58adaffccd31cd3cdbedc5adbbc195c73c37816",
+      "requiredCompanionOutputSHA256": "6c304abb07fe9074d26866f3635c9f203b70b77b6fbb6463d4437d37301019a5"
+    },
+    {
+      "name": "native-backend-sql-admission",
+      "packet": "persistence",
+      "path": "src/main/src/store/LevelPersist.ts",
+      "manifestSHA256": "b5458800e8d4256e50f8e7524441e7f2a95097e57e07203d8c92bb7aa46561b8",
+      "patchSHA256": "5c19256cbc96a9e8b269296fda3a7754ecee36e7054c49ae5ecd6385e6669f63",
+      "inputSHA256": "f26dc362445ea63ad6df32a9c6c1cd67a8c8490005b161c0e4186bd157b38487",
+      "outputSHA256": "ef39796be6ba9aa2f8d4030686ef1a3f30175db8c289fdce80301c5c5ba1d00f",
+      "prerequisitePatch": "backend-write-admission.patch",
+      "prerequisitePatchSHA256": "9cdf70626318a53bb92dc467e056274efa83a60dcec65ea3d7067de403dedca3",
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": "native-singleton-sql-admission.patch",
+      "requiredCompanionPatchSHA256": "aff6e9868e6a9a7f3e4bf93c1c1bb30320b2886cbe5f9858b6a490027e9105c1",
+      "requiredCompanionOutputSHA256": "2f78d0bbd1ccfede3b0b9a9fb5f136a0dc5ad0ab24c7bfe13703582ded5b8344"
+    },
+    {
+      "name": "native-main-sql-admission",
+      "packet": "persistence",
+      "path": "src/main/src/store/ReduxPersistorIPC.ts",
+      "manifestSHA256": "6874dfe7c948b4c75b693809f697c16bbd8dd65a0a662095a5f98f9d983887ca",
+      "patchSHA256": "c4e6980946efa25697bda75956bd3ad24563218f16c36777f356000f7a97ab72",
+      "inputSHA256": "80003bc3b33b688066ae41d50c73d8713dea4960df7d9aa386336eb23c976ff6",
+      "outputSHA256": "85a0340ccc4927875d65e3c8a34b8ad8654120c6bb2d6bee8859c2d4b144bc04",
+      "prerequisitePatch": "legacy-rollback-primary.patch",
+      "prerequisitePatchSHA256": "c7afb5b293fd5fe6c62864e7a9c8076be24f8d67f7aa0ba1d8e44ad1be5bc069",
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": "native-backend-sql-admission.patch",
+      "requiredCompanionPatchSHA256": "5c19256cbc96a9e8b269296fda3a7754ecee36e7054c49ae5ecd6385e6669f63",
+      "requiredCompanionOutputSHA256": "ef39796be6ba9aa2f8d4030686ef1a3f30175db8c289fdce80301c5c5ba1d00f"
+    },
+    {
+      "name": "native-query-owner-binding",
+      "packet": "persistence",
+      "path": "src/main/src/store/mainPersistence.ts",
+      "manifestSHA256": "a5bbc8051ab7f688d81a6816fffa43447840fee222c5f09b86de9a7faec50860",
+      "patchSHA256": "cf72d7931b4a02071a40f53db1873b48ad4a64605b1f760d76ee6ac678d98ef3",
+      "inputSHA256": "7d3e28cb829914fb092774eca3fc357645fa7ef508177d1a0e3b32eed58f05fe",
+      "outputSHA256": "be4459bd40b79b7223cb3f29b1605bb309e6ef7e8dc780c6d10167c9e41b218f",
+      "prerequisitePatch": null,
+      "prerequisitePatchSHA256": null,
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": "native-main-sql-admission.patch",
+      "requiredCompanionPatchSHA256": "c4e6980946efa25697bda75956bd3ad24563218f16c36777f356000f7a97ab72",
+      "requiredCompanionOutputSHA256": "85a0340ccc4927875d65e3c8a34b8ad8654120c6bb2d6bee8859c2d4b144bc04"
+    },
+    {
+      "name": "ack-main-ipc",
+      "packet": "persistence",
+      "path": "src/main/src/store/persistenceIPC.ts",
+      "manifestSHA256": "be7aee5f5797e88eb2ac5b3fec0774c749bb9c405303c47cc1d63e723b3c6433",
+      "patchSHA256": "cad4f7bbedbad42f03207e8cb7e59e97303acc0a2fd576c5601efd78a1457fa7",
+      "inputSHA256": "a570597ae00396259d1ebbb37c7fe7ddb0a01ff3dcecd231cabde1059e9723ae",
+      "outputSHA256": "c95c67ceabcdcbff52f5893965abd06943a132b8cf3e681f5cbcea6f07fc29b6",
+      "prerequisitePatch": null,
+      "prerequisitePatchSHA256": null,
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "ack-application-owner",
+      "packet": "persistence",
+      "path": "src/main/src/Application.ts",
+      "manifestSHA256": "06daa709f627cda6ac5bcf33a302481f7841706cf609a04bfb5e545e38f4b31a",
+      "patchSHA256": "63b92bfd20848f61457e34209dd7c3f3231e859d72775564df21ce739a339638",
+      "inputSHA256": "25c00338c5cece8bad93822ac1ed548928284e2f1922f0406026d2fc01ce98ce",
+      "outputSHA256": "bdbf8bcd4d1ae41fa8d9615a18327115f081d3668d8e88ac5382dcc7f024f39d",
+      "prerequisitePatch": null,
+      "prerequisitePatchSHA256": null,
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "ack-preload",
+      "packet": "persistence",
+      "path": "src/preload/src/index.ts",
+      "manifestSHA256": "2a615bcd1f92c310e39c3e749bf623c5f8632add9f2eb534d9ab561282ea4af0",
+      "patchSHA256": "4e318063b3c1261df649743f9225b4f5626f41b5b31c8286abb00738754938b6",
+      "inputSHA256": "9f49d7900fedc1aaeac771711644bc2e1fcd71f77640bb43c4959a52f2093e42",
+      "outputSHA256": "b4dd5f70c4f98d1589111a7e2cda20cbb4afd1f7473469c0ffd2cfdc806d8b51",
+      "prerequisitePatch": null,
+      "prerequisitePatchSHA256": null,
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "renderer-acknowledged-flush",
+      "packet": "persistence",
+      "path": "src/renderer/src/store/persistDiffMiddleware.ts",
+      "manifestSHA256": "cdb09febdf5af0cd2cd779e9ceecd1161a07c0ec0412ec890c728ae15e6e2c21",
+      "patchSHA256": "4db4ecd26a180915c18f0176e9986853183b1a011ac10bf1618a91698637a43c",
+      "inputSHA256": "d4dbc85a48739c30239bda2b6b091ef9631b5e9df6b3affcd935a4a3a5cf0262",
+      "outputSHA256": "326a2d53c9d08d7b56f436319675dc65be5ecc34977c5097e46511b56e7536dd",
+      "prerequisitePatch": null,
+      "prerequisitePatchSHA256": null,
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "renderer-target-fence",
+      "packet": "persistence",
+      "path": "src/renderer/src/reducers/index.ts",
+      "manifestSHA256": "eb2a434bb7d90fa0171f73ad3951130148dcb710a7fa84f0db2a55187f15f6d0",
+      "patchSHA256": "c8a850ecb5da2411ca2ba93842ecb59bae2370d8f03beba51e93aea051bf6bb0",
+      "inputSHA256": "e59a69384003bade4d1216ee28a8347b38d27291f9b3688c82dc488c168a4e22",
+      "outputSHA256": "6cbd67e632d3f9bce384f9659bdf699b0b120663aed09eb2b7e51d45241fec7b",
+      "prerequisitePatch": null,
+      "prerequisitePatchSHA256": null,
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     }
   ]
 }

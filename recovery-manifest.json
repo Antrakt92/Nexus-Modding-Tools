@@ -196,7 +196,7 @@
     },
     {
       "path": "docs/AGENT-WORKFLOW.md",
-      "sha256_lf": "9b8ed1ddc0eb802c8cd36be4156a76a1f73437f6a6d2257a03369b5d5442b4dd"
+      "sha256_lf": "ac2b4ea076c14415431645fce814e290385db8c98706d7d697bc72c1f42a3548"
     },
     {
       "path": "docs/ARCHIVE-TEMP-CUSTODY.md",
@@ -276,7 +276,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "1421267a9d3ebe5425f8311a225a1185f357389c329eef3be413c7ee5cf80df5"
+      "sha256_lf": "f699d209d907734a25a02b842cf4fc7b585e8bb7073b8df5a88fd6dcda866c82"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -288,7 +288,7 @@
     },
     {
       "path": "docs/NATIVE-ADOPTION-BOUNDARY.md",
-      "sha256_lf": "d3d8b20d77fbf2c7d4c64fd07db14cd1fe7544f2712e912f9e75617436235116"
+      "sha256_lf": "7217b962daf184e6516c82c08cd7f1752cb226b577ea267b1a6485f1989f94d5"
     },
     {
       "path": "docs/NATIVE-CALLBACK-PATCH.md",
@@ -344,7 +344,7 @@
     },
     {
       "path": "docs/NATIVE-SOURCE-ASSEMBLY.md",
-      "sha256_lf": "0507a5484306e9e14522ca1e80c228be58b8774bc1fb3096115fdfe8e115b31f"
+      "sha256_lf": "78c748ba5e89f807386eda5bfa60835298e6c7d04fcd40db560bfebc1395a374"
     },
     {
       "path": "docs/NATIVE-STAGING-TRANSFER.md",
@@ -1560,15 +1560,15 @@
     },
     {
       "path": "tools/modding/vortex-agent/native-source-series.json",
-      "sha256_lf": "8a2b1764b31639f5b6c899339757c9b243c4f1f7dfcb0833106124a79c22439b"
+      "sha256_lf": "6fcbaf625707d234e710a877a106a1b39593fc81928442d3da8f377b4f54938a"
     },
     {
       "path": "tools/modding/vortex-agent/native-source-series.mjs",
-      "sha256_lf": "4fb65446e1638e35f71ef5e5868253c2b39ae4a6fa32dae147cc359a36654597"
+      "sha256_lf": "9018486e93b2ca89665fea0e05616990cc7061f24204b5413a871a54813f36da"
     },
     {
       "path": "tools/modding/vortex-agent/native-source-series.test.mjs",
-      "sha256_lf": "6d5e9fd541b8f4d1588827fc244ab7a4634edb6968e16d0fe047cf5b2eb2fbc9"
+      "sha256_lf": "cda4bf2393dd0c5a4d504499da7b9045d556d5642ff3c0c2ec590f36d136b88b"
     },
     {
       "path": "tools/modding/vortex-agent/native-staging-pending-transfer-patch.test.mjs",

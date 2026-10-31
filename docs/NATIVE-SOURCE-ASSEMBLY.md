@@ -1,7 +1,7 @@
 # Assemble the reviewed Vortex source patches
 
-`native-source-series.mjs` applies the fixed sequence of 30 reviewed patches to
-ten original files from Vortex `v2.9.1`, commit
+`native-source-series.mjs` applies the fixed sequence of 49 reviewed patches to
+22 original files from Vortex `v2.9.1`, commit
 `c80326367cbe6d96621ad6cf4a5488ef49bac110`. It replaces manually composing separate
 patch chains before compilation. It does not change an installed application or
 make native installation available through MCP.
@@ -33,6 +33,14 @@ inputs exceeding 2 MiB per file or 8 MiB in total. Original, intermediate and
 final source hashes, patch/manifest hashes and cross-file prerequisites must
 match the pinned series. Patch application requires exact offsets and context;
 it has no fuzzy matching or hash-refresh mode.
+
+The fixed graph combines the 30-patch mod-management/transfer packet with the
+19-patch persistence packet. The latter includes renderer target admission and
+acknowledged diffs, main/preload/shared IPC, backend reservations and managed SQL
+ownership. Both runtime packet directories have separate closed inventories;
+test-only adapters are excluded. A cross-file companion must already have been
+applied with its exact patch and intermediate output hashes. Later patches may
+then advance that companion source to its pinned final output.
 
 The result contains a frozen source map and deeply frozen receipt. Reading a
 source property returns a fresh mutable byte copy; changing it cannot change
@@ -91,10 +99,11 @@ node --test tools/modding/vortex-agent/native-source-series.test.mjs
 
 The first command covers portable input and packet checks. The second also
 exercises exact original-source assembly and output isolation. The fixture root
-must still contain the ten original files, not their patched replacements.
+must contain all 22 original files, not their patched replacements. The former
+ten-file fixture is incomplete for this graph and is refused.
 Neither command proves compilation, host loading or a successful mod install.
 
-## Renderer qualification â€” 31 October 2026
+## Renderer qualification — 31 October 2026
 
 The original complete official workspace passed its dependency-aware renderer
 typecheck and webpack build. Applying the first 17 patches exposed the three
@@ -129,7 +138,7 @@ Program and webpack map contents. Its combined adapter suite passed 850 tests
 without failures or skips. The installed archive still matches the six official
 original sources; none of these prepared application changes is loaded there.
 
-## Transfer packet â€” 31 October 2026
+## Transfer packet — 31 October 2026
 
 The 28-patch / ten-source graph adds joined staging transfer callbacks,
 exclusive copy collision refusal, cleanup-error preservation, staging Settings
@@ -175,7 +184,7 @@ remain separate gates. The installed Vortex application was not replaced.
 
 ## Persisted transfer admission — 31 October 2026
 
-The current 30-patch / ten-source graph checks persisted transfer markers in
+The 30-patch / ten-source graph checks persisted transfer markers in
 every registered install manager before reserving native exclusion and when
 checking an issued owner. An unresolved or unreadable marker refuses admission.
 Uncertainty observed after reservation permanently invalidates that owner;
@@ -193,3 +202,32 @@ draft was retained as superseded, not used as final acceptance.
 These checks qualify prepared renderer source only. They add no marker reset,
 owner release, native dispatch, registration, filesystem custody or installation
 permit. The installed Vortex application remains unchanged.
+
+## Complete source recipe — 31 October 2026
+
+The 49-patch / 22-source graph includes both runtime packets. Prerequisites may
+cross source files within a packet: for example, event-handler ownership depends
+on an earlier InstallManager bridge. Their exact patch hashes and application
+order are checked separately from each source's input/output chain. Test adapters,
+SQL data files and unchanged build-control sources are not patched runtime nodes.
+The original ten-file fixture is retained as historical input; it must
+not be silently mixed with already-patched sources to satisfy the larger graph.
+
+Every final modified source is byte-identical to its previously qualified
+Program input: 12 renderer, seven main, one preload and two shared sources.
+Twenty appear in runtime source maps; the two shared type-only files do not.
+The prior qualification also observes the unchanged renderer `stateDiff.ts`.
+All 19 assembly tests passed with the 22 original files supplied, without skips.
+They include independent exact patch application, legitimate cross-file
+prerequisites, intermediate companion outputs, rejected missing/changed/additional
+packet entries and a Git CRLF-to-LF roundtrip across both packets. The combined
+assembly and managed SQL/source-intake suite passed 69 tests without skips.
+
+This comparison binds the assembled bytes to the existing checks, not to a new
+complete build. Those checks retain their original execution scope and dates;
+the assembly receipt continues to report `typecheckVerified:false`.
+
+Before packaging or host acceptance, build the selected complete candidate with
+its actual native dependencies and qualify its startup and lifecycle behavior.
+A deterministic source recipe does not establish native module compatibility,
+registration, release or a successful installation.
