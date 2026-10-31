@@ -1,0 +1,126 @@
+--- a/src/renderer/src/reducers/index.ts
++++ b/src/renderer/src/reducers/index.ts
+@@ -412,5 +412,79 @@
+ let nativeRendererAmbiguous = false;
+ 
++interface NativeRendererStoreBinding {
++  store: object;
++  prototype: object | null;
++  descriptor: PropertyDescriptor;
++  factory: object;
++}
++let nativeStoreBinding: NativeRendererStoreBinding | undefined;
++let nativeStoreBindingPhase: "unbound" | "binding" | "bound" | "held" = "unbound";
++let nativeStoreReading = false;
++let nativeRendererInvocations = 0;
++
++function holdNativeStore(): void {
++  nativeStoreBindingPhase = "held";
++  if (nativeRendererTarget !== undefined) nativeRendererTarget.phase = "held";
++}
++
++function nativeStoreDescriptor(store: object): PropertyDescriptor {
++  if (nativeTypes.isProxy(store) || Array.isArray(store)) throw new Error("NATIVE_RENDERER_STORE_HELD");
++  const proto = Object.getPrototypeOf(store);
++  if (proto !== null && nativeTypes.isProxy(proto)) throw new Error("NATIVE_RENDERER_STORE_HELD");
++  const descriptor = Object.getOwnPropertyDescriptor(store, "getState");
++  if (descriptor === undefined || !("value" in descriptor) || typeof descriptor.value !== "function"
++      || nativeTypes.isProxy(descriptor.value)) throw new Error("NATIVE_RENDERER_STORE_HELD");
++  const functionPrototype = Object.getPrototypeOf(descriptor.value);
++  if (functionPrototype !== null && nativeTypes.isProxy(functionPrototype)) throw new Error("NATIVE_RENDERER_STORE_HELD");
++  return descriptor;
++}
++
++function sampleNativeStore(phase: "binding" | "bound"): void {
++  try {
++    const binding = nativeStoreBinding;
++    if (binding === undefined || nativeStoreBindingPhase !== phase || nativeStoreReading
++        || nativeRendererDepth !== 0 || nativeRendererAmbiguous || nativeRendererFactory !== binding.factory) throw new Error();
++    const unchanged = () => {
++      const descriptor = nativeStoreDescriptor(binding.store);
++      if (Object.getPrototypeOf(binding.store) !== binding.prototype
++          || descriptor.value !== binding.descriptor.value || descriptor.writable !== binding.descriptor.writable
++          || descriptor.enumerable !== binding.descriptor.enumerable || descriptor.configurable !== binding.descriptor.configurable) throw new Error();
++    };
++    unchanged();
++    const root = nativeRendererState, invocation = nativeRendererInvocations;
++    nativeStoreReading = true;
++    const observed = Reflect.apply(binding.descriptor.value, binding.store, []);
++    unchanged();
++    if (nativeStoreBindingPhase !== phase || nativeRendererDepth !== 0 || nativeRendererAmbiguous
++        || nativeRendererFactory !== binding.factory || nativeRendererInvocations !== invocation
++        || nativeRendererState !== root || observed !== root) throw new Error();
++  } catch {
++    holdNativeStore();
++    throw new Error("NATIVE_RENDERER_STORE_HELD");
++  } finally { nativeStoreReading = false; }
++}
++
++// Passive startup capture. Failure disables native eligibility, never startup.
++export function bindNativeRendererStore(store: unknown): boolean {
++  if (nativeStoreBindingPhase !== "unbound" || nativeStoreReading || nativeRendererDepth !== 0) {
++    holdNativeStore();
++    return false;
++  }
++  nativeStoreBindingPhase = "binding";
++  try {
++    if (store === null || typeof store !== "object" || nativeRendererFactory === undefined || nativeRendererAmbiguous) throw new Error();
++    const descriptor = nativeStoreDescriptor(store);
++    nativeStoreBinding = { store, prototype: Object.getPrototypeOf(store), descriptor: Object.freeze({ ...descriptor }), factory: nativeRendererFactory };
++    sampleNativeStore("binding");
++    nativeStoreBindingPhase = "bound";
++    return true;
++  } catch {
++    holdNativeStore();
++    return false;
++  }
++}
++
+ function targetFailure(): never {
++  holdNativeStore();
+   if (nativeRendererTarget !== undefined) nativeRendererTarget.phase = "held";
+   throw new Error("NATIVE_RENDERER_TARGET_HELD");
+@@ -482,4 +556,5 @@
+ 
+ export function reserveNativeRendererTarget(gameId: string, modId: string): object {
++  if (nativeStoreReading || nativeRendererDepth !== 0) { holdNativeStore(); throw new Error("NATIVE_RENDERER_STORE_HELD"); }
+   const valid = (id: string) => typeof id === "string"
+     && /^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$/.test(id)
+@@ -488,4 +563,5 @@
+     throw new Error("NATIVE_RENDERER_TARGET_REFUSED");
+   }
++  sampleNativeStore("bound");
+   const reservation: NativeRendererTarget = { owner: Object.freeze({}), factory: nativeRendererFactory, gameId, modId, phase: "pending" };
+   nativeRendererTarget = reservation;
+@@ -502,8 +578,10 @@
+ 
+ export function checkNativeRendererTarget(owner: object): void {
++  if (nativeStoreReading || nativeRendererDepth !== 0) { holdNativeStore(); throw new Error("NATIVE_RENDERER_STORE_HELD"); }
+   const reservation = nativeRendererTarget;
+   if (reservation === undefined || reservation.owner !== owner || reservation.phase !== "reserved"
+       || nativeRendererDepth !== 0) throw new Error("NATIVE_RENDERER_TARGET_REFUSED");
+   try {
++    sampleNativeStore("bound");
+     targetWorkingState(nativeRendererState, reservation);
+   } catch {
+@@ -513,5 +591,5 @@
+ 
+ export function getNativeRendererTargetStatus() {
+-  return Object.freeze({ phase: nativeRendererTarget?.phase ?? "not_reserved",
++  return Object.freeze({ storeBinding: nativeStoreBindingPhase, phase: nativeRendererTarget?.phase ?? "not_reserved",
+     gameId: nativeRendererTarget?.gameId, modId: nativeRendererTarget?.modId,
+     effectsAllowed: false, installationPermit: false, releaseSupported: false });
+@@ -533,4 +611,6 @@
+   const factory = Object.freeze({});
+   return (state: any, action: any) => {
++    nativeRendererInvocations++;
++    if (nativeStoreReading) holdNativeStore();
+     const reservation = nativeRendererTarget;
+     if (reservation === undefined) {
+@@ -541,5 +621,5 @@
+         const result = batched(state, action);
+         if (nativeRendererFactory !== undefined
+-            && (nativeRendererFactory !== factory || state !== nativeRendererState)) nativeRendererAmbiguous = true;
++            && (nativeRendererFactory !== factory || state !== nativeRendererState)) { nativeRendererAmbiguous = true; holdNativeStore(); }
+         nativeRendererState = result;
+         nativeRendererFactory = factory;

@@ -1,0 +1,23 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/renderer.tsx",
+  "inputSHA256": "e7554a3ca81d3d540e15661ccacb839b3b3f0bfdac95cc764abce6e9f76bde40",
+  "outputSHA256": "0ae6036e6dc5fdb0d14dc29e79ea1038656fa9ee20c374cfad0e42c9188d830d",
+  "patchSHA256": "6c43d4a263ae58fe729911c53d20bb7d2d56ffe36362b627ad82143eee793dfb",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "powerLossPersistenceVerified": false,
+  "limitations": [
+    "Passive trusted Redux/enhancer store identity only; no persistence flush, IPC, registration, release or installation authority.",
+    "Binding failure disables native eligibility and leaves ordinary unreserved startup and dispatch operational.",
+    "No attestation against arbitrary privileged JavaScript or unobserved swap-and-restore."
+  ],
+  "requiredCompanionPatch": "renderer-store-binding.patch",
+  "requiredCompanionPatchSHA256": "f4ed4c4e7ae11b5f98a0c7c46ea0077956c444eedd905bfcbc29e430e3469a3e",
+  "requiredCompanionOutputSHA256": "4824d5ec9ffb9e768835d430e043e47b91d8e52cc18c2d9f1272c099e4d730c9"
+}

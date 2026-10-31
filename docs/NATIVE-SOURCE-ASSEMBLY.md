@@ -1,7 +1,7 @@
 # Assemble the reviewed Vortex source patches
 
-`native-source-series.mjs` applies the fixed sequence of 49 reviewed patches to
-22 original files from Vortex `v2.9.1`, commit
+`native-source-series.mjs` applies the fixed sequence of 51 reviewed patches to
+23 original files from Vortex `v2.9.1`, commit
 `c80326367cbe6d96621ad6cf4a5488ef49bac110`. It replaces manually composing separate
 patch chains before compilation. It does not change an installed application or
 make native installation available through MCP.
@@ -35,7 +35,7 @@ match the pinned series. Patch application requires exact offsets and context;
 it has no fuzzy matching or hash-refresh mode.
 
 The fixed graph combines the 30-patch mod-management/transfer packet with the
-19-patch persistence packet. The latter includes renderer target admission and
+21-patch persistence packet. The latter includes renderer target admission and
 acknowledged diffs, main/preload/shared IPC, backend reservations and managed SQL
 ownership. Both runtime packet directories have separate closed inventories;
 test-only adapters are excluded. A cross-file companion must already have been
@@ -99,8 +99,8 @@ node --test tools/modding/vortex-agent/native-source-series.test.mjs
 
 The first command covers portable input and packet checks. The second also
 exercises exact original-source assembly and output isolation. The fixture root
-must contain all 22 original files, not their patched replacements. The former
-ten-file fixture is incomplete for this graph and is refused.
+must contain all 23 original files, not their patched replacements. Earlier
+ten-file and 22-file fixtures are incomplete for this graph and are refused.
 Neither command proves compilation, host loading or a successful mod install.
 
 ## Renderer qualification — 31 October 2026
@@ -231,3 +231,21 @@ Before packaging or host acceptance, build the selected complete candidate with
 its actual native dependencies and qualify its startup and lifecycle behavior.
 A deterministic source recipe does not establish native module compatibility,
 registration, release or a successful installation.
+
+
+## Passive store binding — 31 October 2026
+
+The 51-patch / 23-source graph adds passive Redux store binding and its actual
+renderer startup call. It reuses the prior runtime packets and fixed companion
+checks. The source tests cover safe startup refusal, real enhanced Redux stores,
+descriptor/root drift and reentry without a repeated collection traversal.
+The combined store-binding, assembly and managed SQL/source-intake run passed
+103 cases without failures or skips.
+
+The composed renderer passed the actual TypeScript and webpack targets with all
+eight compiler/build configuration and lockfile pins unchanged. Fourteen renderer
+sources matched the new Program and runtime map, including the unchanged
+state-diff control. Ten main/preload/shared inputs retain their separate unchanged
+baselines. All 23 graph outputs match the qualified source tree. This is a
+renderer development-build check; the main/preload/shared targets were not rerun
+and no installed application was changed. See the [store-binding boundary](NATIVE-ADOPTION-BOUNDARY.md#renderer-target-fence).

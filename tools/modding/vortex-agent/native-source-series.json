@@ -97,7 +97,7 @@
     {
       "path": "src/renderer/src/reducers/index.ts",
       "originalSHA256": "e59a69384003bade4d1216ee28a8347b38d27291f9b3688c82dc488c168a4e22",
-      "finalSHA256": "6cbd67e632d3f9bce384f9659bdf699b0b120663aed09eb2b7e51d45241fec7b"
+      "finalSHA256": "4824d5ec9ffb9e768835d430e043e47b91d8e52cc18c2d9f1272c099e4d730c9"
     },
     {
       "path": "src/renderer/src/store/persistDiffMiddleware.ts",
@@ -113,6 +113,11 @@
       "path": "src/shared/src/types/preload.ts",
       "originalSHA256": "06493d6bfd8db9ed898fbadcd565f4881566984969a6f0fbb300ea70fd8ba45a",
       "finalSHA256": "3ef95ee06161d43796a73b4221207321164924243d6ca72fbb58d13803dfc469"
+    },
+    {
+      "path": "src/renderer/src/renderer.tsx",
+      "originalSHA256": "e7554a3ca81d3d540e15661ccacb839b3b3f0bfdac95cc764abce6e9f76bde40",
+      "finalSHA256": "0ae6036e6dc5fdb0d14dc29e79ea1038656fa9ee20c374cfad0e42c9188d830d"
     }
   ],
   "patches": [
@@ -850,6 +855,36 @@
       "requiredCompanionPatch": null,
       "requiredCompanionPatchSHA256": null,
       "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "renderer-store-binding",
+      "packet": "persistence",
+      "path": "src/renderer/src/reducers/index.ts",
+      "manifestSHA256": "64ee28d9bb7e9299d4d9de9c30f9cbb05ba8ff1a0c3b527d6442049ca44cc407",
+      "patchSHA256": "f4ed4c4e7ae11b5f98a0c7c46ea0077956c444eedd905bfcbc29e430e3469a3e",
+      "inputSHA256": "6cbd67e632d3f9bce384f9659bdf699b0b120663aed09eb2b7e51d45241fec7b",
+      "outputSHA256": "4824d5ec9ffb9e768835d430e043e47b91d8e52cc18c2d9f1272c099e4d730c9",
+      "prerequisitePatch": "renderer-target-fence.patch",
+      "prerequisitePatchSHA256": "c8a850ecb5da2411ca2ba93842ecb59bae2370d8f03beba51e93aea051bf6bb0",
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "renderer-store-initialization",
+      "packet": "persistence",
+      "path": "src/renderer/src/renderer.tsx",
+      "manifestSHA256": "bc716f9bccbed8078da0126cc4289908c56f8e19215c19f96e6f3f854371eb1e",
+      "patchSHA256": "6c43d4a263ae58fe729911c53d20bb7d2d56ffe36362b627ad82143eee793dfb",
+      "inputSHA256": "e7554a3ca81d3d540e15661ccacb839b3b3f0bfdac95cc764abce6e9f76bde40",
+      "outputSHA256": "0ae6036e6dc5fdb0d14dc29e79ea1038656fa9ee20c374cfad0e42c9188d830d",
+      "prerequisitePatch": null,
+      "prerequisitePatchSHA256": null,
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": "renderer-store-binding.patch",
+      "requiredCompanionPatchSHA256": "f4ed4c4e7ae11b5f98a0c7c46ea0077956c444eedd905bfcbc29e430e3469a3e",
+      "requiredCompanionOutputSHA256": "4824d5ec9ffb9e768835d430e043e47b91d8e52cc18c2d9f1272c099e4d730c9"
     }
   ]
 }
