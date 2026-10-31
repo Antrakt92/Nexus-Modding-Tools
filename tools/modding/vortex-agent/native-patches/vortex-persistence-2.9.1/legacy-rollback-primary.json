@@ -1,0 +1,24 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/main/src/store/ReduxPersistorIPC.ts",
+  "prerequisitePatch": "backend-reservation-admission.patch",
+  "prerequisitePatchSHA256": "c44d679ade390fef8cec0ce7d5438ef72243e499d9ccc7cdca1f21d255a2a59c",
+  "inputSHA256": "56b2ac3982a980b193d30a46960e21379a3c855362e6dd374d9424ff5d8b7d07",
+  "outputSHA256": "80003bc3b33b688066ae41d50c73d8713dea4960df7d9aa386336eb23c976ff6",
+  "patchSHA256": "c7afb5b293fd5fe6c62864e7a9c8076be24f8d67f7aa0ba1d8e44ad1be5bc069",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "globalSQLIsolationVerified": false,
+  "powerLossPersistenceVerified": false,
+  "limitations": [
+    "Only secondary legacy rollback-diagnostic exceptions are suppressed after a primary operation failure and failed rollback.",
+    "The original legacy fatal/terminate and outer queue handling remain; a drained legacy queue is not an operation-success acknowledgement.",
+    "Acknowledged failure path remains unchanged and returns its original rejection without legacy rollback diagnostics.",
+    "No registration, backend release, native host or durable/global SQL isolation authority."
+  ]
+}

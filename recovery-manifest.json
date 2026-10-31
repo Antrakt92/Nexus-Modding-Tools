@@ -288,7 +288,7 @@
     },
     {
       "path": "docs/NATIVE-ADOPTION-BOUNDARY.md",
-      "sha256_lf": "cca605ba1466e4985b26b7853c7027714437e311e85e214838686b0b45db28df"
+      "sha256_lf": "00bf2311eff0204cf0f708757b7bd04876d5c2085cc3a7d96d3f814e583eabc2"
     },
     {
       "path": "docs/NATIVE-CALLBACK-PATCH.md",
@@ -1019,6 +1019,10 @@
       "sha256_lf": "cedf1abe35d35521099447b4613053e56fd39cc2a4e7bbf874ef32ecfd26e916"
     },
     {
+      "path": "tools/modding/vortex-agent/native-legacy-rollback-primary.test.mjs",
+      "sha256_lf": "65f07d4d2a9fb74f61d971dbfee7c41d9213bacaa54f2333dbe03d800b1a936c"
+    },
+    {
       "path": "tools/modding/vortex-agent/native-lifecycle-handler-patch.test.mjs",
       "sha256_lf": "81773f1b154448796aa24d7cdda3f76b3733855f04834e01bffdcec20cb89588"
     },
@@ -1377,6 +1381,14 @@
     {
       "path": "tools/modding/vortex-agent/native-patches/vortex-persistence-2.9.1/batch-acknowledgement.patch",
       "sha256_lf": "0a96d2660397fd24b09360b1f0360838339aee3ca2f6e86cca0a50d2fda02bed"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-persistence-2.9.1/legacy-rollback-primary.json",
+      "sha256_lf": "4a2df44a89d1fc20d8a2c9a198c37ad74c23ee795507dade660044c7401756f2"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-persistence-2.9.1/legacy-rollback-primary.patch",
+      "sha256_lf": "c7afb5b293fd5fe6c62864e7a9c8076be24f8d67f7aa0ba1d8e44ad1be5bc069"
     },
     {
       "path": "tools/modding/vortex-agent/native-patches/vortex-persistence-2.9.1/new-mod-conflict-query.json",
