@@ -104,8 +104,15 @@ that no external/native effect occurred. This is not a permit or a liveness API.
 
 ## Next native work
 
-Prepare small independent upstream fixes against the exact source, keeping the
-ordinary MCP install refusal until the combined contract passes native tests:
+Start with the [registration boundary](NATIVE-ADOPTION-BOUNDARY.md). The executable
+extension-first probe confirms a new CAS action is possible, but existing native
+side effects, batches and main persistence are not fenced by an extension action
+check. The prepared per-batch main persistence acknowledgement is a prerequisite,
+not a registration endpoint. Complete the target admission, publication,
+registration/persistence and recovery gates there before expanding the ordinary
+pipeline. Keep the ordinary MCP install refusal until native acceptance.
+
+Already prepared ordinary-pipeline fixes remain separate qualification work:
 
 - Validate the prepared ordinary tracking and callback patches in the full
   application. Their source-derived tests do not prove extractor exit or

@@ -1,0 +1,100 @@
+--- a/src/main/src/store/ReduxPersistorIPC.ts
++++ b/src/main/src/store/ReduxPersistorIPC.ts
+@@ -180,6 +180,63 @@
+       });
+   }
+ 
++  /**
++   * Internal per-batch completion for a future owned registration path.
++   * This is not exposed over IPC and does not flush pending renderer diffs.
++   * A resolved queue drain alone cannot distinguish a failed batch.
++   */
++  public applyDiffOperationsAcknowledged(
++    hive: string,
++    operations: DiffOperation[],
++  ): Promise<void> {
++    try {
++      if (typeof hive !== "string" || hive.length === 0
++          || ["__proto__", "constructor", "prototype"].includes(hive)) {
++        throw new Error("Invalid acknowledged persistence hive");
++      }
++      // Detach before validation/enqueue: callers must not alter a waiting batch.
++      const snapshot = structuredClone(operations);
++      if (!Array.isArray(snapshot) || snapshot.length === 0) {
++        throw new Error("Acknowledged persistence requires a nonempty batch");
++      }
++      for (const op of snapshot) {
++        const keys = op == null ? [] : Object.keys(op);
++        if (op == null || !["set", "remove"].includes(op.type)
++            || keys.length !== (op.type === "set" ? 3 : 2)
++            || !Object.hasOwn(op, "type") || !Object.hasOwn(op, "path")
++            || (op.type === "set" && !Object.hasOwn(op, "value"))
++            || !Array.isArray(op.path) || op.path.length === 0) {
++          throw new Error("Invalid acknowledged persistence operation");
++        }
++        for (const segment of op.path) {
++          if (typeof segment !== "string" || segment.length === 0) {
++            throw new Error("Invalid acknowledged persistence path");
++          }
++        }
++      }
++      let persistor = Object.hasOwn(this.mPersistors, hive) ? this.mPersistors[hive] : undefined;
++      if (persistor === undefined && this.mPersistorFactory !== undefined) {
++        persistor = this.mPersistorFactory(hive);
++        if (persistor !== undefined) {
++          this.mPersistors[hive] = persistor;
++        }
++      }
++      if (persistor === undefined) {
++        return Promise.reject(new Error("Acknowledged persistence requires a registered hive"));
++      }
++      const owner = persistor;
++      const completion = this.mUpdateQueue.then(() =>
++        this.processOperations(hive, owner, snapshot, true),
++      );
++      // Keep the ordinary queue usable, without converting this caller's
++      // failed completion into a successful acknowledgement.
++      this.mUpdateQueue = completion.catch(() => undefined);
++      return completion;
++    } catch (err) {
++      return Promise.reject(err);
++    }
++  }
++
+   // Maximum operations bundled into a single bulk INSERT or DELETE.
+   // Bounds failure granularity (a Write failure loses at most this many
+   // operations of progress) while still collapsing typical Redux diffs
+@@ -201,6 +258,7 @@
+     hive: string,
+     persistor: IPersistor,
+     operations: DiffOperation[],
++    acknowledged = false,
+   ): Promise<void> {
+     const levelPersist = this.#mLevelPersist;
+     const invalidator = this.#mInvalidator;
+@@ -228,12 +286,19 @@
+         try {
+           await levelPersist.rollbackTransaction();
+         } catch (rollbackErr) {
+-          log("warn", "Failed to rollback transaction", {
+-            error: unknownToError(rollbackErr).message,
+-          });
+-        }
+-      }
+-
++          if (!acknowledged) {
++            log("warn", "Failed to rollback transaction", {
++              error: unknownToError(rollbackErr).message,
++            });
++          }
++        }
++      }
++
++      // An owned caller must observe this exact failure, including disk-full.
++      // Do not invoke the legacy terminate/ignore/retry path for an acknowledgement.
++      if (acknowledged) {
++        throw unknownError;
++      }
+       const err = unknownToError(unknownError);
+ 
+       // Handle disk full error (covers LevelDB and DuckDB/OS-level patterns)
