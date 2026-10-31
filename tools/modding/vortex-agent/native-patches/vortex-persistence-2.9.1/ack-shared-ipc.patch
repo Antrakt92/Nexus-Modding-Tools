@@ -1,0 +1,25 @@
+--- a/src/shared/src/types/ipc.ts
++++ b/src/shared/src/types/ipc.ts
+@@ -40,6 +40,12 @@
+   value?: unknown;
+ }
+ 
++/** One detached hive batch in an acknowledged persistence barrier. */
++export interface PersistenceBatch {
++  hive: PersistedHive;
++  operations: DiffOperation[];
++}
++
+ export interface AppInitMetadata {
+   /** Command line arguments */
+   commandLine: Record<string, unknown>;
+@@ -392,6 +398,9 @@
+ 
+   // Persistence: Get all hydration data at startup (called once during init)
+   "persist:get-hydration": () => Promise<Partial<PersistedState>>;
++
++  /** Wait for the exact submitted batches and earlier accepted persistence work. */
++  "persist:diffs-acknowledged": (batches: PersistenceBatch[]) => Promise<void>;
+ 
+   // Updater: the renderer polls this (pull, like downloads and uploads). With
+   // `since`, the reply also lists every snapshot recorded after that sequence

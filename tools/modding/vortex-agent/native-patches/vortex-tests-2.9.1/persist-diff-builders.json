@@ -1,0 +1,48 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/store/persistDiffMiddleware.test.ts",
+  "upstreamGitBlob": "e34b497f21bcbf793f841a062513dc898a0e7780",
+  "inputSHA256": "f55a95cd5af7ae0c61a37a8c41dadfb96e5241e12953882015a6e9c3ced571ab",
+  "outputSHA256": "4bea77ef3e4e9d70bd536eb952e2752c7b91203fa7c7135903036c36a907d544",
+  "patchSHA256": "23b0fc656f4b3ddceedb65578df3ec2bcf236e0cb4db16b9ed94a0db6b7feeff",
+  "testOnly": true,
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "buildersSource": {
+    "upstreamPath": "src/renderer/src/test-utils/builders.ts",
+    "sha256": "44728402d6c7e3a203e450f509db4afbd067b88de2cb653dc33c820cdbc5a13a"
+  },
+  "factoryPins": {
+    "makeReference": {
+      "declarationSHA256": "d48848a0782de38d4a727a10506f1147ff4c7ee71e192353f9950841f6587390",
+      "bodySHA256": "f153d4f7d210b1d253744021b6c7e5f0501303d14f77c74f6e2bea149fef0de0",
+      "localDeclarationSHA256": "d717c800d35f4d907f0e67a1ebc7fad41a4d2beea7716567667ba6761ec6be99"
+    },
+    "makeRule": {
+      "declarationSHA256": "492fbb756f80ccc8b683b99ddfe224542e66e77e336695e6a11db1ea8384e154",
+      "bodySHA256": "955fe5febfdd6d6220b7d4f15f28766b4720209d6f1ddb79923437e46f250a53",
+      "localDeclarationSHA256": "f2cbe7be69207bb5b55b82515c8baeff3f4f200f76981a4f78e95324ad42a7b9"
+    },
+    "makeMod": {
+      "declarationSHA256": "a132c618e3cba89ac2e1c8737994845a55e6525254c892c91c91a98025e4fe62",
+      "bodySHA256": "bfd65a4cbfadab05ba8f4b3989294e065a615888fb35b1c91b8de59d3900e968",
+      "localDeclarationSHA256": "69948c45301475a20efa6646b7f45499963d50da55ae8e0aa65962d2601e05a1"
+    },
+    "makeDownload": {
+      "declarationSHA256": "53b6da624b649c62eafa12c68c4bfd2d49b282408ca0ec4687f48e1962bdd63e",
+      "bodySHA256": "2b954d35687a7b84ec054706dc82272e0a901f11686d108da1dec9d2c758e87a",
+      "localDeclarationSHA256": "2f6b758e05597207a56215751fe1d19d7cec43664c2c8b1d4e44a9e10c59a40e"
+    }
+  },
+  "preservedTestSuffixSHA256": "0832e042f7e5fdffa4e53a989945f133e664b4d9c6629394450cd34363860688",
+  "limitations": [
+    "Test intake only: removes unrelated eager native imports from the shared builders barrel.",
+    "Four local factories preserve exact official declarations/bodies except export removal; test bodies and assertions are unchanged.",
+    "No runtime source, dependency or native behavior is changed."
+  ]
+}

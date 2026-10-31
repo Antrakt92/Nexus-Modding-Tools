@@ -1,0 +1,12 @@
+--- a/src/preload/src/index.ts
++++ b/src/preload/src/index.ts
+@@ -49,6 +49,9 @@
+ 
+     persist: {
+       sendDiff: (hive, operations) => betterIpcRenderer.send("persist:diff", hive, operations),
++
++      sendDiffAcknowledged: (batches) =>
++        betterIpcRenderer.invoke("persist:diffs-acknowledged", batches),
+ 
+       // Synchronous variant used only on quit (beforeunload): blocks until main
+       // has queued the ops so the final batch is persisted before teardown.

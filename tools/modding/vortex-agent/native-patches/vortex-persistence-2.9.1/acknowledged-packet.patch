@@ -1,0 +1,160 @@
+--- a/src/main/src/store/ReduxPersistorIPC.ts
++++ b/src/main/src/store/ReduxPersistorIPC.ts
+@@ -82,8 +82,10 @@
+   private mPersistors: { [hive: string]: IPersistor } = {};
+   private mUpdateQueue: Promise<void> = Promise.resolve();
+   private mPersistorFactory: PersistorFactory | undefined;
+   private mNativeModPersistenceReservation: INativeModPersistenceReservation | undefined;
++  // A drained queue cannot certify an earlier failed write. Never reset in-process.
++  private mPersistenceWriteFailureObserved = false;
+   #mLevelPersist: LevelPersist | undefined;
+   #mInvalidator: QueryInvalidator | undefined;
+ 
+   constructor() {
+@@ -205,8 +207,9 @@
+ 
+     this.mUpdateQueue = this.mUpdateQueue
+       .then(() => this.processOperations(hive, persistor, operations))
+       .catch((unknownError) => {
++        this.mPersistenceWriteFailureObserved = true;
+         if (this.mNativeModPersistenceReservation !== undefined) {
+           this.mNativeModPersistenceReservation.phase = "held";
+         }
+         // Ensure errors don't break the queue
+@@ -252,8 +255,97 @@
+       );
+       // Keep the ordinary queue usable, without converting this caller's
+       // failed completion into a successful acknowledgement.
+       this.mUpdateQueue = completion.catch(() => {
++        this.mPersistenceWriteFailureObserved = true;
++        if (this.mNativeModPersistenceReservation !== undefined) {
++          this.mNativeModPersistenceReservation.phase = "held";
++        }
++      });
++      return completion;
++    } catch (err) {
++      return Promise.reject(err);
++    }
++  }
++
++  /**
++   * Persist one detached renderer packet as a single queue unit.
++   * Empty packets still join prior writes and reject a previously failed queue.
++   * This is not renderer idle, native admission or power-loss acknowledgement.
++   */
++  public flushPersistenceAcknowledged(
++    batches: Array<{ hive: string; operations: DiffOperation[] }>,
++  ): Promise<void> {
++    try {
++      if (!Array.isArray(batches) || batches.length > 32) {
++        throw new Error("Invalid acknowledged persistence packet");
++      }
++      const text = JSON.stringify(structuredClone(batches), (_key, value: unknown) => {
++        if (value === undefined || typeof value === "function" || typeof value === "symbol"
++            || typeof value === "bigint" || (typeof value === "number" && !Number.isFinite(value))) {
++          throw new Error("Lossy acknowledged persistence packet");
++        }
++        return value;
++      });
++      if (typeof text !== "string" || Buffer.byteLength(text, "utf8") > 32 * 1024 * 1024) {
++        throw new Error("Acknowledged persistence packet exceeds limit");
++      }
++      const detached: unknown = JSON.parse(text);
++      if (!Array.isArray(detached)) {
++        throw new Error("Invalid acknowledged persistence packet");
++      }
++      const seen = new Set<string>();
++      let total = 0;
++      const ready = detached.map((batch: { hive: string; operations: DiffOperation[] }) => {
++        if (batch === null || typeof batch !== "object" || Object.keys(batch).length !== 2
++            || !Object.hasOwn(batch, "hive") || !Object.hasOwn(batch, "operations")
++            || typeof batch.hive !== "string"
++            || !/^[A-Za-z][A-Za-z0-9_.-]{0,127}$/.test(batch.hive)
++            || ["constructor", "prototype"].includes(batch.hive)
++            || seen.has(batch.hive) || !Object.hasOwn(this.mPersistors, batch.hive)
++            || this.mPersistors[batch.hive] === undefined) {
++          throw new Error("Invalid or unregistered acknowledged persistence hive");
++        }
++        seen.add(batch.hive);
++        const persistor = this.mPersistors[batch.hive];
++        if (persistor === undefined) {
++          throw new Error("Acknowledged persistence backend is unavailable");
++        }
++        const operations = this.snapshotAcknowledgedPersistenceOperations(batch.operations);
++        total += operations.length;
++        if (total > 32768) {
++          throw new Error("Acknowledged persistence operation limit exceeded");
++        }
++        for (const op of operations) {
++          if (op.path.length > 32 || op.path.some((part) => part.length > 2048 || part.includes("###"))) {
++            throw new Error("Invalid acknowledged persistence physical path");
++          }
++        }
++        if (batch.hive === "persistent") {
++          this.guardNativeModPersistenceOperations(operations);
++        }
++        return { hive: batch.hive, operations, persistor };
++      });
++      const level = this.#mLevelPersist;
++      const invalidator = this.#mInvalidator;
++      const check = () => {
++        if (this.mPersistenceWriteFailureObserved || this.#mLevelPersist !== level
++            || this.#mInvalidator !== invalidator
++            || ready.some((batch) => this.mPersistors[batch.hive] !== batch.persistor)) {
++          throw new Error("Acknowledged persistence packet has an unresolved failure or backend change");
++        }
++      };
++      const completion = this.mUpdateQueue.then(async () => {
++        check();
++        for (const batch of ready) {
++          await this.processOperations(batch.hive, batch.persistor, batch.operations, true);
++          check();
++        }
++      });
++      // Keep the global application queue usable, but never erase this failure
++      // from future barriers or native admission.
++      this.mUpdateQueue = completion.catch(() => {
++        this.mPersistenceWriteFailureObserved = true;
+         if (this.mNativeModPersistenceReservation !== undefined) {
+           this.mNativeModPersistenceReservation.phase = "held";
+         }
+       });
+@@ -301,8 +393,11 @@
+         throw new Error("Invalid native persistence target");
+       }
+       if (this.mNativeModPersistenceReservation !== undefined) {
+         throw new Error("Native persistence target already held");
++      }
++      if (this.mPersistenceWriteFailureObserved) {
++        throw new Error("Native persistence has an unresolved write failure");
+       }
+       const persistor = Object.hasOwn(this.mPersistors, "persistent")
+         ? this.mPersistors.persistent : undefined;
+       const levelPersist = this.#mLevelPersist;
+@@ -349,14 +444,15 @@
+     return Object.freeze({
+       phase: reservation?.phase ?? "not_reserved",
+       gameId: reservation?.gameId, modId: reservation?.modId,
+       effectsAllowed: false, installationPermit: false, releaseSupported: false,
++      writeFailureObserved: this.mPersistenceWriteFailureObserved,
+     });
+   }
+ 
+   private checkNativeModPersistenceBackend(reservation: INativeModPersistenceReservation): void {
+     if (this.mNativeModPersistenceReservation !== reservation || reservation.phase === "held"
+-        || this.mPersistors.persistent !== reservation.persistor
++        || this.mPersistenceWriteFailureObserved || this.mPersistors.persistent !== reservation.persistor
+         || this.#mLevelPersist !== reservation.levelPersist
+         || this.#mInvalidator !== reservation.invalidator) {
+       reservation.phase = "held";
+       throw new Error("Native persistence backend or reservation changed");
+@@ -427,8 +523,9 @@
+           invalidator.notifyDirtyTables(dirtyTables);
+         }
+       }
+     } catch (unknownError) {
++      this.mPersistenceWriteFailureObserved = true;
+       if (useTransaction) {
+         try {
+           await levelPersist.rollbackTransaction();
+         } catch (rollbackErr) {

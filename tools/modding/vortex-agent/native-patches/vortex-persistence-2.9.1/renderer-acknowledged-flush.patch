@@ -1,0 +1,309 @@
+--- a/src/renderer/src/store/persistDiffMiddleware.ts
++++ b/src/renderer/src/store/persistDiffMiddleware.ts
+@@ -9,5 +9,5 @@
+ 
+ import { getErrorMessageOrDefault } from "@vortex/shared";
+-import type { DiffOperation } from "@vortex/shared/ipc";
++import type { DiffOperation, PersistenceBatch } from "@vortex/shared/ipc";
+ import type { PersistedHive } from "@vortex/shared/state";
+ import type { Middleware, MiddlewareAPI, Dispatch, AnyAction } from "redux";
+@@ -119,4 +119,65 @@
+ }
+ 
++/** Strict snapshot serialization: never turn an unsupported value into a remove. */
++function serializeAcknowledgedBatches(batches: PersistenceBatch[]): string {
++  if (batches.length > 32 || batches.reduce((sum, batch) => sum + batch.operations.length, 0) > 32768) {
++    throw new Error("Acknowledged persistence snapshot exceeds batch limit");
++  }
++  const active = new Set<object>();
++  let nodes = 0;
++  let units = 0;
++  const account = (text: string) => {
++    if ((units += text.length) > 32 * 1024 * 1024) {
++      throw new Error("Acknowledged persistence snapshot exceeds byte limit");
++    }
++  };
++  const copy = (value: unknown, depth: number): unknown => {
++    if (++nodes > 200000 || depth > 32) {
++      throw new Error("Acknowledged persistence snapshot exceeds limits");
++    }
++    if (typeof value === "string") { account(value); return value; }
++    if (value === null || typeof value === "boolean") return value;
++    if (typeof value === "number" && Number.isFinite(value)) return value;
++    if (typeof value !== "object" || value === null || active.has(value)) {
++      throw new Error("Acknowledged persistence snapshot is not lossless JSON");
++    }
++    const array = Array.isArray(value);
++    const prototype = Object.getPrototypeOf(value);
++    if ((array && prototype !== Array.prototype)
++        || (!array && prototype !== Object.prototype && prototype !== null)
++        || Object.getOwnPropertySymbols(value).length !== 0) {
++      throw new Error("Acknowledged persistence snapshot is not plain JSON");
++    }
++    active.add(value);
++    try {
++      const descriptors = Object.getOwnPropertyDescriptors(value);
++      const result: Record<string, unknown> | unknown[] = array ? [] : Object.create(null);
++      const keys = Object.keys(descriptors).filter(key => !(array && key === "length"));
++      if (array && (keys.length !== (value as unknown[]).length
++          || keys.some((key, index) => key !== String(index)))) {
++        throw new Error("Acknowledged persistence snapshot has sparse or extended arrays");
++      }
++      for (const key of keys) {
++        account(key);
++        const descriptor = descriptors[key];
++        if (descriptor === undefined || !("value" in descriptor) || !descriptor.enumerable) {
++          throw new Error("Acknowledged persistence snapshot has unsupported descriptors");
++        }
++        Object.defineProperty(result, key, {
++          value: copy(descriptor.value, depth + 1), enumerable: true, writable: true, configurable: true,
++        });
++      }
++      return result;
++    } finally {
++      active.delete(value);
++    }
++  };
++  const packet = JSON.stringify(copy(batches, 0));
++  if (packet.length > 32 * 1024 * 1024 || new TextEncoder().encode(packet).byteLength > 32 * 1024 * 1024) {
++    throw new Error("Acknowledged persistence snapshot exceeds byte limit");
++  }
++  return packet;
++}
++
+ type PersistApi = {
+   sendDiff: (hive: PersistedHive, operations: DiffOperation[]) => void;
+@@ -126,4 +187,5 @@
+   // sendDiff). See GH#23363.
+   sendDiffSync?: (hive: PersistedHive, operations: DiffOperation[]) => void;
++  sendDiffAcknowledged?: (batches: PersistenceBatch[]) => Promise<void>;
+ };
+ 
+@@ -132,4 +194,5 @@
+ // creates exactly one instance; tests create their own (the most recent wins).
+ let activeSyncFlush: (() => void) | undefined;
++let activeAcknowledgedFlush: (() => Promise<void>) | undefined;
+ 
+ /**
+@@ -163,4 +226,11 @@
+   let pendingDiffs: PendingDiffs = {};
+   let flushTimeout: ReturnType<typeof setTimeout> | null = null;
++  let acknowledgedFlight: Promise<void> | undefined;
++  let acknowledgedHeld = false;
++  let coherenceGeneration = 0;
++  let legacyFlushDepth = 0;
++  // Lifetime-only reconciliation evidence; never exposed as an admission token.
++  let acknowledgedSnapshot: PendingDiffs | undefined;
++  let acknowledgedPacket: string | undefined;
+ 
+   /**
+@@ -169,26 +239,35 @@
+   const flushDiffs = () => {
+     flushTimeout = null;
+-    const persistApi = getApi();
+-    if (persistApi == null) {
+-      return;
+-    }
+-
+-    for (const [hive, operations] of Object.entries(pendingDiffs) as [
+-      PersistedHive,
+-      PendingHiveDiffs,
+-    ][]) {
+-      // Serialize operations to ensure IPC compatibility
+-      const serializedOps = Array.from(operations.values(), serializeOperation);
+-      try {
+-        persistApi.sendDiff(hive, serializedOps);
+-        // cleared only once the send succeeded, so a failure keeps the queue for the next flush
+-        delete pendingDiffs[hive];
+-      } catch (err) {
+-        log("error", "failed to send state diff for persistence", {
+-          hive,
+-          operationCount: serializedOps.length,
+-          error: getErrorMessageOrDefault(err),
+-        });
+-      }
++    if (acknowledgedFlight !== undefined || acknowledgedHeld) return;
++    ++legacyFlushDepth;
++    try {
++      const persistApi = getApi();
++      if (persistApi == null || acknowledgedHeld || acknowledgedFlight !== undefined) {
++        return;
++      }
++
++      for (const [hive, operations] of Object.entries(pendingDiffs) as [
++        PersistedHive,
++        PendingHiveDiffs,
++      ][]) {
++        if (acknowledgedHeld || acknowledgedFlight !== undefined) return;
++        // Serialize operations to ensure IPC compatibility
++        const serializedOps = Array.from(operations.values(), serializeOperation);
++        if (acknowledgedHeld || acknowledgedFlight !== undefined) return;
++        try {
++          persistApi.sendDiff(hive, serializedOps);
++          if (acknowledgedHeld || acknowledgedFlight !== undefined) return;
++          // cleared only once the send succeeded, so a failure keeps the queue for the next flush
++          delete pendingDiffs[hive];
++        } catch (err) {
++          log("error", "failed to send state diff for persistence", {
++            hive,
++            operationCount: serializedOps.length,
++            error: getErrorMessageOrDefault(err),
++          });
++        }
++      }
++    } finally {
++      --legacyFlushDepth;
+     }
+   };
+@@ -202,27 +281,106 @@
+    */
+   const flushDiffsSync = () => {
+-    const persistApi = getApi();
+-    if (persistApi == null) {
++    if (acknowledgedFlight !== undefined || acknowledgedHeld) {
++      ++coherenceGeneration;
++      acknowledgedHeld = true;
+       return;
+     }
+-    if (flushTimeout != null) {
+-      clearTimeout(flushTimeout);
+-      flushTimeout = null;
+-    }
+-    for (const [hive, operations] of Object.entries(pendingDiffs) as [
+-      PersistedHive,
+-      PendingHiveDiffs,
+-    ][]) {
+-      if (operations.size > 0) {
+-        const serializedOps = Array.from(operations.values(), serializeOperation);
+-        if (persistApi.sendDiffSync != null) {
+-          persistApi.sendDiffSync(hive, serializedOps);
+-        } else {
+-          persistApi.sendDiff(hive, serializedOps);
++    ++legacyFlushDepth;
++    try {
++      const persistApi = getApi();
++      if (persistApi == null || acknowledgedHeld || acknowledgedFlight !== undefined) {
++        return;
++      }
++      if (flushTimeout != null) {
++        clearTimeout(flushTimeout);
++        flushTimeout = null;
++      }
++      for (const [hive, operations] of Object.entries(pendingDiffs) as [
++        PersistedHive,
++        PendingHiveDiffs,
++      ][]) {
++        if (acknowledgedHeld || acknowledgedFlight !== undefined) return;
++        if (operations.size > 0) {
++          const serializedOps = Array.from(operations.values(), serializeOperation);
++          if (acknowledgedHeld || acknowledgedFlight !== undefined) return;
++          if (persistApi.sendDiffSync != null) {
++            persistApi.sendDiffSync(hive, serializedOps);
++          } else {
++            persistApi.sendDiff(hive, serializedOps);
++          }
+         }
+       }
+-    }
++      if (acknowledgedHeld || acknowledgedFlight !== undefined) return;
++      pendingDiffs = {};
++    } finally {
++      --legacyFlushDepth;
++    }
++  };
++
++  const flushAcknowledged = (): Promise<void> => {
++    if (acknowledgedFlight !== undefined) return acknowledgedFlight;
++    if (acknowledgedHeld) return Promise.reject(new Error("Acknowledged persistence flush is held"));
++    if (legacyFlushDepth !== 0) {
++      acknowledgedHeld = true;
++      acknowledgedSnapshot = pendingDiffs;
++      return Promise.reject(new Error("Acknowledged persistence overlaps a legacy flush"));
++    }
++    let resolveFlight!: () => void;
++    let rejectFlight!: (error: unknown) => void;
++    const flight = new Promise<void>((resolve, reject) => {
++      resolveFlight = resolve;
++      rejectFlight = reject;
++    });
++    // Publish before any API, serializer or timer callback can reenter.
++    acknowledgedFlight = flight;
++    acknowledgedSnapshot = pendingDiffs;
+     pendingDiffs = {};
+-  };
++    const generation = coherenceGeneration;
++    const fail = (error: unknown) => {
++      acknowledgedHeld = true;
++      acknowledgedFlight = undefined;
++      // Retain the detached snapshot and exact packet, if serialization completed.
++      rejectFlight(error);
++    };
++    try {
++      if (flushTimeout !== null) {
++        clearTimeout(flushTimeout);
++        flushTimeout = null;
++      }
++      const api = getApi();
++      if (api?.sendDiffAcknowledged === undefined) {
++        throw new Error("Acknowledged persistence API is unavailable");
++      }
++      const batches = Object.entries(acknowledgedSnapshot).map(([hive, operations]) => ({
++        hive: hive as PersistedHive, operations: Array.from(operations.values()),
++      }));
++      acknowledgedPacket = serializeAcknowledgedBatches(batches);
++      if (acknowledgedHeld || coherenceGeneration !== generation) {
++        throw new Error("Acknowledged persistence coherence changed");
++      }
++      const completion = api.sendDiffAcknowledged(JSON.parse(acknowledgedPacket));
++      if (completion == null || typeof completion.then !== "function") {
++        throw new Error("Acknowledged persistence API did not return a completion");
++      }
++      void Promise.resolve(completion).then(() => {
++        try {
++          if (acknowledgedHeld || coherenceGeneration !== generation) {
++            throw new Error("Acknowledged persistence coherence changed");
++          }
++          acknowledgedFlight = undefined;
++          if (Object.keys(pendingDiffs).length !== 0) scheduleFlush();
++          acknowledgedSnapshot = undefined;
++          acknowledgedPacket = undefined;
++          resolveFlight();
++        } catch (error) {
++          fail(error);
++        }
++      }, fail);
++    } catch (error) {
++      fail(error);
++    }
++    return flight;
++  };
++  activeAcknowledgedFlush = flushAcknowledged;
+ 
+   // Expose this instance's synchronous flush for the quit-time beforeunload hook.
+@@ -233,4 +391,5 @@
+    */
+   const scheduleFlush = () => {
++    if (acknowledgedFlight !== undefined || acknowledgedHeld) return;
+     if (flushTimeout == null) {
+       flushTimeout = setTimeout(flushDiffs, DEBOUNCE_MS);
+@@ -271,4 +430,5 @@
+         action.type === "__persist_push"
+       ) {
++        ++coherenceGeneration;
+         // Update previous state without computing diff.
+         // __persist_push originates from main — sending it back would create a loop.
+@@ -340,2 +500,14 @@
+   activeSyncFlush?.();
+ }
++
++/**
++ * Acknowledge the detached pending snapshot and the main queue barrier.
++ * Concurrent callers share one flight. Failure/unknown outcome is held without
++ * replay. This does not freeze future renderer changes or grant installation.
++ */
++export function flushPendingDiffsAcknowledged(): Promise<void> {
++  if (activeAcknowledgedFlush === undefined) {
++    return Promise.reject(new Error("Acknowledged persistence middleware is unavailable"));
++  }
++  return activeAcknowledgedFlush();
++}

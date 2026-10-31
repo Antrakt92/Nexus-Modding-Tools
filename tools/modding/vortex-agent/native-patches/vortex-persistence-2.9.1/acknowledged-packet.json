@@ -1,0 +1,31 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/main/src/store/ReduxPersistorIPC.ts",
+  "originalSourceSHA256": "2a86c8e57e643172e8babf3474bd2e697a1cf8b3f3e3f3ea1f44934781a737e3",
+  "prerequisitePatch": "target-reservation.patch",
+  "prerequisitePatchSHA256": "db20272f9dacf0d927f6740b3e4d2149016c74a1251d5a123e3eff0239c684fb",
+  "inputSHA256": "ddc2ff79896e311bef88834521fa8c45c32c5fd371becfe3da9895ca1580764c",
+  "outputSHA256": "005308ebd857eec2e28b4a8c3bb86f2ba791ceb3c5c7ddf8683071b1550beb2e",
+  "patchSHA256": "879ad8234776f01f7128da73953b4de911df2f0c22765df8c33384f0ede68a70",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "powerLossPersistenceVerified": false,
+  "limits": {
+    "hives": 32,
+    "operations": 32768,
+    "packetBytes": 33554432,
+    "pathSegments": 32,
+    "segmentCharacters": 2048
+  },
+  "limitations": [
+    "Acknowledges one detached packet and prior queue success, not renderer idle, native registration or power-loss persistence.",
+    "Only already registered hives are accepted; all batches are validated before enqueue and run as one queue unit.",
+    "Any observed backend write failure permanently blocks later barriers/native admission in this process; ordinary legacy application behavior is retained.",
+    "Lost replies and renderer restart require owning-operation reconciliation, never automatic replay."
+  ]
+}
