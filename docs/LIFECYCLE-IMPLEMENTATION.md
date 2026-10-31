@@ -58,6 +58,11 @@ copy failures. Source-derived tests preserve the existing successful/self-copy
 routes and demonstrate that other workers can still run after rejection. This
 does not close no-clobber, ownership or terminal gates.
 
+The subsequent [transfer join patch](NATIVE-TRANSFER-JOIN-PATCH.md) waits for
+already-started mkdir/transfer callbacks before rejecting into error cleanup and
+stops scheduling new callbacks after the first failure. Detached native work and
+physical ownership remain outside that source-derived callback boundary.
+
 The current bottleneck evidence and architectural constraints are in
 [Lifecycle performance](LIFECYCLE-PERFORMANCE.md). This checklist does not replace
 the [agent workflow](AGENT-WORKFLOW.md) or task-specific native admission.

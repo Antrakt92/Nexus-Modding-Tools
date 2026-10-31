@@ -1,0 +1,31 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/extensions/mod_management/InstallManager.ts",
+  "originalSourceSHA256": "577d56a8728052069f850face9bb57437dbf2886bd41409fe6a66cfefc08ed33",
+  "prerequisitePatch": "copy-error.patch",
+  "prerequisitePatchSHA256": "15f73ef8333782d1eaf4841e5fd7013dd6a4140723c96ac2a7e29025e9823955",
+  "inputSHA256": "cba7e1fda1580ba57c14308e89be46e3b9de8ed2c290ee21d3e74288b30ba9bd",
+  "outputSHA256": "61abf69a0a11579da830a93c04cba7ca7dac36faf090d4685ed026c9bf385480",
+  "patchSHA256": "20e5e5bbf5e8a814fc89fbb16f75147d3b7b26b4b3be6f47c3dba6765caf700f",
+  "scope": "Join all returned mkdir/transfer callback promises after the first failure, stop scheduling further callbacks, then reject with the original first error. Only extractArchive uses this local pool.",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "nativeTerminalGuarantee": false,
+  "globalIdleGuarantee": false,
+  "noReplacementGuarantee": false,
+  "importNoClobberGuarantee": false,
+  "ownerReservationGuarantee": false,
+  "installationPermit": false,
+  "testSourceEnvironment": "VORTEX_NATIVE_INSTALL_MANAGER",
+  "limitations": [
+    "Prepared source only; no installed host, full application build/typecheck or native acceptance.",
+    "Joining callback promises does not prove extractor/child exit, independent native I/O completion or host-global idle.",
+    "A callback that never settles keeps the transfer held; no timeout, forced cancellation or ownership release is added.",
+    "Existing remove-before-copy, overwrite defaults, missing-source warnings and failure cleanup remain separate no-clobber and ownership gates.",
+    "The global mapWithConcurrency helper and dependency/cancellation consumers retain their existing behavior."
+  ]
+}

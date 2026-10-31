@@ -17,6 +17,10 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Prepare a Vortex transfer-worker join patch: after failure, stop new callbacks
+  and wait for started mkdir/copy callbacks before returning the first error to
+  cleanup. It preserves normal concurrency and leaves global dependency helpers
+  unchanged; native termination and safe cleanup remain separate gates.
 - Prepare a Vortex transfer patch that propagates failed copy fallbacks instead
   of reporting success. Source-derived tests preserve the self-copy exception
   and verify that rejection does not prove other transfers have stopped. The

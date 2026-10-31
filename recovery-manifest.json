@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "962bac82850d16d427546dc345770b81aeef7825a5e2e492d314398e9573fd04"
+      "sha256_lf": "69922ec9f3f64154597cd34483a1c74d00cd56e49eb8644f51177323fa43e586"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -256,7 +256,7 @@
     },
     {
       "path": "docs/LIFECYCLE-IMPLEMENTATION.md",
-      "sha256_lf": "36d45543ae699bd1b3a4f56d20913705d54b3cb31a7f923a6905e5b46fefcd15"
+      "sha256_lf": "72316429115e67b0c5f90ceb3b37f575ee6345980ef4333fec694358de135be6"
     },
     {
       "path": "docs/LIFECYCLE-PERFORMANCE.md",
@@ -268,7 +268,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "d6edb7e0dd7a9c75cacfb3f09dfd834cf6c1af014a36b5b1f401751e4ea44677"
+      "sha256_lf": "0fe8b12d3de9301313577235e5cb0895d15d8e19deb1486e42c9f5d34e04d582"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -305,6 +305,10 @@
     {
       "path": "docs/NATIVE-TRACKING-PATCH.md",
       "sha256_lf": "de6cf0a3290c9f6d5df1018a361b6ed393850b95f651bcf6693fe2c516aa8b80"
+    },
+    {
+      "path": "docs/NATIVE-TRANSFER-JOIN-PATCH.md",
+      "sha256_lf": "25e0c0863e2c669bc6ea646ba2f532458f761c7a635c82f151170dfc5b950660"
     },
     {
       "path": "docs/NO-RESTART-WORKFLOW.md",
@@ -804,7 +808,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/native-copy-error-patch.test.mjs",
-      "sha256_lf": "48d0110e75ad133e9036ebebfc8bd3d1c642d40e2b4d0968c04c940146b48a00"
+      "sha256_lf": "f4a705cf8c9c877046bc9aff4e61c6cc95d40ebec3af2fa009f14a159c1db97a"
     },
     {
       "path": "tools/modding/vortex-agent/native-dispatch-contract.cjs",
@@ -899,12 +903,28 @@
       "sha256_lf": "c91b8ffe9e6061fa2bb756d97954024dd478a977e664fecb5d0e950618db6ea3"
     },
     {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/transfer-join.json",
+      "sha256_lf": "540104730956fd0ad600ab97351864eeda24086e411fdc91412d6c661abc43e2"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/transfer-join.patch",
+      "sha256_lf": "20e5e5bbf5e8a814fc89fbb16f75147d3b7b26b4b3be6f47c3dba6765caf700f"
+    },
+    {
       "path": "tools/modding/vortex-agent/native-strict-selection-patch.test.mjs",
       "sha256_lf": "37a5823dac7d9ab6649c9fa5588ce4773c8eb302d4cb2757923e53225ed19193"
     },
     {
       "path": "tools/modding/vortex-agent/native-tracking-patch.test.mjs",
       "sha256_lf": "24fdd187bb413687757db7675c605413a1e77133e015bed03709f018c460883d"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-transfer-join-patch.test.mjs",
+      "sha256_lf": "4f395c6666f499dafbf60e266d817c0cfbfbe8c6fb254071db0b6bc7436766d8"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-transfer-test-fixture.mjs",
+      "sha256_lf": "d351280911185776e313b882b25d27ef70c7d33ee943270b2438101f53d3cb32"
     },
     {
       "path": "tools/modding/vortex-agent/own-helper-binder.mjs",

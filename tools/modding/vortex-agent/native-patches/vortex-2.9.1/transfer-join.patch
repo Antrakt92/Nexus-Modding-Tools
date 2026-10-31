@@ -1,0 +1,51 @@
+--- a/src/renderer/src/extensions/mod_management/InstallManager.ts
++++ b/src/renderer/src/extensions/mod_management/InstallManager.ts
+@@ -7886,4 +7886,37 @@
+   ): Promise<void> {
+     const now = Date.now();
++    // Do not start cleanup while a returned mkdir/transfer callback still runs.
++    // This joins callback promises only, not extractor processes or native I/O
++    // that a callback started without returning its completion promise.
++    async function mapTransfers<T, R>(
++      items: T[],
++      fn: (item: T, index: number) => Promise<R> | R,
++      concurrency: number,
++    ): Promise<R[]> {
++      const results: R[] = new Array(items.length);
++      let nextIdx = 0;
++      let failed = false;
++      let firstError: any;
++      async function worker(): Promise<void> {
++        while (!failed && nextIdx < items.length) {
++          const idx = nextIdx++;
++          try {
++            results[idx] = await fn(items[idx], idx);
++          } catch (err) {
++            if (!failed) {
++              failed = true;
++              firstError = err;
++            }
++          }
++        }
++      }
++      await Promise.all(
++        Array.from({ length: Math.min(concurrency, items.length) }, () => worker()),
++      );
++      if (failed) {
++        throw firstError;
++      }
++      return results;
++    }
+     // Strategy:
+     //  - dedupe and pre-create parent directories once
+@@ -7934,8 +7967,8 @@
+     try {
+       // create parent directories
+-      await mapWithConcurrency(Array.from(dirs), (d) => fs.ensureDirAsync(d), dirConcurrency);
++      await mapTransfers(Array.from(dirs), (d) => fs.ensureDirAsync(d), dirConcurrency);
+ 
+       // perform hard links in parallel; fallback to copy on failure
+-      await mapWithConcurrency(
++      await mapTransfers(
+         jobs,
+         async (job) => {

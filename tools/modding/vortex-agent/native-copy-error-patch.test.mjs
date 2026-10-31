@@ -2,10 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
-import {stripTypeScriptTypes} from 'node:module';
-import path from 'node:path';
-import vm from 'node:vm';
-import {applyExact, hunks, extractClassDeclaration} from './native-patch-test-fixture.mjs';
+import {applyExact, hunks} from './native-patch-test-fixture.mjs';
+
+import {fixture, failure, SelfCopyCheckError} from './native-transfer-test-fixture.mjs';
 
 const base = new URL('./native-patches/vortex-2.9.1/', import.meta.url);
 const manifest = JSON.parse(readFileSync(new URL('copy-error.json', base)));
@@ -46,32 +45,6 @@ test('copy-error patch pins the ordered source and makes no native safety claim'
     if (line.startsWith('+')) assert.doesNotMatch(line.slice(1), /[\t ]$/);
   assert(!patch.includes('\r'));
 });
-class SelfCopyCheckError extends Error {}
-function failure(code, message = code) {return Object.assign(Error(message), {code});}
-function fixture(source, {linkError, copyError, removeError, copy, link, mkdirError} = {}) {
-  const calls = [], notifications = [];
-  const start = source.indexOf('async function mapWithConcurrency<');
-  const end = source.indexOf('/**\n * central class', start);
-  assert(start > 0 && end > start);
-  // Execute the real transfer method and its real concurrency helper. Only the
-  // filesystem/API imports are owned stubs; no constructor or native I/O runs.
-  const concurrency = stripTypeScriptTypes(source.slice(start, end), {mode: 'transform'});
-  const globals = {path: path.win32, os: {cpus: () => [{}, {}]}, SelfCopyCheckError,
-    getErrorCode: e => e?.code, getErrorMessage: e => e?.message,
-    log: (...args) => calls.push(['log', ...args]),
-    fs: {
-      ensureDirAsync: async name => {calls.push(['mkdir', name]); if (mkdirError) throw mkdirError;},
-      linkAsync: async (src, dst) => {calls.push(['link', src, dst]); if (link) return link(src, dst); if (linkError) throw linkError;},
-      copyAsync: async (src, dst) => {calls.push(['copy', src, dst]); if (copy) return copy(src, dst); if (copyError) throw copyError;},
-      removeAsync: async name => {calls.push(['remove', name]); if (removeError) throw removeError;},
-    }};
-  const Manager = vm.runInNewContext(concurrency + '\n' + extractClassDeclaration(source) + '\nInstallManager;', globals, {timeout: 1000});
-  const manager = Object.create(Manager.prototype);
-  const api = {translate: value => value, showErrorNotification: (...args) => notifications.push(args)};
-  const run = (copies = [{source: 'a.txt', destination: 'a.txt'}]) =>
-    manager.extractArchive(api, 'F:/Downloads/Own.zip', 'F:/Stage/Own.installing', 'F:/Stage/Own', copies, 'cyberpunk2077');
-  return {calls, notifications, run};
-}
 integration('baseline silently resolves a failed copy while repaired transfer rejects the exact error', async () => {
   const {input, patched} = sources(), error = failure('ENOSPC');
   const before = fixture(input, {linkError: failure('EXDEV'), copyError: error});
