@@ -333,6 +333,73 @@ before and after, with no installer message. The Node-only `original-fs` alias
 uses a private qualification config; it is not ASAR or native Electron proof.
 Install-script suppression alone does not prevent import-time installers.
 
+## Core readiness observation
+
+This prepared layer joins startup identities with a fixed read-only main IPC
+observation. It is internal application source, not a new adapter/MCP tool.
+
+The static mod-management loader retains the namespace from its existing literal
+`f()` result before extracting the default initializer. It does not import or
+require the module again. Only that static row can bind the private namespace;
+dynamic extensions with a matching name and mutable public `api.ext` are not
+readiness authority. The captured default/readiness/accessor function references
+are rechecked around calls and awaits. Capture failure disables native eligibility
+without replacing the ordinary initializer's result or error.
+
+`waitForNativeRendererManagerReady(store)` and its check method combine the actual
+ExtensionManager load owner with that namespace's manager startup owner. An
+internal instance accessor checks those owners and the same store before returning
+the already-created manager. No new manager, store or connection is constructed.
+Imports of InstallManager types do not evaluate its module early.
+
+`observeNativeCoreReadiness(requestId)` admits one logical observation before any
+await. Its five-second caller deadline uses a monotonic clock as well as a timer.
+Expiration does not cancel the underlying startup/IPC work or free the logical
+slot early. A late startup result cannot begin IPC after expiration. Further
+calls are busy until that original work settles; no automatic retry or queued
+observers accumulate. Settled transport failure can be retried explicitly and
+does not itself invalidate healthy local startup identities. Observed source
+identity drift remains held even if the old value is restored.
+
+The fixed preload method is `persist.observeMainReadiness(requestId)` and the
+channel is `persist:native-main-readiness`. The request contains only one bounded
+correlation string. Main selects its owned WebContents/main frame, checks the
+handler's persistor against the current main instance, and waits on the actual
+main readiness producer. It retains opaque main owners privately. One source
+observer serves one active read; the five-second main deadline and navigation
+invalidation release the read without cancelling initialization.
+
+The reply has exactly 12 scalar fields: schema/request ID, main PID, WebContents
+ID, renderer OS PID, frame process/routing IDs, main-generated frame epoch and
+four fixed readiness/authority flags. Main generates all process/frame values and
+rechecks them after waits and before replying. Main-frame navigation, renderer
+loss and destruction invalidate pending observations, including a same-object,
+same-URL reload. Watcher failure makes readiness unavailable while preserving the
+ordinary acknowledgement binding. Unknown metadata errors are normalized without
+reading their arbitrary message getters.
+
+The renderer checks local owners before and after IPC and copies only the exact
+validated schema into a frozen result. `mainReadinessObserved` describes main
+only; `effectsAllowed`, `installationPermit` and `nativeAdmission` remain false.
+Correlation IDs and returned PIDs are not authorization or OS image/start-time
+proof. The observation is not a lasting frame lease, pending-diff completion,
+target reservation or permission for installation. Future effects must bind the
+current window/context again and acquire their separate source-owned admission.
+
+Twenty-four module/consumer cases and 17 main IPC cases passed, including a real
+source-method counterexample that accepted a reply after a delayed timer; the
+monotonic repair now refuses it. Nine prior ACK cases remain green. The combined
+source suite passed 191 cases without skips. These tests use exact source bodies,
+controlled module/IPC dependencies and EventEmitter windows, not native Electron
+transport or full ExtensionManager construction.
+
+Main, renderer, preload and shared TypeScript/build targets all passed, followed
+by 52 upstream Node unit cases. All 25 selected source inputs matched actual
+Programs; 23 matched new runtime maps (the two shared type-only sources do not
+appear there). All 24 graph outputs and six runtime output/map hashes matched,
+with configuration/lockfile/test adapters unchanged. Electron's npm package
+remained cold. No application, game or native window was started by these checks.
+
 ## Renderer and manager startup readiness
 
 The prepared startup layer observes two separate production boundaries. The

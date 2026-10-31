@@ -1,0 +1,181 @@
+--- a/src/main/src/store/persistenceIPC.ts
++++ b/src/main/src/store/persistenceIPC.ts
+@@ -1,3 +1,4 @@
++import { performance } from "node:perf_hooks";
+ /**
+  * IPC handlers for persistence operations.
+  *
+@@ -10,16 +11,55 @@
+  * 3. Main process applies operations to LevelDB via ReduxPersistorIPC
+  */
+ 
+-import type { DiffOperation } from "@vortex/shared/ipc";
++import type { DiffOperation, NativeMainReadinessObservation } from "@vortex/shared/ipc";
+ import type { PersistedHive, PersistedState } from "@vortex/shared/state";
+ import { ipcMain, type WebContents } from "electron";
+ 
+ import { betterIpcMain } from "../ipc";
+ import { log } from "../logging";
+-import { registerAllPersistedHives } from "./mainPersistence";
++import { registerAllPersistedHives, getMainPersistor, waitForNativeMainPersistenceReady, checkNativeMainPersistenceReady } from "./mainPersistence";
+ import type ReduxPersistorIPC from "./ReduxPersistorIPC";
+ 
+ let acknowledgementOwner: WebContents | undefined;
++const nativeReadErrors = new WeakSet<Error>();
++function nativeReadinessError(code: "REQUEST" | "BUSY" | "CONTEXT" | "PENDING" | "UNAVAILABLE"): Error {
++  const error = new Error("NATIVE_MAIN_READINESS_" + code);
++  nativeReadErrors.add(error);
++  return error;
++}
++let nativeReadWatchOwner: WebContents | undefined;
++let nativeReadWatchReady = false;
++let nativeReadFrameEpoch = 0;
++let nativeReadInvalidation: (() => void) | undefined;
++let nativeReadActive = false;
++
++function watchNativeReadinessOwner(owner: WebContents): void {
++  if (nativeReadWatchOwner !== undefined) return;
++  nativeReadWatchOwner = owner;
++  const invalidate = () => {
++    if (nativeReadFrameEpoch >= Number.MAX_SAFE_INTEGER) nativeReadWatchReady = false;
++    else ++nativeReadFrameEpoch;
++    nativeReadInvalidation?.();
++  };
++  try {
++    // Electron 44.2: first argument carries isMainFrame; deprecated positional
++    // arguments are not authority. Missing metadata conservatively invalidates.
++    owner.on("did-start-navigation", (details) => {
++      try {
++        if (typeof details?.isMainFrame !== "boolean") { nativeReadWatchReady = false; invalidate(); }
++        else if (details.isMainFrame) invalidate();
++      } catch { nativeReadWatchReady = false; invalidate(); }
++    });
++    owner.on("render-process-gone", invalidate);
++    owner.on("destroyed", invalidate);
++    nativeReadWatchReady = true;
++  } catch {
++    // Ordinary acknowledgement binding/startup remains available. Partial watch
++    // installation is not retried or treated as a qualified readiness watcher.
++    nativeReadWatchReady = false;
++  }
++}
++
+ 
+ /** Main-process-only binding; renderer messages never select this owner. */
+ export function bindPersistenceAcknowledgementSender(owner: WebContents | undefined): void {
+@@ -28,6 +68,7 @@
+     throw new Error("Persistence acknowledgement owner cannot be bound");
+   }
+   acknowledgementOwner = owner;
++  watchNativeReadinessOwner(owner);
+ }
+ 
+ /**
+@@ -36,6 +77,107 @@
+  * @param persistor - The ReduxPersistorIPC instance to use for persistence
+  */
+ export function setupPersistenceIPC(persistor: ReduxPersistorIPC): void {
++  // One retained main readiness observation, one bounded active reader. Timeout
++  // abandons only this read; the actual main initialization is never cancelled.
++  let observationStarted = false;
++  let observation: { state: "pending" | "ready" | "failed"; owner?: object } = { state: "pending" };
++  let notify: (() => void) | undefined;
++  const startObservation = () => {
++    if (observationStarted) return;
++    observationStarted = true;
++    try {
++      void Promise.resolve(waitForNativeMainPersistenceReady()).then((owner) => {
++        observation = { state: "ready", owner };
++        notify?.();
++      }, () => {
++        observation = { state: "failed" };
++        notify?.();
++      });
++    } catch {
++      observation = { state: "failed" };
++      notify?.();
++    }
++  };
++  betterIpcMain.handle("persist:native-main-readiness", async (event, ...args) => {
++    const requestId = args[0];
++    if (args.length !== 1 || typeof requestId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9_-]{7,95}$/.test(requestId)) {
++      throw nativeReadinessError("REQUEST");
++    }
++    if (nativeReadActive) throw nativeReadinessError("BUSY");
++    nativeReadActive = true;
++    const deadline = performance.now() + 5000;
++    let timer: ReturnType<typeof setTimeout> | undefined;
++    try {
++      const owner = acknowledgementOwner;
++      const frame = event.senderFrame;
++      const epoch = nativeReadFrameEpoch;
++      const sample = () => {
++        if (performance.now() >= deadline) throw nativeReadinessError("PENDING");
++        if (owner === undefined || owner !== acknowledgementOwner || owner !== nativeReadWatchOwner
++            || !nativeReadWatchReady || owner.isDestroyed() || event.sender !== owner
++            || frame == null || event.senderFrame !== frame || owner.mainFrame !== frame
++            || epoch !== nativeReadFrameEpoch || getMainPersistor() !== persistor) {
++          throw nativeReadinessError("CONTEXT");
++        }
++        const values = { mainProcessId: process.pid, webContentsId: owner.id,
++          rendererProcessId: owner.getOSProcessId(), frameProcessId: frame.processId,
++          frameRoutingId: frame.routingId, frameEpoch: epoch };
++        for (const [key, value] of Object.entries(values)) {
++          const minimum = ["mainProcessId", "webContentsId", "rendererProcessId"].includes(key) ? 1 : 0;
++          if (!Number.isSafeInteger(value) || value < minimum) throw nativeReadinessError("CONTEXT");
++        }
++        if (performance.now() >= deadline) throw nativeReadinessError("PENDING");
++        if (owner !== acknowledgementOwner || owner.isDestroyed() || owner.mainFrame !== frame
++            || event.senderFrame !== frame || epoch !== nativeReadFrameEpoch
++            || getMainPersistor() !== persistor || !nativeReadWatchReady) {
++          throw nativeReadinessError("CONTEXT");
++        }
++        return values;
++      };
++      const initial = sample();
++      return await new Promise<NativeMainReadinessObservation>((resolve, reject) => {
++        let settled = false;
++        const finish = (error?: Error) => {
++          if (settled) return;
++          try {
++            if (error !== undefined) throw error;
++            const current = sample();
++            if (Object.keys(initial).some((key) => initial[key as keyof typeof initial] !== current[key as keyof typeof current])) {
++              throw nativeReadinessError("CONTEXT");
++            }
++            if (observation.state === "pending") return;
++            if (observation.state !== "ready" || observation.owner === undefined) throw nativeReadinessError("UNAVAILABLE");
++            checkNativeMainPersistenceReady(observation.owner);
++            const final = sample();
++            if (Object.keys(initial).some((key) => initial[key as keyof typeof initial] !== final[key as keyof typeof final])) {
++              throw nativeReadinessError("CONTEXT");
++            }
++            settled = true;
++            resolve({ schema: "native-main-readiness/1", requestId, ...final,
++              mainReadinessObserved: true, effectsAllowed: false, installationPermit: false, nativeAdmission: false });
++          } catch (err) {
++            settled = true;
++            reject(nativeReadErrors.has(err as Error) ? err : nativeReadinessError("UNAVAILABLE"));
++          }
++          if (settled && timer !== undefined) clearTimeout(timer);
++        };
++        notify = () => finish();
++        nativeReadInvalidation = () => finish(nativeReadinessError("CONTEXT"));
++        timer = setTimeout(() => finish(nativeReadinessError("PENDING")), Math.max(0, deadline - performance.now()));
++        startObservation();
++        finish();
++      });
++    } catch (err) {
++      throw nativeReadErrors.has(err as Error) ? err : nativeReadinessError("UNAVAILABLE");
++    } finally {
++      if (timer !== undefined) clearTimeout(timer);
++      notify = undefined;
++      nativeReadInvalidation = undefined;
++      nativeReadActive = false;
++    }
++  });
++
++
+   // This channel acknowledges its exact barrier, not arbitrary queue drainage.
+   betterIpcMain.handle("persist:diffs-acknowledged", async (event, batches) => {
+     const owner = acknowledgementOwner;

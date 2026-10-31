@@ -1,6 +1,6 @@
 # Assemble the reviewed Vortex source patches
 
-`native-source-series.mjs` applies the fixed sequence of 55 reviewed patches to
+`native-source-series.mjs` applies the fixed sequence of 61 reviewed patches to
 24 original files from Vortex `v2.9.1`, commit
 `c80326367cbe6d96621ad6cf4a5488ef49bac110`. It replaces manually composing separate
 patch chains before compilation. It does not change an installed application or
@@ -34,8 +34,8 @@ final source hashes, patch/manifest hashes and cross-file prerequisites must
 match the pinned series. Patch application requires exact offsets and context;
 it has no fuzzy matching or hash-refresh mode.
 
-The fixed graph combines the 31-patch mod-management/transfer packet with the
-24-patch persistence packet. The latter includes renderer target admission and
+The fixed graph combines the 32-patch mod-management/transfer packet with the
+29-patch persistence packet. The latter includes renderer target admission and
 acknowledged diffs, main/preload/shared IPC, backend reservations and managed SQL
 ownership. Both runtime packet directories have separate closed inventories;
 test-only adapters are excluded. A cross-file companion must already have been
@@ -286,3 +286,26 @@ Fifteen renderer inputs matched the fresh Program/map; ten main/preload/shared
 inputs retained unchanged baselines. All 24 graph outputs matched the qualified
 tree. This adds no installed-host, global-idle, persistence-flush or installation
 permit. See the [startup boundaries](NATIVE-ADOPTION-BOUNDARY.md#renderer-and-manager-startup-readiness).
+
+
+## Source-bound core readiness observation — 31 October 2026
+
+The 61-patch / 24-source recipe retains the actual static mod-management module
+namespace from its existing loader result, adds gated access to its existing
+manager and composes it with the fixed main/preload readiness observation. Packet
+inventories contain 32 lifecycle and 29 persistence patch pairs. This adds no
+second module load or publicly mutable extension-API authority.
+
+The combined source suite passed 191 cases without skips. All four projects
+passed their actual TypeScript and build targets, with 52 upstream Node tests
+also passing. Fresh Programs contain all 25 selected inputs; new runtime maps
+contain 23 (excluding the two shared type-only sources). Root independently
+verified all 24 graph outputs, configuration/lock pins and six runtime output/map
+hashes. Cold Electron/test adapters remained unchanged.
+
+The source-level deadline counterexample is retained separately: a timer-only
+renderer guard accepted after a 5010 ms event-loop stall. The repaired monotonic
+guard rejects the late result while retaining one underlying logical operation.
+These source/controlled-fixture checks do not qualify native IPC transport,
+ExtensionManager construction or installed loading. Readiness replies keep all
+native/installation authority false; see [observation scope](NATIVE-ADOPTION-BOUNDARY.md#core-readiness-observation).
