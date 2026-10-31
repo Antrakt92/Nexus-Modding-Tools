@@ -8,6 +8,7 @@ embedded Vortex adapter's 1.0.4 label.
 
 | Version | Published | Main changes |
 | --- | --- | --- |
+| [0.5.0](https://github.com/Antrakt92/vortex-nexus-modding-mcp/releases/tag/v0.5.0) | 2026-10-31 | Process-check benchmarks, experimental Rust CLI and native install contracts |
 | [0.4.0](https://github.com/Antrakt92/vortex-nexus-modding-mcp/releases/tag/v0.4.0) | 2026-10-30 | Interrupted-plan status, local helper binding, file proofs and API-cache checks |
 | [0.3.0](https://github.com/Antrakt92/vortex-nexus-modding-mcp/releases/tag/v0.3.0) | 2026-10-29 | Tracked Nexus batch helpers, inventory repair, payload checks and setup guides |
 | [0.2.0](https://github.com/Antrakt92/vortex-nexus-modding-mcp/releases/tag/v0.2.0) | 2026-10-29 | Offline helper preparation, installation diagnostics and development dependencies |
@@ -16,44 +17,74 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
-- Add an explicit static-CRT prototype build and bounded PE import inspection.
-  Verify the compiled artifact's declared DLLs before native tests; production
-  packaging and clean-Windows acceptance remain pending.
+No unreleased changes.
 
-- Add an alternating PowerShell/native process-probe comparison with full-call
-  timings and strict reply/exit checks. Record local component measurements
-  without claiming a live installation or renderer speedup.
+## 0.5.0 — 2026-10-31
 
-- Add an isolated Rust process-snapshot prototype with pinned build inputs,
-  bounded request/output and independent native contract tests. It is not
-  packaged with Vortex or selected by the resident guard.
+Adds process-check benchmarks, an isolated Rust CLI and source-tested native
+installation contracts. This is a source release: the resident Vortex guard
+still uses its existing backend. No Rust executable or Vortex application
+update is included, and native archive installation through MCP remains unavailable.
+Changes since [0.4.0](https://github.com/Antrakt92/vortex-nexus-modding-mcp/compare/v0.4.0...v0.5.0).
 
-- Add an explicit read-only process-guard benchmark and a bounded native snapshot
-  data contract. Keep startup, full invocation and batch-control measurements
-  separate; the resident guard and supported operations are unchanged.
+### Process diagnostics
 
-- Prepare a separate native installation activity registry with manager-scoped
-  job IDs, core-tail observations and joined error cleanup. Callback, debug
-  timeout and optional staging-size metadata no longer define the diagnostic
-  core lifetime. This patch is not installed or a native completion guarantee.
+- Add `process-probe-benchmark.mjs` and `process-probe-compare.mjs`. Both default
+  to plan-only; explicit `--run` starts bounded read-only measurements. Reports
+  retain initial observations and separate subprocess wall time, full-call
+  validation and executable admission. Alternating comparisons omit raw process
+  lists.
+- Add a process-only Rust Toolhelp CLI with a closed request/reply format,
+  exact request IDs and bounded UTF-8/UTF-16 validation. Partial enumeration,
+  malformed output and unexpected arguments refuse.
+- Add an explicit static-CRT build recipe and bounded AMD64 PE import inspection.
+  Native tests can require the reviewed declared OS imports before launching
+  the exact compiled artifact. Clean-Windows and distribution acceptance remain
+  separate checks.
+- In one local sequential 40-pair run, median full-call time was 296.86 ms for
+  PowerShell and 49.96 ms for the static prototype. This measures one component,
+  not complete installation or renderer responsiveness. See the
+  [method and results](docs/PROCESS-PROBE-EXPERIMENT.md).
 
-- Prepare a Vortex callback patch that prevents callback/bookkeeping exceptions
-  from entering destructive install cleanup, reports success after synchronous
-  event handlers, and preserves replacement tracking entries. Forced timeout
-  cleanup uses the same one-shot notification. This source patch is not installed.
-
-- Prepare an exact-source Vortex 2.9.1 patch for ordinary installation tracking
-  collisions and active-source cleanup, with source-backed regression tests.
-  The patch is not installed and does not enable MCP installation.
+### Native installation preparation
 
 - Add a pure tracked-install job model with bounded strict JSON, canonical plan
-  identity and replayed callback/terminal/cleanup observations. It grants no
-  native effects and does not add an installation endpoint.
+  identity and replayed callback, terminal and cleanup observations. It grants
+  no native effects or installation permission.
+- Include exact-source Vortex 2.9.1 patches for ordinary tracking collisions,
+  one-shot callback delivery and separate per-invocation core-tail diagnostics.
+  The callback patch preserves reentrant tracking replacements and isolates
+  notification failures from destructive cleanup. The activity patch joins
+  error cleanup even when error formatting throws. These patches are uninstalled;
+  source-derived tests do not replace a complete Vortex build or native acceptance.
+- Specify the future fixed new-disabled entrypoint, durable preallocated job ID,
+  bounded one-shot consumption and uncertain-result recovery. The contract is
+  documented but the native executor is not implemented.
 
-- Rename the project to Vortex Nexus Modding MCP and move the repository to
-  `Antrakt92/vortex-nexus-modding-mcp`. Update current source/recovery links while
-  accepting the previous repository URL in existing packages. Published tags,
-  archive names, bundle pins and adapter identity are unchanged.
+### Maintenance and compatibility
+
+- Rename the project to Vortex Nexus Modding MCP at
+  `Antrakt92/vortex-nexus-modding-mcp`. Accept both repository URLs in existing
+  packages and source recovery. Historical release names, hashes and recovery
+  bundle pins remain unchanged.
+- Document bounded post-task cleanup through the Recycle Bin, preserving active
+  consumers, source, required fixtures and reconstruction inputs. No general
+  MCP deletion operation is added.
+- Validate Rust source and Cargo lockfile UTF-8 before pinning source inventories.
+- Pin the optional prototype to Rust 1.99.1, windows-sys 0.61.2, serde 1.0.229 and
+  serde_json 1.0.154. Its Cargo lockfile and dependency review are included.
+  Existing JavaScript dependency versions are unchanged.
+
+### Verification and upgrading
+
+- Local verification passed 605 MCP/helper tests, 57 Python recovery/cache/version
+  tests, 35 installer tests and six Rust tests, with no skipped tests. The native
+  CLI and declared imports were checked against an independently parsed local
+  build; this does not establish clean-machine or installed-Vortex acceptance.
+- The suite version is 0.5.0; the embedded adapter label remains 1.0.4. Updating
+  this source checkout does not activate Rust, apply native patches, restart
+  Vortex or enable MCP installation/removal. Preserve the existing runtime
+  workspace, credentials and operation receipts.
 
 ## 0.4.0 — 2026-10-30
 
