@@ -1,0 +1,79 @@
+--- a/src/main/src/store/ReduxPersistorIPC.ts
++++ b/src/main/src/store/ReduxPersistorIPC.ts
+@@ -1,2 +1,3 @@
++import type QueryRegistry from "./QueryRegistry";
+ /**
+  * Redux Persistor that receives diff operations via IPC from the renderer process.
+@@ -18,5 +19,5 @@
+ import { terminate } from "../errorHandling";
+ import { log } from "../logging";
+-import type LevelPersist from "./LevelPersist";
++import LevelPersist from "./LevelPersist";
+ import type QueryInvalidator from "./QueryInvalidator";
+ 
+@@ -78,4 +79,6 @@
+   invalidator: QueryInvalidator;
+   backendOwner?: object;
++  sqlOwner?: object;
++  registry: QueryRegistry | undefined;
+ }
+ 
+@@ -89,4 +92,5 @@
+   #mLevelPersist: LevelPersist | undefined;
+   #mInvalidator: QueryInvalidator | undefined;
++  #mQueryRegistry: QueryRegistry | undefined;
+ 
+   constructor() {
+@@ -97,8 +101,8 @@
+    * Set the LevelPersist instance and QueryInvalidator for dirty table tracking.
+    */
+-  public setQueryInvalidator(levelPersist: LevelPersist, invalidator: QueryInvalidator): void {
++  public setQueryInvalidator(levelPersist: LevelPersist, invalidator: QueryInvalidator, registry?: QueryRegistry): void {
+     const reservation = this.mNativeModPersistenceReservation;
+     if (reservation !== undefined
+-        && (levelPersist !== reservation.levelPersist || invalidator !== reservation.invalidator)) {
++        && (levelPersist !== reservation.levelPersist || invalidator !== reservation.invalidator || registry !== reservation.registry)) {
+       reservation.phase = "held";
+       throw new Error("Reserved native persistence backend cannot be replaced");
+@@ -106,4 +110,5 @@
+     this.#mLevelPersist = levelPersist;
+     this.#mInvalidator = invalidator;
++    this.#mQueryRegistry = registry;
+   }
+ 
+@@ -420,7 +425,9 @@
+         throw new Error("Native persistence backend is not ready");
+       }
++      const registry = this.#mQueryRegistry;
++      if (registry === undefined) throw new Error("Native query registry is unavailable");
+       const reservation: INativeModPersistenceReservation = {
+         owner: Object.freeze({}), gameId, modId, phase: "pending",
+-        persistor, levelPersist, invalidator,
++        persistor, levelPersist, invalidator, registry,
+       };
+       // Set synchronously, before the queue wait or a backend call can reenter.
+@@ -434,5 +441,8 @@
+         }
+         this.checkNativeModPersistenceBackend(reservation);
+-        const conflict = await levelPersist.hasNewModRegistrationConflict(gameId, modId);
++        reservation.sqlOwner = LevelPersist.prototype.reserveNativeSQLAdmission.call(levelPersist, reservation.backendOwner, registry);
++        if (reservation.sqlOwner === null || typeof reservation.sqlOwner !== "object") throw new Error("Native SQL owner is missing");
++        this.checkNativeModPersistenceBackend(reservation);
++        const conflict = await LevelPersist.prototype.hasNewModRegistrationConflict.call(levelPersist, gameId, modId);
+         this.checkNativeModPersistenceBackend(reservation);
+         if (conflict !== false) {
+@@ -477,4 +487,7 @@
+         throw new Error("Native backend owner is missing");
+       }
++      if (reservation.sqlOwner !== undefined && reservation.backendOwner !== undefined && reservation.registry !== undefined) {
++        LevelPersist.prototype.checkNativeSQLAdmission.call(reservation.levelPersist, reservation.sqlOwner, reservation.backendOwner, reservation.registry);
++      } else if (reservation.phase === "reserved") throw new Error("Native SQL owner is missing");
+     } catch (err) {
+       reservation.phase = "held";
+@@ -484,5 +497,5 @@
+         || this.mPersistenceWriteFailureObserved || this.mPersistors.persistent !== reservation.persistor
+         || this.#mLevelPersist !== reservation.levelPersist
+-        || this.#mInvalidator !== reservation.invalidator) {
++        || this.#mInvalidator !== reservation.invalidator || this.#mQueryRegistry !== reservation.registry) {
+       reservation.phase = "held";
+       throw new Error("Native persistence backend or reservation changed");

@@ -142,8 +142,8 @@ unrelated settings. Earlier accepted queue work finishes before backend freeze.
 This is not a transparent pause/resume feature: there is no release yet. A future
 coordinator must bound this window and reconcile it before enabling the route.
 
-Other `DuckDBSingleton` connections and QueryRegistry execution remain separate
-gates. In the pinned official source, QueryRegistry runs five setup CALLs during
+Other `DuckDBSingleton` connections and QueryRegistry execution are outside
+this backend pair; the managed SQL layer below binds the reviewed instance. In the pinned official source, QueryRegistry runs five setup CALLs during
 initialization and two fixed SELECT bodies afterward. The parser's `@type` comment
 does not enforce read-only SQL and accepts extra files. Only completed setup plus
 exact file/body/parameter qualification can support a later read-only connection
@@ -195,6 +195,99 @@ the actual main TypeScript/direct build and 49 upstream unit tests passed. Four
 main sources matched the actual Program/new map; the other 16 qualified sources
 retained their separate baseline. Configuration and lockfile were unchanged.
 The patch changes no installed application and grants no native capability.
+
+## Managed SQL connection admission
+
+The prepared SQL layer composes five source changes: QueryRegistry source
+qualification, DuckDBSingleton connection ownership, the private LevelPersist
+bridge, the existing main reservation and its production initialization binding.
+It does not add a SQL/MCP endpoint or expose a raw connection.
+
+Query qualification checks the actual detached initialization inputs and stored
+query bodies, names and parameters. Exactly five setup CALLs must finish before
+the two reviewed SELECTs are eligible. A current closed inventory of the three
+SQL files is a filesystem observation, not a disk lease. An extra empty SQL file
+also refuses qualification. `@type select` is only a parser label. Unknown input
+retains ordinary legacy behavior but supplies no native read-only proof.
+
+Owner checks use private runtime state without rereading the SQL directory.
+Reinitialization or a changed registered query invalidates an issued owner;
+removing the conflicting input cannot restore it. An opaque owner is bound to
+the actual class, initialization generation and exact connection, rather than a
+caller-provided boolean or serialized status.
+
+The singleton records creation, attachment, detachment and close intents before
+callbacks or awaits. Admission requires the selected backend attachment and one
+qualified query connection, with no additional issued, failed or pending
+capability. A connect promise that has not returned a connection is still work.
+Public attachment-map contents cannot replace the private issued-connection
+ledger. Cached additional connections refuse admission; they are not revoked.
+
+The existing main reservation first drains prior queue work and joins the backend
+writer hold, then acquires this SQL scope before checking target absence. Backend,
+query registry and singleton owners are checked around that wait/read and on
+later reservation checks. Production initialization passes the actual registry
+and SQL directory; a missing or unqualified registry cannot grant admission.
+
+In its packaged ASAR layout, Vortex resolves SQL under `app.asar`. The source
+qualifier supports both ordinary files and that packed layout: physical checks
+use Electron's `original-fs` for the container/ancestors, while virtual entries
+are checked only for type, size and exact bounded contents. Synthetic virtual
+inodes/times are not physical identity evidence. The ASAR branch uses the pinned
+Electron 44.2 `readdirSync` API; `opendirSync` does not support this virtual tree.
+Virtual symlinks, unpacked SQL redirects and container drift refuse qualification.
+See the [pinned Electron implementation](https://raw.githubusercontent.com/electron/electron/v44.2.0/lib/node/asar-fs-wrapper.ts).
+
+The owner checks perform no SQL-directory reads. Source qualification runs only
+around initialization; its observed file generations do not establish a lasting
+filesystem lease or an atomic snapshot against arbitrary external writers.
+
+This is a hold over the reviewed source-managed singleton and its connections.
+It does not isolate arbitrary privileged JavaScript, unrelated DuckDB instances
+or external processes. Native installation, registration, release, crash
+reconciliation and physical payload ownership still need their own integration.
+
+### Managed SQL checks
+
+```powershell
+$env:VORTEX_EXTENSION_ADMISSION_REPO = 'ABSOLUTE_OFFICIAL_GIT_CACHE'
+node --test tools/modding/vortex-agent/native-query-source-admission.test.mjs tools/modding/vortex-agent/native-singleton-sql-admission.test.mjs tools/modding/vortex-agent/native-main-sql-admission.test.mjs
+```
+
+All 47 coupled source-backed cases passed without skips. They execute the five actual
+classes/functions, including production initialization, with owned SQL/connection
+facades. A before/after case proves that shadowing the target-absence method
+cannot hide a real conflict: the original prototype query runs and refuses it.
+Other cases cover pending connections, source drift, extra files, repeated
+initialization, cached capabilities and failed owner checks.
+
+A separate official Electron 44.2.0 SDK ran the actual qualifier and parser in
+Node-only mode against an owned ASAR with the three pinned SQL files. Packed and
+ordinary inputs qualified; a packed extra empty SQL file refused. Both accepted
+inputs completed five stubbed setup calls, and owner checks succeeded with both
+FS interfaces replaced by throwing proxies. This tests real Electron ASAR reads,
+not DuckDB or installed Vortex. Electron may internally cache extracted entries;
+this is not a claim of zero runtime cache writes. SDK release checksums and the
+RunAsNode fuse were verified; no application window, account profile or Vortex
+process was started. A pinned SDK compatibility check is not a production
+Electron security or native-addon qualification.
+
+The final composed main TypeScript target, direct main build and 52 upstream
+unit cases passed. Seven current main inputs matched the actual Program/new
+source map; 16 renderer/preload/shared inputs retained their separate baseline.
+The official compiler configurations and lockfile were unchanged. The first
+compiler attempt failed on strict types; explicit runtime guards repaired it
+without weakening configuration. Earlier attempts remain separate evidence.
+
+The new runtime LevelPersist import exposed Electron's npm require-time installer
+in an earlier Node test run. That run materialized an SDK in isolated dependencies;
+it did not launch Vortex. The separate `main-persistence-path-intake` test adapter
+adds one fail-closed path-lookup mock, retaining all upstream test bodies and
+assertions byte-for-byte. Three source-contract cases verify this boundary. The
+final run passed with the package's SDK directory and path marker absent both
+before and after, with no installer message. The Node-only `original-fs` alias
+uses a private qualification config; it is not ASAR or native Electron proof.
+Install-script suppression alone does not prevent import-time installers.
 
 ## Renderer target fence
 

@@ -1,0 +1,213 @@
+--- a/src/main/src/store/DuckDBSingleton.ts
++++ b/src/main/src/store/DuckDBSingleton.ts
+@@ -2,4 +2,6 @@
+ 
+ import { log } from "../logging";
++import { types as nativeTypes } from "node:util";
++import QueryRegistry from "./QueryRegistry";
+ 
+ /**
+@@ -17,5 +19,79 @@
+   #mConnections: DuckDBConnection[] = [];
+ 
++  #nativeActive = 0;
++  #nativeFailed = false;
++  #nativeInitStarts = 0;
++  #nativeBootstrapClosed = false;
++  #nativeClosed = false;
++  #nativeDetached = false;
++  #nativeGeneration = 0;
++  #nativeIssued: Array<{ connection: DuckDBConnection; kind: "attach" | "query"; alias?: string }> = [];
++  #nativeHold: { owner: object; phase: "pending" | "reserved" | "held"; generation: number;
++    registry: QueryRegistry; queryOwner?: object; backend: DuckDBConnection; query: DuckDBConnection | undefined } | undefined;
++
+   private constructor() {}
++
++  #nativeGuard(): void {
++    if (this.#nativeHold !== undefined) {
++      this.#nativeHold.phase = "held";
++      throw new Error("NATIVE_SQL_POOL_HELD");
++    }
++  }
++  #nativeEnter(): void { this.#nativeGuard(); this.#nativeActive++; this.#nativeGeneration++; }
++  #nativeFinish(ok: boolean): void { this.#nativeActive--; if (!ok) this.#nativeFailed = true; }
++  #nativeLive(): void { if (this.#nativeClosed) throw new Error("NATIVE_SQL_POOL_CLOSED"); }
++  #nativeExact(): void {
++    if (nativeTypes.isProxy(this) || Object.getPrototypeOf(this) !== DuckDBSingleton.prototype
++        || DuckDBSingleton.#sInstance !== this) throw new Error("NATIVE_SQL_POOL_REFUSED");
++  }
++  #nativeStable(): boolean {
++    return this.#mInitialized && this.#mDuckDB !== undefined && this.#mInitPromise === undefined
++      && this.#nativeActive === 0 && !this.#nativeFailed && !this.#nativeClosed
++      && !this.#nativeDetached && this.#nativeInitStarts === 1 && this.#nativeBootstrapClosed;
++  }
++  public reserveNativeSQLConnections(backend: DuckDBConnection, alias: string, registry: QueryRegistry): object {
++    this.#nativeExact();
++    if (this.#nativeHold !== undefined) throw new Error("NATIVE_SQL_POOL_REFUSED");
++    const attached = this.#nativeIssued.filter((r) => r.kind === "attach");
++    const queries = this.#nativeIssued.filter((r) => r.kind === "query");
++    const attachedRecord = attached[0], query = queries[0]?.connection;
++    const hold = { owner: Object.freeze({}), phase: "pending" as "pending" | "reserved" | "held",
++      generation: this.#nativeGeneration, registry, backend, query,
++      queryOwner: undefined as object | undefined };
++    this.#nativeHold = hold;
++    try {
++      // The public Map is not authority: records of issued capabilities are private.
++      if (!this.#nativeStable() || this.#nativeIssued.length !== 2 || attached.length !== 1 || queries.length !== 1
++          || attachedRecord === undefined || query === undefined
++          || attachedRecord.connection !== backend || attachedRecord.alias !== alias || backend === query
++          || this.#mConnections.length !== 2 || !this.#mConnections.includes(backend)
++          || !this.#mConnections.includes(query)) throw new Error("NATIVE_SQL_POOL_HELD");
++      hold.queryOwner = QueryRegistry.prototype.acquireNativeQueryOwner.call(registry, query);
++      if (hold.queryOwner === null || typeof hold.queryOwner !== "object") throw new Error("NATIVE_SQL_POOL_HELD");
++      QueryRegistry.prototype.checkNativeQueryOwner.call(registry, hold.queryOwner, query);
++      if (hold.phase !== "pending" || !this.#nativeStable() || hold.generation !== this.#nativeGeneration
++          || DuckDBSingleton.#sInstance !== this) throw new Error("NATIVE_SQL_POOL_HELD");
++      hold.phase = "reserved";
++      return hold.owner;
++    } catch { hold.phase = "held"; throw new Error("NATIVE_SQL_POOL_HELD"); }
++  }
++  public checkNativeSQLConnections(owner: object): void {
++    this.#nativeExact();
++    const hold = this.#nativeHold;
++    if (hold === undefined || owner !== hold.owner || hold.phase !== "reserved") throw new Error("NATIVE_SQL_POOL_REFUSED");
++    try {
++      const query = hold.query;
++      if (!this.#nativeStable() || hold.generation !== this.#nativeGeneration || hold.queryOwner === undefined
++          || query === undefined) throw new Error("NATIVE_SQL_POOL_HELD");
++      QueryRegistry.prototype.checkNativeQueryOwner.call(hold.registry, hold.queryOwner, query);
++      if (hold.phase !== "reserved" || !this.#nativeStable() || hold.generation !== this.#nativeGeneration
++          || DuckDBSingleton.#sInstance !== this) throw new Error("NATIVE_SQL_POOL_HELD");
++    } catch { hold.phase = "held"; throw new Error("NATIVE_SQL_POOL_HELD"); }
++  }
++  public getNativeSQLConnectionStatus() {
++    return Object.freeze({ phase: this.#nativeHold?.phase ?? "not_reserved", activeIntents: this.#nativeActive,
++      issuedConnections: this.#nativeIssued.length, failureObserved: this.#nativeFailed,
++      closed: this.#nativeClosed, globalSQLIsolationVerified: false, installationPermit: false, releaseSupported: false });
++  }
+ 
+   public static getInstance(): DuckDBSingleton {
+@@ -36,4 +112,5 @@
+    */
+   public initialize(extensionDir: string): Promise<void> {
++    this.#nativeGuard();
+     if (this.#mInitialized) {
+       return Promise.resolve();
+@@ -45,5 +122,9 @@
+     }
+ 
++    this.#nativeEnter();
++    this.#nativeInitStarts++;
+     this.#mInitPromise = (async () => {
++      let nativeOK = false;
++      try {
+       log("debug", "duckdb-singleton: creating shared instance", {
+         extensionDir,
+@@ -60,9 +141,13 @@
+       } finally {
+         connection.closeSync();
++        this.#nativeBootstrapClosed = true;
+       }
+ 
++      this.#nativeLive();
+       this.#mInitialized = true;
+       this.#mInitPromise = undefined;
+       log("debug", "duckdb-singleton: initialized");
++      nativeOK = true;
++      } finally { this.#nativeFinish(nativeOK); }
+     })();
+ 
+@@ -75,4 +160,7 @@
+    */
+   public async attachDatabase(persistPath: string, alias: string): Promise<DuckDBConnection> {
++    this.#nativeEnter();
++    let nativeOK = false;
++    try {
+     if (!this.#mInitialized || this.#mDuckDB === undefined) {
+       throw new Error("DuckDBSingleton not initialized");
+@@ -84,5 +172,7 @@
+ 
+     const connection = await this.#mDuckDB.connect();
++    this.#nativeIssued.push({ connection, kind: "attach", alias });
+     this.#mConnections.push(connection);
++    this.#nativeLive();
+ 
+     const escapedPath = persistPath.replace(/'/g, "''");
+@@ -101,5 +191,9 @@
+     log("debug", "duckdb-singleton: database attached", { alias });
+ 
++    nativeOK = true;
+     return connection;
++  
++    nativeOK = true;
++    } finally { this.#nativeFinish(nativeOK); }
+   }
+ 
+@@ -108,9 +202,15 @@
+    */
+   public async detachDatabase(alias: string): Promise<void> {
++    this.#nativeEnter();
++    let nativeOK = false;
++    try {
++    this.#nativeDetached = true;
+     if (!this.#mInitialized || this.#mDuckDB === undefined) {
++      nativeOK = true;
+       return;
+     }
+ 
+     if (!this.#mAttachedDatabases.has(alias)) {
++      nativeOK = true;
+       return;
+     }
+@@ -125,4 +225,7 @@
+     this.#mAttachedDatabases.delete(alias);
+     log("debug", "duckdb-singleton: database detached", { alias });
++  
++    nativeOK = true;
++    } finally { this.#nativeFinish(nativeOK); }
+   }
+ 
+@@ -132,4 +235,7 @@
+    */
+   public async createConnection(): Promise<DuckDBConnection> {
++    this.#nativeEnter();
++    let nativeOK = false;
++    try {
+     if (!this.#mInitialized || this.#mDuckDB === undefined) {
+       throw new Error("DuckDBSingleton not initialized");
+@@ -137,6 +243,12 @@
+ 
+     const connection = await this.#mDuckDB.connect();
++    this.#nativeIssued.push({ connection, kind: "query" });
+     this.#mConnections.push(connection);
++    this.#nativeLive();
++    nativeOK = true;
+     return connection;
++  
++    nativeOK = true;
++    } finally { this.#nativeFinish(nativeOK); }
+   }
+ 
+@@ -145,4 +257,8 @@
+    */
+   public close(): void {
++    this.#nativeEnter();
++    this.#nativeClosed = true;
++    let nativeOK = false;
++    try {
+     for (const conn of this.#mConnections) {
+       try {
+@@ -169,4 +285,7 @@
+     DuckDBSingleton.#sInstance = undefined;
+     log("debug", "duckdb-singleton: closed");
++  
++    nativeOK = true;
++    } finally { this.#nativeFinish(nativeOK); }
+   }
+ 
+@@ -176,4 +295,5 @@
+    */
+   public nextAlias(): string {
++    this.#nativeGuard();
+     const id = this.#mNextAliasId++;
+     return id === 0 ? "db" : `db_${id}`;

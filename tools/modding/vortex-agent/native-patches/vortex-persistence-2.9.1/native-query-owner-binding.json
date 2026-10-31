@@ -1,0 +1,24 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/main/src/store/mainPersistence.ts",
+  "inputSHA256": "7d3e28cb829914fb092774eca3fc357645fa7ef508177d1a0e3b32eed58f05fe",
+  "outputSHA256": "be4459bd40b79b7223cb3f29b1605bb309e6ef7e8dc780c6d10167c9e41b218f",
+  "patchSHA256": "cf72d7931b4a02071a40f53db1873b48ad4a64605b1f760d76ee6ac678d98ef3",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "globalSQLIsolationVerified": false,
+  "powerLossPersistenceVerified": false,
+  "releaseSupported": false,
+  "limitations": [
+    "Coupled source-managed Singleton/Registry/backend admission only, not privileged external SQL isolation.",
+    "No registration, release, native host or power-loss persistence permit."
+  ],
+  "requiredCompanionPatch": "native-main-sql-admission.patch",
+  "requiredCompanionPatchSHA256": "c4e6980946efa25697bda75956bd3ad24563218f16c36777f356000f7a97ab72",
+  "requiredCompanionOutputSHA256": "85a0340ccc4927875d65e3c8a34b8ad8654120c6bb2d6bee8859c2d4b144bc04"
+}
