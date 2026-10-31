@@ -155,6 +155,10 @@ the full guard's repeated metadata traversal and synchronous process checks.
 
 ## Stage 4 preflight foundation — 30 October 2026
 
+The [31 October continuation](LOCAL-INSTALL-IMPLEMENTATION.md) separates native
+source/ownership/terminal gates from a pure tracked-install job model. Neither
+the model nor archive-sealing mechanics grants invocation permission.
+
 The new pure own-install evaluator checks an exact archive and bounded detached
 inventory against the source-reviewed collision and previous-provider branches.
 It rejects defined native provider IDs, shared archive references, owner/path

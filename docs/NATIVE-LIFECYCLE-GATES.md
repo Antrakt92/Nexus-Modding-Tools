@@ -133,10 +133,11 @@ across foreground work and the poller; sharing an older check from a different
 phase is not a fresh check. Cancellation stops later effects while preserving
 reconciliation of an already invoked operation.
 
-The standalone [file-proof worker](FILE-PROOF-WORKER.md) currently refuses
-Electron. Exact-host worker startup, `original-fs` physical `app.asar` behavior,
-source/module pins and error propagation require separate acceptance before
-integration. No game launch is needed for source tests; native host acceptance
+The [file-proof worker](FILE-PROOF-WORKER.md) has passed exact-host Electron
+component acceptance, including the physical `original-fs` backend. Held helper
+integration is separately tested; this does not admit a native installer or
+prove its termination. See [local installation implementation](LOCAL-INSTALL-IMPLEMENTATION.md)
+for the remaining owner/reservation/terminal gates. Native installer acceptance
 still requires a coordinated window. Returning a guard Promise from callbacks
 is necessary. At direct call sites, preserve synchronous execution when the
 guard returns synchronously; await thenables and recheck live context afterward.

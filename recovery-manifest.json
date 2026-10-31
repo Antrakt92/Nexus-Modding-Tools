@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "29805eb86089185681f01344dd61165772880fe7618984f2b643b97b9cabb35d"
+      "sha256_lf": "45f4773f0326658c51b8f93ed5eb293384497c140b0dca22aec0f1039552fecd"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -256,7 +256,7 @@
     },
     {
       "path": "docs/LIFECYCLE-IMPLEMENTATION.md",
-      "sha256_lf": "d74bdef6e21d25c3b5663946039422698b20363f31436492d7d2f15f94ee1960"
+      "sha256_lf": "ff8d7797a5ef427153ef21cbcff38cc621d389921e4a66e508de31504afe2efa"
     },
     {
       "path": "docs/LIFECYCLE-PERFORMANCE.md",
@@ -265,6 +265,10 @@
     {
       "path": "docs/LOCAL-CLEANUP.md",
       "sha256_lf": "8431c868a47201e48473c8b8b0f650125fa9d15a859f087a8d17b500f939314c"
+    },
+    {
+      "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
+      "sha256_lf": "d84cc2e2884ff178e792580e9ed1b4d78263ba7868adad6651f9f9651e63257a"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -276,7 +280,7 @@
     },
     {
       "path": "docs/NATIVE-LIFECYCLE-GATES.md",
-      "sha256_lf": "2ade64464e85eeb386ac9665cab940913c796860a120c511e7b68b6b676ba3e3"
+      "sha256_lf": "4389ce1bf97ac2fe43d120a732fa2133a51e8e1e1d6e71d3f091330cec02513a"
     },
     {
       "path": "docs/NO-RESTART-WORKFLOW.md",
@@ -292,7 +296,7 @@
     },
     {
       "path": "docs/README.md",
-      "sha256_lf": "eb4f6a120365686ce3d48d060d4a29590780d974afa82530666b05c8c2b6c148"
+      "sha256_lf": "8ce22509e11cd301ddb49776289df1d39ba68ba84618bd4e01e5a5df913791c0"
     },
     {
       "path": "docs/RESTORE.md",
@@ -657,6 +661,14 @@
     {
       "path": "tools/modding/vortex-agent/inspection.cjs",
       "sha256_lf": "6dabc3bbd550817c0a83a90c613005a43c1abd76327645f208e714f20f7b6cb5"
+    },
+    {
+      "path": "tools/modding/vortex-agent/install-job-contract.cjs",
+      "sha256_lf": "48fe66006115e5646024efa1a469eaffcd6cba8a75174bd3625749ed346617e4"
+    },
+    {
+      "path": "tools/modding/vortex-agent/install-job-contract.test.cjs",
+      "sha256_lf": "03a90ad56c58fe2e305257a96975cc61e9909e263cde62e9bf948d445455af0f"
     },
     {
       "path": "tools/modding/vortex-agent/install-settlement.cjs",
