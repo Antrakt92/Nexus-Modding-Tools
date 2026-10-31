@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "affe0a541e8116eda151d45834d1be925db1ca1c3e77dfdea52dacd656187ab7"
+      "sha256_lf": "8a388ece24126ebb1a88b0b671892ac24db3899e7b510bf042d83c30fca4d499"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -276,7 +276,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "ee2005324e0e1d852e688a137fcaa4b6535c3e1d367815e5ef7db30217f2b0e9"
+      "sha256_lf": "cd1d929f00cdca11e468cf94b8ff91cc19563d88bbb9dee1b955367075ebe850"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -337,6 +337,10 @@
     {
       "path": "docs/OWN-LOCAL-BINDER.md",
       "sha256_lf": "34fbca5dd5920de08a5f3343851d4424036df3c9bc5c1b76da460c6ed10b93ef"
+    },
+    {
+      "path": "docs/OWNED-EXTRACTOR-PROCESS.md",
+      "sha256_lf": "510dc13806adf6ff68806281598de9090b6a58cf2e2731115d7dc87d891fa9e0"
     },
     {
       "path": "docs/OWNED-FILE-TRANSFER.md",
@@ -1035,6 +1039,14 @@
       "sha256_lf": "dfee9ac88e4d0638fff047dc7eccabc4ef62ab597b68cf835956922f3a6ebd80"
     },
     {
+      "path": "tools/modding/vortex-agent/owned-extractor-process.py",
+      "sha256_lf": "454f2f97719a04d6558da746dc751f7d1a4bb26a26cbd1943358c2ae506b4ec7"
+    },
+    {
+      "path": "tools/modding/vortex-agent/owned-extractor-process.test.py",
+      "sha256_lf": "e5bcee8ba2396f6b18194cc33c76ba18ea343276e4f1dd9f2e34cf13cf570f6d"
+    },
+    {
       "path": "tools/modding/vortex-agent/owned-extractor-scope.cjs",
       "sha256_lf": "2a5200be844a4bab0b1b3c15de00441876039a674e9c871e7bf29b7a0217bfec"
     },
@@ -1044,11 +1056,11 @@
     },
     {
       "path": "tools/modding/vortex-agent/owned-file-transfer.py",
-      "sha256_lf": "656bf5515db4045554e849c27264ef18b03e5bc281e496a685004149873fc312"
+      "sha256_lf": "65e89606998bd13113bca5d57503568f736b659ba2643ffcd38ab50b4f57df3c"
     },
     {
       "path": "tools/modding/vortex-agent/owned-file-transfer.test.py",
-      "sha256_lf": "3c703ab48b4b1103bb8dbaaf02a43ba001fd169f30c872cf51fa2d63f265daf2"
+      "sha256_lf": "c4a1ad8b1dc8124d4465fae0a33f59795eff5029f31a2596e474f19a5e72fa33"
     },
     {
       "path": "tools/modding/vortex-agent/package.test.mjs",

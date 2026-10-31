@@ -17,6 +17,9 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Add an internal fixed extractor process owner with shared handle custody,
+  sticky cancellation, bounded pipe polling and terminal-gated handoff. It is
+  not connected to the MCP installation operation.
 - Exercise controlled guardian loss with suspended and active extractor fixtures
   and a real intent journal. Owner loss requires reconciliation regardless of
   process exit code; source drift and replay remain refused in the fixture.
