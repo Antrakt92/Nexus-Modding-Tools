@@ -1,6 +1,6 @@
 # Assemble the reviewed Vortex source patches
 
-`native-source-series.mjs` applies the fixed sequence of 51 reviewed patches to
+`native-source-series.mjs` applies the fixed sequence of 52 reviewed patches to
 23 original files from Vortex `v2.9.1`, commit
 `c80326367cbe6d96621ad6cf4a5488ef49bac110`. It replaces manually composing separate
 patch chains before compilation. It does not change an installed application or
@@ -35,7 +35,7 @@ match the pinned series. Patch application requires exact offsets and context;
 it has no fuzzy matching or hash-refresh mode.
 
 The fixed graph combines the 30-patch mod-management/transfer packet with the
-21-patch persistence packet. The latter includes renderer target admission and
+22-patch persistence packet. The latter includes renderer target admission and
 acknowledged diffs, main/preload/shared IPC, backend reservations and managed SQL
 ownership. Both runtime packet directories have separate closed inventories;
 test-only adapters are excluded. A cross-file companion must already have been
@@ -249,3 +249,21 @@ state-diff control. Ten main/preload/shared inputs retain their separate unchang
 baselines. All 23 graph outputs match the qualified source tree. This is a
 renderer development-build check; the main/preload/shared targets were not rerun
 and no installed application was changed. See the [store-binding boundary](NATIVE-ADOPTION-BOUNDARY.md#renderer-target-fence).
+
+
+## Main initialization readiness — 31 October 2026
+
+The 52-patch / 23-source graph adds the production main readiness attempt after
+query-owner binding. The current SQL fixture initializes through the actual
+production entry. Exact predecessor controls reproduce late-init rebinding and
+stale factory adoption; the repaired generation/captured-backend checks prevent
+both. Passive observers settle on invalidation without canceling raw SQL work.
+
+The combined source suite passed 122 cases without skips. The actual main
+TypeScript target, direct build and 52 upstream unit cases passed with unchanged
+compiler configuration and lockfile. Seven main inputs matched the new Program
+and main runtime map. Seventeen renderer/preload/shared inputs retain their prior
+unchanged baseline; those targets were not rebuilt. All 23 graph outputs matched
+the qualified tree. No installed application was changed and no readiness result
+grants queue, SQL, filesystem or installation authority. See the
+[readiness contract](NATIVE-ADOPTION-BOUNDARY.md#main-initialization-readiness).

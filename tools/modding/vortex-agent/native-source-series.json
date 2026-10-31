@@ -82,7 +82,7 @@
     {
       "path": "src/main/src/store/mainPersistence.ts",
       "originalSHA256": "7d3e28cb829914fb092774eca3fc357645fa7ef508177d1a0e3b32eed58f05fe",
-      "finalSHA256": "be4459bd40b79b7223cb3f29b1605bb309e6ef7e8dc780c6d10167c9e41b218f"
+      "finalSHA256": "90e5a0c97eb1d02360de088a9ebe897021b825bf2cb0a6888bdac8f94c01b904"
     },
     {
       "path": "src/main/src/store/persistenceIPC.ts",
@@ -885,6 +885,21 @@
       "requiredCompanionPatch": "renderer-store-binding.patch",
       "requiredCompanionPatchSHA256": "f4ed4c4e7ae11b5f98a0c7c46ea0077956c444eedd905bfcbc29e430e3469a3e",
       "requiredCompanionOutputSHA256": "4824d5ec9ffb9e768835d430e043e47b91d8e52cc18c2d9f1272c099e4d730c9"
+    },
+    {
+      "name": "native-main-readiness",
+      "packet": "persistence",
+      "path": "src/main/src/store/mainPersistence.ts",
+      "manifestSHA256": "49bda2f696fb94a719e6c627a8ae88e70497aaa2b64c148b06c403ff012676cf",
+      "patchSHA256": "eb482bec5663042300dfdb3b6897e11dfee28a30306974ba42295aa7ebafe53d",
+      "inputSHA256": "be4459bd40b79b7223cb3f29b1605bb309e6ef7e8dc780c6d10167c9e41b218f",
+      "outputSHA256": "90e5a0c97eb1d02360de088a9ebe897021b825bf2cb0a6888bdac8f94c01b904",
+      "prerequisitePatch": "native-query-owner-binding.patch",
+      "prerequisitePatchSHA256": "cf72d7931b4a02071a40f53db1873b48ad4a64605b1f760d76ee6ac678d98ef3",
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
     }
   ]
 }

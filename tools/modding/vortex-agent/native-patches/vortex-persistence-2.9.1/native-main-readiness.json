@@ -1,0 +1,24 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/main/src/store/mainPersistence.ts",
+  "originalSourceSHA256": "7d3e28cb829914fb092774eca3fc357645fa7ef508177d1a0e3b32eed58f05fe",
+  "inputSHA256": "be4459bd40b79b7223cb3f29b1605bb309e6ef7e8dc780c6d10167c9e41b218f",
+  "outputSHA256": "90e5a0c97eb1d02360de088a9ebe897021b825bf2cb0a6888bdac8f94c01b904",
+  "patchSHA256": "eb482bec5663042300dfdb3b6897e11dfee28a30306974ba42295aa7ebafe53d",
+  "prerequisitePatch": "native-query-owner-binding.patch",
+  "prerequisitePatchSHA256": "cf72d7931b4a02071a40f53db1873b48ad4a64605b1f760d76ee6ac678d98ef3",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "globalSQLIsolationVerified": false,
+  "powerLossPersistenceVerified": false,
+  "releaseSupported": false,
+  "limitations": [
+    "Exact production initialization identity only; no queue flush, persistence hold, SQL admission, registration or native permit.",
+    "Ordinary startup stays nonblocking; fulfilled query skips are not native readiness."
+  ]
+}

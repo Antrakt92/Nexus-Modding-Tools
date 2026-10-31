@@ -1,0 +1,230 @@
+--- a/src/main/src/store/mainPersistence.ts
++++ b/src/main/src/store/mainPersistence.ts
+@@ -41,4 +41,51 @@
+ let database: Database | undefined;
+ 
++interface NativeMainAttempt {
++  owner: object;
++  main: ReduxPersistorIPC;
++  backend: LevelPersist;
++  raw?: Promise<void>;
++  completion: Promise<void>;
++  settle: () => void;
++  held: boolean;
++  ready: boolean;
++  registry?: QueryRegistry;
++  invalidator?: QueryInvalidator;
++  database?: Database;
++}
++let nativeMainAttempt: NativeMainAttempt | undefined;
++let nativeMainClose: { main: ReduxPersistorIPC | undefined; backend: LevelPersist | undefined; tail: Promise<void> } | undefined;
++
++function holdNativeMainAttempt(attempt: NativeMainAttempt): void {
++  attempt.held = true;
++  attempt.settle();
++}
++
++function checkNativeMainAttempt(attempt: NativeMainAttempt): void {
++  if (nativeMainAttempt !== attempt || attempt.held || mainPersistor !== attempt.main || levelPersist !== attempt.backend) {
++    holdNativeMainAttempt(attempt);
++    throw new Error("NATIVE_MAIN_PERSISTENCE_UNAVAILABLE");
++  }
++}
++
++export async function waitForNativeMainPersistenceReady(): Promise<object> {
++  const attempt = nativeMainAttempt;
++  if (attempt === undefined) throw new Error("NATIVE_MAIN_PERSISTENCE_UNAVAILABLE");
++  await attempt.completion;
++  checkNativeMainPersistenceReady(attempt.owner);
++  return attempt.owner;
++}
++
++export function checkNativeMainPersistenceReady(owner: object): void {
++  const attempt = nativeMainAttempt;
++  if (attempt === undefined || attempt.owner !== owner) throw new Error("NATIVE_MAIN_PERSISTENCE_UNAVAILABLE");
++  checkNativeMainAttempt(attempt);
++  if (!attempt.ready || attempt.registry === undefined || attempt.invalidator === undefined || attempt.database === undefined
++      || queryRegistry !== attempt.registry || queryInvalidator !== attempt.invalidator || database !== attempt.database) {
++    holdNativeMainAttempt(attempt);
++    throw new Error("NATIVE_MAIN_PERSISTENCE_UNAVAILABLE");
++  }
++}
++
+ /**
+  * Get the Database instance for typed model access.
+@@ -56,4 +103,5 @@
+ export function initMainPersistence(levelPersistor: LevelPersist): ReduxPersistorIPC {
+   if (mainPersistor !== undefined) {
++    if (nativeMainAttempt !== undefined) holdNativeMainAttempt(nativeMainAttempt);
+     return mainPersistor;
+   }
+@@ -61,23 +109,42 @@
+   levelPersist = levelPersistor;
+   mainPersistor = new ReduxPersistorIPC();
+-
+-  // Set up factory to create persistors on demand for unknown hives
+-  // (e.g., extension-registered hives that main doesn't know about)
+-  mainPersistor.setPersistorFactory((hive: string) => {
+-    if (levelPersist === undefined) {
+-      return undefined;
+-    }
+-    return new SubPersistor(levelPersist, hive);
+-  });
+-
+-  // Set up IPC handlers to receive diffs from renderer
+-  setupPersistenceIPC(mainPersistor);
+-
+-  // Set up the query system (async, non-blocking)
+-  initQuerySystem(levelPersistor).catch((err) => {
+-    log("warn", "Failed to initialize query system", {
+-      error: getErrorMessageOrDefault(err),
++  let settle = () => {};
++  const completion = new Promise<void>((resolve) => { settle = resolve; });
++  const attempt: NativeMainAttempt = { owner: Object.freeze({}), main: mainPersistor, backend: levelPersistor, held: false, ready: false, completion, settle };
++  nativeMainAttempt = attempt;
++
++  try {
++    // Set up factory to create persistors on demand for unknown hives
++    // (e.g., extension-registered hives that main doesn't know about)
++    mainPersistor.setPersistorFactory((hive: string) => {
++      if (mainPersistor !== attempt.main || levelPersist !== attempt.backend) {
++        return undefined;
++      }
++      return new SubPersistor(attempt.backend, hive);
+     });
+-  });
++
++    // Set up IPC handlers to receive diffs from renderer
++    setupPersistenceIPC(mainPersistor);
++
++    // Set up the query system (async, non-blocking)
++    const raw = initQuerySystem(attempt);
++    attempt.raw = raw;
++    // Observe the exact raw invocation independently of best-effort diagnostics.
++    void raw.then(() => {
++      if (!attempt.ready) holdNativeMainAttempt(attempt);
++      attempt.settle();
++    }, (err) => {
++      holdNativeMainAttempt(attempt);
++      try {
++        log("warn", "Failed to initialize query system", { error: getErrorMessageOrDefault(err) });
++      } catch {
++        // A secondary diagnostic failure cannot replace initialization failure.
++      }
++    });
++
++  } catch (err) {
++    holdNativeMainAttempt(attempt);
++    throw err;
++  }
+ 
+   return mainPersistor;
+@@ -88,5 +155,7 @@
+  * Creates QueryRegistry, QueryInvalidator, and sets up IPC handlers.
+  */
+-async function initQuerySystem(levelPersistor: LevelPersist): Promise<void> {
++async function initQuerySystem(attempt: NativeMainAttempt): Promise<void> {
++  const levelPersistor = attempt.backend;
++  checkNativeMainAttempt(attempt);
+   const singleton = DuckDBSingleton.getInstance();
+   if (!singleton.isInitialized) {
+@@ -95,9 +164,12 @@
+   }
+ 
++  checkNativeMainAttempt(attempt);
+   // Create a dedicated connection for query execution
+   const queryConnection = await singleton.createConnection();
++  checkNativeMainAttempt(attempt);
+ 
+   // Parse all SQL query files
+   const queriesDir = path.join(getVortexPath("base"), "queries");
++  checkNativeMainAttempt(attempt);
+   let queries: ParsedQuery[];
+   try {
+@@ -111,4 +183,5 @@
+   }
+ 
++  checkNativeMainAttempt(attempt);
+   if (queries.length === 0) {
+     log("debug", "No queries found, skipping query system initialization");
+@@ -117,21 +190,29 @@
+ 
+   // Initialize registry
+-  queryRegistry = new QueryRegistry(queryConnection);
+-  await queryRegistry.initialize(queries, queriesDir);
+-
+-  // Create invalidator and wire to persistor
+-  queryInvalidator = new QueryInvalidator(queryRegistry);
+-  mainPersistor?.setQueryInvalidator(levelPersistor, queryInvalidator, queryRegistry);
+-
+-  // Create Database instance for typed model access
+-  database = new Database(levelPersistor, queryInvalidator);
+-
+-  // Create watcher and wire to invalidator
+-  const queryWatcher = new QueryWatcher(queryRegistry);
+-  queryInvalidator.setWatcher(queryWatcher);
+-
+-  log("info", "Query system initialized", {
+-    queryCount: queryRegistry.getQueryNames().length,
+-  });
++  const registry = new QueryRegistry(queryConnection);
++  checkNativeMainAttempt(attempt);
++  await registry.initialize(queries, queriesDir);
++  checkNativeMainAttempt(attempt);
++
++  // Construct locally: a stale asynchronous attempt must never bind a new main.
++  const invalidator = new QueryInvalidator(registry);
++  checkNativeMainAttempt(attempt);
++  attempt.main.setQueryInvalidator(levelPersistor, invalidator, registry);
++  checkNativeMainAttempt(attempt);
++  const initializedDatabase = new Database(levelPersistor, invalidator);
++  checkNativeMainAttempt(attempt);
++  const queryWatcher = new QueryWatcher(registry);
++  checkNativeMainAttempt(attempt);
++  invalidator.setWatcher(queryWatcher);
++  checkNativeMainAttempt(attempt);
++  log("info", "Query system initialized", { queryCount: registry.getQueryNames().length });
++  checkNativeMainAttempt(attempt);
++  queryRegistry = registry;
++  queryInvalidator = invalidator;
++  database = initializedDatabase;
++  attempt.registry = registry;
++  attempt.invalidator = invalidator;
++  attempt.database = initializedDatabase;
++  attempt.ready = true;
+ }
+ 
+@@ -205,14 +286,24 @@
+  * Close the persistence system.
+  */
+-export async function closeMainPersistence(): Promise<void> {
+-  if (mainPersistor !== undefined) {
+-    await mainPersistor.finalizeWrite();
+-  }
+-  if (levelPersist !== undefined) {
+-    await levelPersist.close();
+-  }
+-  mainPersistor = undefined;
+-  levelPersist = undefined;
++export function closeMainPersistence(): Promise<void> {
++  const closingMain = mainPersistor, closingBackend = levelPersist;
++  if (nativeMainClose !== undefined && nativeMainClose.main === closingMain && nativeMainClose.backend === closingBackend) return nativeMainClose.tail;
++  const attempt = nativeMainAttempt;
++  if (attempt !== undefined) holdNativeMainAttempt(attempt);
++  // Install the shared tail before any finalizer/backend callback can reenter.
++  const tail = Promise.resolve().then(async () => {
++    if (closingMain !== undefined) await closingMain.finalizeWrite();
++    if (closingBackend !== undefined) await closingBackend.close();
++    if (nativeMainAttempt === attempt && mainPersistor === closingMain && levelPersist === closingBackend) {
++      mainPersistor = undefined;
++      levelPersist = undefined;
++      queryRegistry = undefined;
++      queryInvalidator = undefined;
++      database = undefined;
++    }
++  });
++  nativeMainClose = { main: closingMain, backend: closingBackend, tail };
++  return tail;
+ }
+ 
+ /**
