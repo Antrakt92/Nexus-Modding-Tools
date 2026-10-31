@@ -1,0 +1,93 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import vm from 'node:vm';
+import path from 'node:path';
+import {readFileSync,readdirSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+import {createRequire,stripTypeScriptTypes} from 'node:module';
+import {createHash} from 'node:crypto';
+import {types as nativeTypes} from 'node:util';
+import {applyExact} from './native-patch-test-fixture.mjs';
+const base=new URL('./native-patches/vortex-persistence-2.9.1/',import.meta.url);
+const m=JSON.parse(readFileSync(new URL('renderer-target-fence.json',base)));
+const patch=readFileSync(new URL('renderer-target-fence.patch',base),'utf8');
+const sha=x=>createHash('sha256').update(x).digest('hex');
+const repo=process.env.VORTEX_EXTENSION_ADMISSION_REPO,deps=process.env.VORTEX_EXTENSION_ADMISSION_DEPS;
+const integration=(name,fn)=>test(name,{timeout:10000,skip:repo&&deps?false:'Set VORTEX_EXTENSION_ADMISSION_REPO and VORTEX_EXTENSION_ADMISSION_DEPS'},fn);
+let cached;
+function inputs(){
+ if(cached)return cached;
+ const req=createRequire(import.meta.url);
+ function lib(relative,digest,entry='index.js'){
+  const folder=path.join(deps,'.pnpm',relative,'lib'),rows=[];
+  function walk(dir){for(const e of readdirSync(dir,{withFileTypes:true}).sort((a,b)=>a.name<b.name?-1:1)){
+   const full=path.join(dir,e.name);if(e.isDirectory())walk(full);else if(e.isFile()&&e.name.endsWith('.js'))rows.push({file:path.relative(folder,full).split(path.sep).join('/'),sha256:sha(readFileSync(full))});else assert.ok(e.isFile());}}
+  walk(folder);assert.equal(sha(JSON.stringify(rows)),digest);return req(path.join(folder,entry));
+ }
+ const redux=lib('redux@4.2.1/node_modules/redux','6bdb7c6337de0a11e1291b3ac3cf34c63468cd845dd98cccd320b44238969b6e','redux.js');
+ const act=lib('redux-act@1.8.0/node_modules/redux-act','39ac092d7638d1ea5a7d3d8f3ad52d1aa96b7e2e042fb7431e919cd8bcd82b6d');
+ const batching=lib('redux-batched-actions@0.5.0_redux@4.2.1/node_modules/redux-batched-actions','e12ecbaa555ba0f4cc8590f9adadf5b26858aa8b02b739fcd896c91f83af8fc8');
+ const tsFile=path.join(deps,'.pnpm/typescript@6.0.3/node_modules/typescript/lib/typescript.js');
+ assert.equal(sha(readFileSync(tsFile)),'569177652966bd528c319171c7dd22860dbf72bde116cbc4f644f1d02bb12e39');const ts=req(tsFile);
+ function source(file,pin){const s=execFileSync('git',['-C',repo,'show',m.upstreamCommit+':src/renderer/src/'+file],{maxBuffer:2e6}).toString('utf8');assert.equal(sha(s),pin);return s;}
+ const raw=source('reducers/index.ts',m.inputSHA256);
+ const helper=source('util/storeHelper.ts','f54ab78f17df20db0e53f071fc727364d5a66c3380af271933d7203be3d31a28');
+ const deep=source('util/deepMerge.ts','bb84a5c120c392a9fbd082ac318f59e6a031a88f3351d4eaa0390413ce517cf2');
+ function named(text,name){const sf=ts.createSourceFile('input.ts',text,ts.ScriptTarget.Latest,true),found=[];function walk(n){if(ts.isFunctionDeclaration(n)&&n.name?.text===name)found.push(n.getText(sf));ts.forEachChild(n,walk);}walk(sf);assert.equal(found.length,1);return found[0];}
+ const run=(text,context={})=>vm.runInNewContext(stripTypeScriptTypes(text.replace(/^export /gm,''),{mode:'transform'}),context,{timeout:1000});
+ const setSafe=run(named(helper,'setSafe')+'\nsetSafe;');
+ const deleteOrNop=run(named(helper,'clone')+'\n'+named(helper,'deleteOrNop')+'\ndeleteOrNop;');
+ const getSafe=run(named(helper,'getSafe')+'\ngetSafe;');
+ const rehydrate=run(named(helper,'merge')+'\n'+named(helper,'rehydrate')+'\nrehydrate;',{getSafe,setSafe});
+ const deepMerge=run(named(deep,'pick')+'\n'+named(deep,'deepMerge')+'\ndeepMerge;');
+ const out=applyExact(raw,patch,m.upstreamPath);assert.equal(sha(out),m.outputSHA256);
+ cached={raw,out,redux,act,batching,ts,setSafe,deleteOrNop,deepMerge,getSafe,rehydrate};return cached;
+}
+function fixture({baseline=false,profiles={p:{gameId:'game'}},extra={}}={}){
+ const i=inputs(),empty={reducers:{},defaults:{}},notifications=[];
+ let sf=i.ts.createSourceFile('root.ts',baseline?i.raw:i.out,i.ts.ScriptTarget.Latest,true);
+ let text=(baseline?i.raw:i.out);const imports=sf.statements.filter(n=>i.ts.isImportDeclaration(n)||i.ts.isExportDeclaration(n));
+ for(const n of imports.reverse())text=text.slice(0,n.pos)+text.slice(n.end);
+ text=text.replace(/^export default reducers;/m,'').replace(/^export /gm,'');
+ const ctx={nativeTypes,combineReducers:i.redux.combineReducers,createReducer:i.act.createReducer,enableBatching:i.batching.enableBatching,
+  pick:(obj,keys)=>Object.fromEntries(keys.filter(k=>Object.hasOwn(obj,k)).map(k=>[k,obj[k]])),
+  unknownToError:x=>x,deepMerge:i.deepMerge,setSafe:i.setSafe,deleteOrNop:i.deleteOrNop,getSafe:i.getSafe,rehydrate:i.rehydrate,
+  setImmediate:fn=>notifications.push(fn),log:()=>{},...Object.fromEntries(['appReducer','devToolsReducer','downloadsReducer','loReducer','notificationsReducer','notificationSettingsReducer','sessionReducer','tableReducer','toolbarReducer','userReducer','windowReducer'].map(k=>[k,empty]))};
+ const api=vm.runInNewContext(stripTypeScriptTypes(text,{mode:'transform'})+'\n({reducers'+(baseline?'':',reserveNativeRendererTarget,checkNativeRendererTarget,getNativeRendererTargetStatus')+'});',ctx,{timeout:1000});
+ const reducers={ADD:(s,p)=>i.setSafe(s,['game',p.id],p),REMOVE:(s,p)=>i.deleteOrNop(s,['game',p.id]),IMPURE:(s,p)=>{s.game[p.id]=p;return s;},THROW:()=>{throw Error('own');},...extra};
+ const exts=[{path:['persistent','mods'],reducer:{defaults:{game:{}},reducers}},
+ {path:['persistent','profiles'],reducer:{defaults:profiles,reducers:{FLAGS:(s,p)=>i.setSafe(s,[p.profile,'modState',p.id],{enabled:false})}}}];
+ const make=()=>api.reducers(exts,()=>{}),rootReducer=make(),store=i.redux.createStore(rootReducer);
+ return {api,store,make,rootReducer,notifications,...i,reserve:()=>api.reserveNativeRendererTarget('game','new')};
+}
+
+test('artifact exact pins and all authority flags remain false',()=>{assert.equal(sha(patch),m.patchSHA256);assert.equal(m.inputSHA256,'e59a69384003bade4d1216ee28a8347b38d27291f9b3688c82dc488c168a4e22');for(const k of ['installed','nativeAcceptanceVerified','installationPermit','powerLossPersistenceVerified'])assert.equal(m[k],false);assert.equal(m.preparedOnly,true);});
+integration('baseline proves ordinary target overwrite and nested net-zero batch bypass',()=>{const f=fixture({baseline:true});f.store.dispatch(f.batching.batchActions([{type:'ADD',payload:{id:'new'}},f.batching.batchActions([{type:'REMOVE',payload:{id:'new'}}])]));assert.equal(f.store.getState().persistent.mods.game.new,undefined);});
+integration('inactive factory preserves original identities and performs no protected scans',()=>{const f=fixture();const state=f.store.getState();f.store.dispatch({type:'NOOP'});assert.equal(f.store.getState().persistent.mods,state.persistent.mods);assert.equal(f.store.getState().persistent.profiles,state.persistent.profiles);f.store.dispatch({type:'ADD',payload:{id:'new'}});assert.equal(f.store.getState().persistent.mods.game.new.id,'new');});
+integration('reservation opaque owner and absent target across all profiles',()=>{const f=fixture({profiles:{a:{gameId:'other',modState:{new:{enabled:false}}}}});assert.throws(f.reserve);assert.equal(f.api.getNativeRendererTargetStatus().phase,'held');const g=fixture();const owner=g.reserve();assert.ok(Object.isFrozen(owner));assert.throws(()=>g.api.checkNativeRendererTarget({}));g.api.checkNativeRendererTarget(owner);assert.throws(g.reserve);assert.equal(g.api.getNativeRendererTargetStatus().releaseSupported,false);});
+integration('nested batch conflict rejects whole transaction including prior unrelated mutation',()=>{const f=fixture(),o=f.reserve(),before=f.store.getState();assert.throws(()=>f.store.dispatch(f.batching.batchActions([{type:'ADD',payload:{id:'safe'}},f.batching.batchActions([{type:'ADD',payload:{id:'new'}},{type:'REMOVE',payload:{id:'new'}}])])));assert.equal(f.store.getState(),before);assert.equal(before.persistent.mods.game.safe,undefined);assert.throws(()=>f.api.checkNativeRendererTarget(o));assert.throws(()=>f.store.dispatch({type:'NOOP'}));});
+integration('in-place target mutation cannot corrupt previous state',()=>{const f=fixture();f.reserve();const before=f.store.getState();assert.throws(()=>f.store.dispatch({type:'IMPURE',payload:{id:'new'}}));assert.equal(before.persistent.mods.game.new,undefined);assert.equal(f.store.getState(),before);});
+integration('actual safeCombine swallowed reducer throw still holds outside combine',()=>{const f=fixture();f.reserve();assert.throws(()=>f.store.dispatch({type:'THROW'}));assert.equal(f.api.getNativeRendererTargetStatus().phase,'held');assert.ok(f.notifications.length>0);});
+integration('push, hydrate and replace hydration cannot bypass root fence',()=>{for(const action of [{type:'__persist_push',payload:{hive:'persistent',operations:[{type:'set',path:['mods','game','new'],value:{id:'new'}}]}},{type:'__hydrate',payload:{persistent:{mods:{game:{new:{id:'new'}}}}}},{type:'__hydrate_replace',payload:{persistent:{mods:{game:{new:{id:'new'}}}}}}]){const f=fixture();f.reserve();assert.throws(()=>f.store.dispatch(action));assert.equal(f.api.getNativeRendererTargetStatus().phase,'held');}});
+integration('all-profile flag writes refuse while unrelated payload identity stays intact',()=>{const f=fixture({profiles:{p:{gameId:'other'}}}),record={id:'old',data:{large:'same-reference'}};f.store.dispatch({type:'ADD',payload:record});f.reserve();f.store.dispatch({type:'ADD',payload:{id:'safe'}});assert.equal(f.store.getState().persistent.mods.game.old,record);assert.equal(f.store.getState().persistent.mods.game.old.data,record.data);assert.throws(()=>f.store.dispatch({type:'FLAGS',payload:{profile:'p',id:'new'}}));});
+integration('rebuilt actual factory inherits reservation; arbitrary foreign replaceReducer remains outside seam',()=>{const f=fixture();f.reserve();assert.throws(()=>f.store.replaceReducer(f.make()));assert.equal(f.api.getNativeRendererTargetStatus().phase,'held');const g=fixture();g.reserve();g.store.replaceReducer(()=>({foreign:true}));assert.equal(g.store.getState().foreign,true);});
+integration('proxy and accessor protected state refuse without invoking traps',()=>{for(const profiles of [new Proxy({}, {ownKeys(){assert.fail('proxy trap');}}),Object.defineProperty({},'p',{enumerable:true,get(){assert.fail('getter');}})]){const f=fixture();f.store.getState().persistent.profiles=profiles;assert.throws(f.reserve);assert.equal(f.api.getNativeRendererTargetStatus().phase,'held');}});
+integration('reentry during protected reduction holds outer transaction',()=>{let f;f=fixture({extra:{REENTER:s=>{assert.throws(()=>f.api.reserveNativeRendererTarget('game','other'));f.api.checkNativeRendererTarget({});return s;}}});f.reserve();assert.throws(()=>f.store.dispatch({type:'REENTER'}));assert.equal(f.api.getNativeRendererTargetStatus().phase,'held');});
+integration('malformed/budgeted protected containers remain held and cannot reset',()=>{const profiles=Object.fromEntries(Array.from({length:4097},(_,n)=>['p'+n,{gameId:'game'}]));const f=fixture();f.store.getState().persistent.profiles=profiles;assert.throws(f.reserve);assert.throws(f.reserve);assert.equal(f.api.getNativeRendererTargetStatus().phase,'held');});
+
+integration('empty and nested-empty batches validate adversarial input before publishing state',()=>{for(const nested of [false,true]){const f=fixture();f.reserve();const before=f.store.getState();before.persistent.mods.game.new={id:'new'};const action=f.batching.batchActions(nested?[f.batching.batchActions([])]:[]);assert.throws(()=>f.store.dispatch(action));assert.equal(f.store.getState(),before);assert.equal(f.api.getNativeRendererTargetStatus().phase,'held');}});
+integration('second store from a new factory cannot attest or mutate owner state after reservation',()=>{const f=fixture();const owner=f.reserve();assert.throws(()=>f.redux.createStore(f.make()));assert.equal(f.api.getNativeRendererTargetStatus().phase,'held');assert.throws(()=>f.api.checkNativeRendererTarget(owner));});
+integration('inactive direct reducer reentry retains upstream behavior while reserve inside reduction refuses',()=>{let reducer,entered=false,f;f=fixture({extra:{REENTER:s=>{if(!entered){entered=true;assert.throws(f.reserve);reducer(f.store.getState(),{type:'NOOP'});}return s;}}});reducer=f.make();assert.doesNotThrow(()=>reducer(f.store.getState(),{type:'REENTER'}));assert.equal(f.api.getNativeRendererTargetStatus().phase,'not_reserved');});
+integration('real hydration and main push baseline do write target before fence is introduced',()=>{for(const action of [{type:'__persist_push',payload:{hive:'persistent',operations:[{type:'set',path:['mods','game','new'],value:{id:'new'}}]}},{type:'__hydrate',payload:{persistent:{mods:{game:{new:{id:'new'}}}}}},{type:'__hydrate_replace',payload:{persistent:{mods:{game:{new:{id:'new'}}}}}}]){const f=fixture({baseline:true});f.store.dispatch(action);assert.equal(f.store.getState().persistent.mods.game.new.id,'new');assert.equal(f.notifications.length,0);}});
+
+integration('shared aggregate budget includes unrelated fields on every profile container',()=>{const fields=Object.fromEntries(Array.from({length:512},(_,n)=>['field'+n,n]));const f=fixture({profiles:Object.fromEntries(Array.from({length:33},(_,n)=>['p'+n,{gameId:'game',...fields}]))});assert.throws(f.reserve);assert.equal(f.api.getNativeRendererTargetStatus().phase,'held');});
+
+integration('two observed factories before reserve refuse ambiguous latest-state attestation',()=>{const f=fixture();f.redux.createStore(f.make());assert.throws(f.reserve);assert.equal(f.api.getNativeRendererTargetStatus().phase,'held');});
+integration('inactive NOOP does not traverse protected profile containers',()=>{const f=fixture();const proxy=new Proxy({}, {ownKeys(){assert.fail('inactive protected scan');},getOwnPropertyDescriptor(){assert.fail('inactive descriptor scan');}});f.store.getState().persistent.profiles=proxy;assert.doesNotThrow(()=>f.store.dispatch({type:'NOOP'}));assert.equal(f.store.getState().persistent.profiles,proxy);});
+
+integration('same reducer used for a second actual store cannot attest a different clean root',()=>{const f=fixture(),r=f.rootReducer,a=f.store;a.dispatch({type:'ADD',payload:{id:'new'}});const b=f.redux.createStore(r);assert.equal(a.getState().persistent.mods.game.new.id,'new');assert.equal(b.getState().persistent.mods.game.new,undefined);assert.throws(f.reserve);assert.equal(f.api.getNativeRendererTargetStatus().phase,'held');});
+
+integration('malformed prototype constructor during owner check gives fixed held error',()=>{const f=fixture(),owner=f.reserve();Object.setPrototypeOf(f.store.getState().persistent.profiles.p,Object.assign(Object.create(null),{constructor:123}));assert.throws(()=>f.api.checkNativeRendererTarget(owner),/NATIVE_RENDERER_TARGET_HELD/);assert.equal(f.api.getNativeRendererTargetStatus().phase,'held');});
+integration('required inherited getters never run before reserve or during issued-owner check',()=>{for(const issued of [false,true])for(const key of ['persistent','mods','profiles']){const f=fixture(),owner=issued?f.reserve():null,root=f.store.getState(),container=key==='persistent'?root:root.persistent,proto=Object.getPrototypeOf(container);assert.notEqual(proto,Object.prototype,'fixture modifies only VM Object.prototype');let reads=0;delete container[key];Object.defineProperty(proto,key,{configurable:true,get(){reads++;throw Error('getter executed');}});try{assert.throws(()=>issued?f.api.checkNativeRendererTarget(owner):f.reserve(),/NATIVE_RENDERER_TARGET_HELD/);assert.equal(reads,0);assert.equal(f.api.getNativeRendererTargetStatus().phase,'held');}finally{delete proto[key];}}});
+
+integration('forged native-Object prototype and proxy constructor refuse without getter or proxy traps',()=>{for(const issued of [false,true])for(const proxy of [false,true]){const f=fixture(),owner=issued?f.reserve():null,root=f.store.getState(),proto=Object.create(null);let reads=0;Object.defineProperty(proto,'constructor',{value:proxy?new Proxy(Object,{getOwnPropertyDescriptor(){assert.fail('constructor proxy trap');}}):Object});Object.defineProperty(proto,'persistent',{get(){reads++;throw Error('inherited getter');}});Object.setPrototypeOf(root,proto);delete root.persistent;assert.throws(()=>issued?f.api.checkNativeRendererTarget(owner):f.reserve(),/NATIVE_RENDERER_TARGET_HELD/);assert.equal(reads,0);assert.equal(f.api.getNativeRendererTargetStatus().phase,'held');}});
