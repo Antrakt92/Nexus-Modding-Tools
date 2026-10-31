@@ -1,8 +1,10 @@
 # Next native dispatch contract
 
-This is the implementation contract for the next installation stage. It is not
-an available API, an installed capability or permission to invoke legacy install
-events. The [job model](LOCAL-INSTALL-IMPLEMENTATION.md) and
+This is the implementation contract for the next installation stage. The closed
+request and consumed-ID model below are implemented offline; native dispatch and
+the durable executor remain absent. This is not an available native API, an
+installed capability or permission to invoke legacy install events. The
+[job model](LOCAL-INSTALL-IMPLEMENTATION.md) and
 [activity patch](NATIVE-ACTIVITY-PATCH.md) remain separate preparations.
 
 ## One fixed native entrypoint
@@ -26,10 +28,52 @@ writing its intent. It also pins the current manager scope and renderer generati
 The latter must identify the renderer lifetime; a manager counter or process ID
 alone is insufficient across restart/PID reuse.
 
-The closed native request binds the contract version, operation ID, plan hash,
-native job ID, manager scope, renderer generation, admission hash and exact
-tracked-package descriptor. Its canonical digest binds all fields. The next code
-stage must specify the complete field schema before accepting any request.
+## Closed request and consumed-ID model
+
+`tools/modding/vortex-agent/native-dispatch-contract.cjs` accepts strict UTF-8 JSON
+bytes only. Its closed request has these exact fields:
+
+| Field | Required value |
+| --- | --- |
+| `schema` | `native-dispatch-request/1` |
+| `contractId` | `tracked-new-disabled-dispatch/1` |
+| `operationId` | `op_` plus 32 lowercase hexadecimal digits |
+| `nativeJobId` | `exec_` plus 32 lowercase hexadecimal digits |
+| `planId` | Canonical SHA-256 of the complete validated embedded plan |
+| `managerScope` | Existing diagnostic `manager-<nonce>-<sequence>`; nonce is 1–64 ASCII letters/digits/underscores/hyphens, sequence is a positive safe integer in ordinary decimal without leading zeroes |
+| `rendererGeneration` | `renderer_` plus 32 lowercase hexadecimal digits |
+| `admissionSHA256` | SHA-256 of the fresh admission snapshot, corresponding to the job model's `admission_observed.snapshotSHA256` |
+| `plan` | Complete validated `install-job-plan/1`, including context, root identities, package, payload, evidence and disabled/no-deploy options |
+
+`plan.evidence.nativeAdmissionSHA256` identifies the source/capability admission
+document; it is distinct from the fresh snapshot hash. Unknown fields and a
+mismatched `planId` refuse. The request digest binds every field with recursively
+sorted object keys; JSON whitespace and key order do not change it. The byte
+boundary copies non-shared `Buffer`/`Uint8Array` contents without invoking caller
+accessors; shared buffers, proxies, duplicate decoded keys and malformed UTF-8
+refuse. The complete envelope is limited to 1 MiB + 4 KiB, depth 18 and 50,128
+JSON tokens. The embedded plan retains its own stricter budgets.
+
+`createConsumedRegistry` takes a separate closed JSON byte document containing
+only `managerScope` and `rendererGeneration` (maximum 1 KiB). Its synchronous
+`consume(requestBytes)` validates that lifetime, then records compact request
+digest/ID bindings in two indexes. Either a reused operation ID with another job
+or a reused job ID with another descriptor refuses. Exact duplicate consumption
+also refuses. `inspect(requestBytes)` reads only an exact matching binding and
+never consumes it. The capacity is 1,024 operations; no entry is evicted or
+released, including after errors, lost replies or caller cancellation. Existing
+exact status remains readable at capacity. There is no callback, await or native
+invocation in this module, and every status has `effectsAllowed:false`.
+
+The factory does not establish a renderer generation, durable operation, source
+admission, cancellation or an installation permit. The future renderer owner must
+mint a fresh lifetime nonce, instantiate exactly one registry per live manager,
+and never recreate it to bypass a hold. The executor must allocate and persist
+the operation/job IDs and matching request digest before requesting consumption.
+A new registry has no durable history; it cannot authorize cross-generation
+replay. Shape checks and matching caller-supplied hashes prove no external facts.
+
+## Required executor ordering
 
 Required order:
 
@@ -75,6 +119,16 @@ invocation. After dispatch, cancellation blocks later effects while observation
 continues; it does not stop an extractor, undo installation or authorize replay.
 
 ## Required regressions and remaining native gates
+
+The offline request/registry suite covers complete-plan digest binding, canonical
+formatting, closed IDs/lifetimes, malformed and oversized input, accessors/proxies,
+shared buffers, synchronous duplicate consumption, two-index replay exclusion,
+full capacity without eviction and a lost reply. It does not exercise a native
+installer or a durable intent. Run it with:
+
+```powershell
+node --test tools/modding/vortex-agent/native-dispatch-contract.test.cjs
+```
 
 Test exact ID persistence before invocation; simultaneous duplicate requests;
 descriptor mismatch; wrong manager/renderer generation; callback reentrancy;

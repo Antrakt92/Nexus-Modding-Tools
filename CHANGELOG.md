@@ -17,7 +17,10 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
-No unreleased changes.
+- Add an offline native-dispatch request model with complete-plan binding and a
+  synchronous 1,024-operation consumed-ID registry. Both operation and job IDs
+  prevent replay within the modeled lifetime; native dispatch, durable intents
+  and installation permission remain unavailable.
 
 ## 0.5.0 — 2026-10-31
 

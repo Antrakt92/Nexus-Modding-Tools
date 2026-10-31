@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "c2cc337105233f97bf53ff493c02d8d4ecd7df15a5912b71253927b18f1193e6"
+      "sha256_lf": "6eae408f13acb8983204bbb40eb41bd2bfb4660b344c627cf911040945145d31"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -268,7 +268,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "5117f23d59cf1ad56d28a434abdf091762615254ef7a3bb9e9f464549e4782df"
+      "sha256_lf": "6abbcfee9ae971273c62010d52ea8b9a0e85e23db3ce28bf90bb516815533f80"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -284,7 +284,7 @@
     },
     {
       "path": "docs/NATIVE-DISPATCH-CONTRACT.md",
-      "sha256_lf": "8d5f7b9875326c5079e16eba0a05e6f6d5317705bffce170ab156a025c1f8d81"
+      "sha256_lf": "f07fbae57498ad53483089d61ddec3ee300179ad7cb5a03a22518cb3cfe1928a"
     },
     {
       "path": "docs/NATIVE-HELPER-PREPARATION.md",
@@ -789,6 +789,14 @@
     {
       "path": "tools/modding/vortex-agent/native-conflicts.test.mjs",
       "sha256_lf": "9c50555d82f0699ee8926f155cd28d5bf2e49efb3a6b4debbc8fa2f27512ccb6"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-dispatch-contract.cjs",
+      "sha256_lf": "ec4d123f389b5aefc5134c49ea8b5eb355065f0016eb34792b1bf41d60009c58"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-dispatch-contract.test.cjs",
+      "sha256_lf": "2095ca5e69166a46f7e90f09bb73d9243346c3d5539618602ced0d71c2ce084e"
     },
     {
       "path": "tools/modding/vortex-agent/native-fixture-close.ps1",
