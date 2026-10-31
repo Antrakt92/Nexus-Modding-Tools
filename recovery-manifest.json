@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "5028a60a7b155d5e6fc7742d2d4ed1defbd3139d419f52b3e9265fc506aa0160"
+      "sha256_lf": "e1fa9194fe8382a52a4ccbf5701384a8e97ab53f1807b098bc92ad472304947d"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -276,7 +276,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "90ba59f32f207ba8ce63cc77eed21f76d04f18ed7dd4362e9e141410b13c85b3"
+      "sha256_lf": "997755b290298ff7a7b05b348c953a2c737f8888f557523fcd4c563221d06af5"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -300,7 +300,7 @@
     },
     {
       "path": "docs/NATIVE-DISPATCH-CONTRACT.md",
-      "sha256_lf": "e95073f270b9f517fd2027c49732249159093ac9a6afd5dbd7b9ca2b1922d6b6"
+      "sha256_lf": "0aab550bbd591914768da738260df477b28f87acd4d15c271e0829910416cf02"
     },
     {
       "path": "docs/NATIVE-EXTRACTOR-CLOSE-PATCH.md",
@@ -313,6 +313,10 @@
     {
       "path": "docs/NATIVE-LIFECYCLE-GATES.md",
       "sha256_lf": "4389ce1bf97ac2fe43d120a732fa2133a51e8e1e1d6e71d3f091330cec02513a"
+    },
+    {
+      "path": "docs/NATIVE-MANAGER-EXCLUSION.md",
+      "sha256_lf": "1c5f49309f7d13d0df4f230d5d48fa4bb9ee264a702f777718b8005e3c082ade"
     },
     {
       "path": "docs/NATIVE-OWNED-EXTRACTOR.md",
@@ -939,6 +943,10 @@
       "sha256_lf": "cedf1abe35d35521099447b4613053e56fd39cc2a4e7bbf874ef32ecfd26e916"
     },
     {
+      "path": "tools/modding/vortex-agent/native-manager-exclusion-patch.test.mjs",
+      "sha256_lf": "0d446becc32448a177c8408f62c174af28bd783950ece55165f8d2cb3b744073"
+    },
+    {
       "path": "tools/modding/vortex-agent/native-patch-test-fixture.mjs",
       "sha256_lf": "7187fff854ba3c4dd1c54e7f6a2c7826d01c9236388975dc3abe63f9bb73a3db"
     },
@@ -989,6 +997,14 @@
     {
       "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/copy-error.patch",
       "sha256_lf": "15f73ef8333782d1eaf4841e5fd7013dd6a4140723c96ac2a7e29025e9823955"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/manager-exclusion.json",
+      "sha256_lf": "c3f8b21243a6015f5fed6676a0819fee344a57e56db7fb1c6586ef5d080bb7ac"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/manager-exclusion.patch",
+      "sha256_lf": "baf14e57097fe39f4a42ce5b3bda594e3b90d1f39d27885215b212bf5b300fa3"
     },
     {
       "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/native-activity.json",
