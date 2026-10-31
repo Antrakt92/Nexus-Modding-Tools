@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "69e958227f79a382082116350bcaaf565d4d3c50b0011fa6aeff7a9709a63d6e"
+      "sha256_lf": "c132a80101544c4475f0c7ac8961e2774b183666ffb35bad088b90e429f2b8d8"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -199,6 +199,10 @@
       "sha256_lf": "501840e4d972c0af23e621ece2449c13c27ae0304aed792de89e66b75f3728a1"
     },
     {
+      "path": "docs/ARCHIVE-TEMP-CUSTODY.md",
+      "sha256_lf": "8acf4fc690f40464cbcfb605db5d2b0d6708c6f7422713cf7b4e2ae1b2534d2d"
+    },
+    {
       "path": "docs/AUDIT-20261025.md",
       "sha256_lf": "f0f6d19378ad9abb38989a7fff6db4352f4ea93a41de570d626995417ffb67a2"
     },
@@ -272,7 +276,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "4a703559b4a6b14f33cf8d10b503291e8d258fbbdfa3157c1671221f96f186ea"
+      "sha256_lf": "3802ac40b61ee6c70cb32c17a4e7ec32515120f84dcd340430b306eb648bcd59"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -308,7 +312,7 @@
     },
     {
       "path": "docs/NATIVE-OWNED-EXTRACTOR.md",
-      "sha256_lf": "510a42cb0a51d516cf4377c5ebc797aba1f445964a33ffbf492924df7f4ebc39"
+      "sha256_lf": "1d9814faefdf43348c9bccd2281a0ce58d1724f9c6b45721f8f39f8675fe0a52"
     },
     {
       "path": "docs/NATIVE-STRICT-SELECTION.md",
@@ -332,7 +336,7 @@
     },
     {
       "path": "docs/OWNED-FILE-TRANSFER.md",
-      "sha256_lf": "6f8a29148fd8157c86098f08e5b15b4247c376f8c8c692f4268d64b5735f18ea"
+      "sha256_lf": "ad7f77fb96723a1fe013d8374af24d40729ec68fa6805c142e327e89f850c461"
     },
     {
       "path": "docs/PRISTINE-API-CACHE.md",
@@ -609,6 +613,10 @@
     {
       "path": "tools/modding/vortex-agent/README.md",
       "sha256_lf": "15664f162f8c23e1a0d1c3161741841fe9178576d9936e58a91075ed623f92c3"
+    },
+    {
+      "path": "tools/modding/vortex-agent/archive-temp-lease.test.py",
+      "sha256_lf": "51053982ca56e0d14ffa744df0cf2d036d92b36327f5dfc67ed6b3980c764b1a"
     },
     {
       "path": "tools/modding/vortex-agent/audit-fixes.test.mjs",
@@ -1020,7 +1028,7 @@
     },
     {
       "path": "tools/modding/vortex-agent/owned-file-transfer.py",
-      "sha256_lf": "45f462ccd1c220007b42591c62177569b18514b7ce11aadb511d513772e1ec32"
+      "sha256_lf": "656bf5515db4045554e849c27264ef18b03e5bc281e496a685004149873fc312"
     },
     {
       "path": "tools/modding/vortex-agent/owned-file-transfer.test.py",

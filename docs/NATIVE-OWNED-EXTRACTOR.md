@@ -94,6 +94,11 @@ This used in-memory module resolution, not a rebuilt Vortex package. Directory
 identity was checked before/after; no exclusive directory reservation or archive
 seal was established by this fixture. No managed Vortex or game path was accessed.
 
+A separate [archive/temp custody fixture](ARCHIVE-TEMP-CUSTODY.md) subsequently
+held the archive and temporary root throughout an actual SDK extraction and
+passed the original root handle to the transfer library. It establishes the
+normal path while the keeper survives; crash lifetime remains unproved.
+
 Tests execute the actual composed SDK source with controlled Node child launches
 in place of 7-Zip. The optional Bluebird fixture checks its independently pinned
 runtime files. These checks do not establish full Vortex integration,

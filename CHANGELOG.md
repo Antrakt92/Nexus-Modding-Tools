@@ -17,6 +17,9 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Add internal archive/temp custody and handoff through the original held
+  directory handle. Windows tests and an actual 7z fixture cover the normal path;
+  crash custody, no-clobber extraction and Vortex installation remain unproved.
 - Prepare explicit job-owned extraction with a fixed archive/destination tuple,
   bounded launches and cancellation that blocks later attempts. Ownership stays
   attached to the instance across asynchronous callbacks. This is an uninstalled

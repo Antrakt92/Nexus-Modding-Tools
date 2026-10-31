@@ -65,8 +65,9 @@ after the native call remains uncertain and is never attempted again against a
 possibly reused raw handle. Ordinary failed closes may be attempted explicitly;
 they do not establish release. There is no automatic destructor or rollback.
 
-Sharing restrictions block ordinary rename/delete and file writes while held,
-including writes through another hardlink name. They do not fence directory
+Sharing restrictions block ordinary rename/delete of opened names and file writes
+while held, including writes through another hardlink name. A separately opened
+hardlink alias may still be renamed. They do not fence directory
 contents: siblings or new hardlink names can still appear. The target directory
 is visible before copying completes. This is not atomic publication, an ACL
 sandbox or protection from privileged actors, existing writable mappings or
@@ -77,6 +78,11 @@ status also retains `nativeInstallAccepted:false`. These mean no installation
 permit is granted, despite the explicit filesystem effects of this library.
 
 ## Verification and remaining integration
+
+The [archive/temp custody lease](ARCHIVE-TEMP-CUSTODY.md) can lend its original
+temporary-root handle to one already acquired transfer. Both share a lock and
+aggregate handle limit; borrower handles close separately, before the parent's
+archive/root handles. This is physical custody, not extractor-terminal admission.
 
 Run the native suite explicitly; it is separate from the Node test glob and
 Python `tests/` discovery:

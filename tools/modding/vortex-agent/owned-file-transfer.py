@@ -10,8 +10,9 @@ Only fixed local NTFS is admitted. Drive mapping/ACL changes by hostile actors
 are not a security boundary; handles do not fence arbitrary directory contents.
 Only the explicitly checked Windows x64 ctypes ABI is supported.
 The destination namespace becomes visible at acquire(), before copying completes;
-this is not atomic publication of a complete payload. New hardlink aliases can
-appear while held; no future cleanup/adoption is authorized after handles close.
+this is not atomic publication of a complete payload. New hardlink aliases and
+renaming separately opened alias names can remain possible while the canonical
+archive name and bytes are held; no cleanup/adoption is authorized after close.
 """
 import ctypes as C
 from ctypes import wintypes as W
@@ -181,33 +182,22 @@ def _hash(handle, size):
     return result.hexdigest()
 
 
-class OwnedFileTransfer:
-    """One explicitly acquired destination root; partial failures never roll back.
+class _HandlePool:
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.thread = threading.get_ident()
+        self.owners = []
 
-    Caller retains this object even after failure; errors also expose error.lease.
-    close() releases handles only. It never deletes any created object, proves
-    durability, or grants permission to release an unrelated extractor's seals.
-    """
-    def __init__(self, source_root, source_identity, destination_parent, parent_identity, destination_leaf):
-        _need(os.name == 'nt', 'UNSUPPORTED_PLATFORM')
-        _need(_abi(), 'UNSUPPORTED_ABI')
-        self._source_path, self._parent_path = _root(source_root), _root(destination_parent)
-        self._leaf = _component(destination_leaf)
-        source_identity, parent_identity = _identity(source_identity), _identity(parent_identity)
-        target = ntpath.join(self._parent_path, self._leaf).lower()
-        source = self._source_path.lower()
-        inside = lambda a, b: a == b or a.startswith(b.rstrip('\\') + '\\')
-        _need(not inside(source, target) and not inside(target, source) and source_identity != parent_identity, 'ROOT_OVERLAP')
-        self._source_pin, self._parent_pin = source_identity, parent_identity
-        self._handles, self._source_dirs, self._destination_dirs = [], {}, {}
-        self._attempted = self._acquired = self._poisoned = self._closed = False
-        self._files = self._total = 0
-        self._destinations = set()
-        self._thread = threading.get_ident()
-        self._lock = threading.Lock()
+
+class _HandleCustody:
+    def _init_custody(self, pool=None):
+        self._pool = pool or _HandlePool()
+        self._handles = []
+        self._pool.owners.append(self)
+        self._lock, self._thread = self._pool.lock, self._pool.thread
 
     def _open(self, parent, name, directory, create=False, writable=False):
-        _need(len(self._handles) < MAX_HANDLES, 'HANDLE_LIMIT')
+        _need(sum(len(owner._handles) for owner in self._pool.owners) < MAX_HANDLES, 'HANDLE_LIMIT')
         storage = C.create_unicode_buffer(name)
         text = _Unicode(len(name.encode('utf-16-le')), (len(name) + 1) * 2, C.cast(storage, W.LPWSTR))
         # OBJ_DONT_REPARSE + OBJ_CASE_INSENSITIVE, including the drive open.
@@ -252,6 +242,81 @@ class OwnedFileTransfer:
         finally:
             self._lock.release()
 
+    def _error(self, error):
+        if isinstance(error, OwnedTransferError):
+            error.lease = self
+            return error
+        return OwnedTransferError('IO_FAILED', self)
+
+    def close(self):
+        with self._operation(closing=True):
+            borrow = getattr(self, '_borrow', None)
+            _need(borrow is None or (borrow._closed and not borrow._handles), 'BORROW_ACTIVE')
+            return self._close()
+
+    def _close(self):
+        failed = False
+        try:
+            for index in range(len(self._handles)-1, -1, -1):
+                entry = self._handles[index]
+                handle = entry.cell.value
+                if handle in (None, C.c_void_p(-1).value):
+                    self._handles.pop(index)
+                    continue
+                if entry.phase == 'close-uncertain':
+                    failed = True
+                    continue
+                # Premark BEFORE the native call. An interrupt anywhere between
+                # native close and forgetting the entry can never cause an ABA retry.
+                entry.phase = 'close-uncertain'
+                success = _K.CloseHandle(handle)
+                if success:
+                    self._handles.pop(index)
+                else:
+                    entry.phase = 'open'
+                    failed = True
+            if failed:
+                self._poisoned = True
+                raise OwnedTransferError('CLOSE_FAILED', self)
+            self._closed = not self._handles
+            return self.status()
+        except BaseException as error:
+            self._poisoned = True
+            if not isinstance(error, Exception):
+                error.lease = self
+                raise
+            if isinstance(error, OwnedTransferError):
+                raise
+            raise OwnedTransferError('CLOSE_UNCERTAIN', self) from None
+        finally:
+            self._closed = not self._handles
+
+
+class OwnedFileTransfer(_HandleCustody):
+    """One explicitly acquired destination root; partial failures never roll back.
+
+    Caller retains this object even after failure; errors also expose error.lease.
+    close() releases handles only. It never deletes any created object, proves
+    durability, or grants permission to release an unrelated extractor's seals.
+    """
+    def __init__(self, source_root, source_identity, destination_parent, parent_identity, destination_leaf):
+        _need(os.name == 'nt', 'UNSUPPORTED_PLATFORM')
+        _need(_abi(), 'UNSUPPORTED_ABI')
+        self._source_path, self._parent_path = _root(source_root), _root(destination_parent)
+        self._leaf = _component(destination_leaf)
+        source_identity, parent_identity = _identity(source_identity), _identity(parent_identity)
+        target = ntpath.join(self._parent_path, self._leaf).lower()
+        source = self._source_path.lower()
+        inside = lambda a, b: a == b or a.startswith(b.rstrip('\\') + '\\')
+        _need(not inside(source, target) and not inside(target, source) and source_identity != parent_identity, 'ROOT_OVERLAP')
+        self._source_pin, self._parent_pin = source_identity, parent_identity
+        self._init_custody()
+        self._source_dirs, self._destination_dirs = {}, {}
+        self._borrow_parent = None
+        self._attempted = self._acquired = self._poisoned = self._closed = False
+        self._files = self._total = 0
+        self._destinations = set()
+
     def acquire(self):
         with self._operation():
             return self._acquire()
@@ -260,7 +325,13 @@ class OwnedFileTransfer:
         _need(not self._attempted, 'ALREADY_ATTEMPTED')
         self._attempted = True
         try:
-            source = self._existing_root(self._source_path, self._source_pin)
+            if self._borrow_parent is None:
+                source = self._existing_root(self._source_path, self._source_pin)
+            else:
+                _need(self._borrow_parent._acquired and not self._borrow_parent._closed
+                      and not self._borrow_parent._poisoned, 'BORROW_HELD')
+                source = self._borrow_parent._temp_handle
+                _need(_snapshot(source, True)[0] == self._source_pin, 'ROOT_IDENTITY_MISMATCH')
             parent = self._existing_root(self._parent_path, self._parent_pin)
             _need(_snapshot(source, True)[0] != _snapshot(parent, True)[0], 'ROOT_OVERLAP')
             destination, _ = self._open(parent, self._leaf, True, create=True)
@@ -274,12 +345,6 @@ class OwnedFileTransfer:
                 error.lease = self
                 raise
             raise self._error(error) from None
-
-    def _error(self, error):
-        if isinstance(error, OwnedTransferError):
-            error.lease = self
-            return error
-        return OwnedTransferError('IO_FAILED', self)
 
     def _directory(self, parts, source):
         cache = self._source_dirs if source else self._destination_dirs
@@ -343,43 +408,108 @@ class OwnedFileTransfer:
                 'retainedHandles': len(self._handles), 'attemptedFiles': self._files, 'attemptedBytes': self._total,
                 'effectsAllowed': False, 'persistenceVerified': False, 'nativeInstallAccepted': False}
 
-    def close(self):
-        with self._operation(closing=True):
-            return self._close()
 
-    def _close(self):
-        failed = False
-        try:
-            for index in range(len(self._handles)-1, -1, -1):
-                entry = self._handles[index]
-                handle = entry.cell.value
-                if handle in (None, C.c_void_p(-1).value):
-                    self._handles.pop(index)
-                    continue
-                if entry.phase == 'close-uncertain':
-                    failed = True
-                    continue
-                # Premark BEFORE the native call. An interrupt anywhere between
-                # native close and forgetting the entry can never cause an ABA retry.
-                entry.phase = 'close-uncertain'
-                success = _K.CloseHandle(handle)
-                if success:
-                    self._handles.pop(index)
-                else:
-                    entry.phase = 'open'
-                    failed = True
-            if failed:
+
+class ArchiveTempLease(_HandleCustody):
+    """Physical custody only; no child-terminal, installation or cleanup authority.
+
+    The trusted caller must independently seal its actual extractor owner and
+    observe every child/pipe before begin_transfer. No JSON proof is accepted.
+    Root handles cannot fence descendant insertion or 7z's overwrite policy.
+    """
+    def __init__(self, binding, archive_parent, archive_parent_identity, archive_leaf,
+                 archive_identity, expected_size, expected_sha256,
+                 temp_parent, temp_parent_identity, temp_leaf):
+        _need(os.name == 'nt', 'UNSUPPORTED_PLATFORM')
+        _need(_abi(), 'UNSUPPORTED_ABI')
+        fields = {'operationId': r'op_[a-f0-9]{32}', 'nativeJobId': r'exec_[a-f0-9]{32}',
+                  'requestSHA256': r'[a-f0-9]{64}', 'rendererGeneration': r'renderer_[a-f0-9]{32}'}
+        _need(type(binding) is dict and set(binding) == set(fields), 'INVALID_BINDING')
+        _need(all(type(binding[key]) is str and re.fullmatch(pattern, binding[key])
+                  for key, pattern in fields.items()), 'INVALID_BINDING')
+        self._binding = dict(binding)
+        self._archive_parent, self._temp_parent = _root(archive_parent), _root(temp_parent)
+        self._archive_leaf, self._temp_leaf = _component(archive_leaf), _component(temp_leaf)
+        self._archive_pin, self._archive_parent_pin = _identity(archive_identity), _identity(archive_parent_identity)
+        self._temp_parent_pin = _identity(temp_parent_identity)
+        self._temp_path = _root(ntpath.join(self._temp_parent, self._temp_leaf))
+        archive_path = _root(ntpath.join(self._archive_parent, self._archive_leaf)).lower()
+        temp_path = self._temp_path.lower()
+        inside = lambda a, b: a == b or a.startswith(b.rstrip('\\') + '\\')
+        _need(not inside(archive_path, temp_path) and not inside(temp_path, archive_path), 'ROOT_OVERLAP')
+        _need(type(expected_size) is int and 0 <= expected_size <= 64 * 1024 * 1024
+              and type(expected_sha256) is str and re.fullmatch(r'[a-f0-9]{64}', expected_sha256), 'INVALID_PROOF')
+        self._size, self._sha = expected_size, expected_sha256
+        self._init_custody()
+        self._attempted = self._acquired = self._poisoned = self._closed = False
+        self._archive_handle = self._temp_handle = None
+        self._archive_snapshot = self._temp_pin = None
+        self._borrow = None
+        self._borrow_attempted = False
+
+    def acquire(self):
+        with self._operation():
+            _need(not self._attempted, 'ALREADY_ATTEMPTED')
+            self._attempted = True
+            try:
+                parent = self._existing_root(self._archive_parent, self._archive_parent_pin)
+                archive, observed = self._open(parent, self._archive_leaf, False)
+                self._archive_handle = archive
+                _need(observed[0] == self._archive_pin and observed[1] == self._size
+                      and _hash(archive, self._size) == self._sha
+                      and _snapshot(archive, False) == observed, 'ARCHIVE_MISMATCH')
+                self._archive_snapshot = observed
+                temp_parent = self._existing_root(self._temp_parent, self._temp_parent_pin)
+                temp, observed_temp = self._open(temp_parent, self._temp_leaf, True, create=True)
+                self._temp_handle, self._temp_pin = temp, observed_temp[0]
+                self._acquired = True
+                return self.status()
+            except BaseException as error:
                 self._poisoned = True
-                raise OwnedTransferError('CLOSE_FAILED', self)
-            self._closed = not self._handles
-            return self.status()
-        except BaseException as error:
-            self._poisoned = True
-            if not isinstance(error, Exception):
-                error.lease = self
-                raise
-            if isinstance(error, OwnedTransferError):
-                raise
-            raise OwnedTransferError('CLOSE_UNCERTAIN', self) from None
-        finally:
-            self._closed = not self._handles
+                if not isinstance(error, Exception):
+                    error.lease = self
+                    raise
+                raise self._error(error) from None
+
+    def begin_transfer(self, destination_parent, parent_identity, new_leaf):
+        with self._operation():
+            _need(self._acquired and not self._borrow_attempted, 'BORROW_UNAVAILABLE')
+            try:
+                _need(_snapshot(self._archive_handle, False) == self._archive_snapshot
+                      and _hash(self._archive_handle, self._size) == self._sha
+                      and _snapshot(self._archive_handle, False) == self._archive_snapshot
+                      and _snapshot(self._temp_handle, True)[0] == self._temp_pin, 'CUSTODY_CHANGED')
+                borrow = OwnedFileTransfer(self._temp_path, _label(self._temp_pin),
+                                           destination_parent, parent_identity, new_leaf)
+                # Reserve before native acquisition; retained even if it fails.
+                self._borrow_attempted = True
+                self._borrow = borrow
+                borrow._pool.owners.remove(borrow)
+                borrow._pool = self._pool
+                self._pool.owners.append(borrow)
+                borrow._lock, borrow._thread = self._lock, self._thread
+                borrow._borrow_parent = self
+                borrow._acquire()
+                return borrow
+            except BaseException as error:
+                self._poisoned = True
+                if not isinstance(error, Exception):
+                    if self._borrow is not None:
+                        self._borrow._poisoned = True
+                    error.lease = self._borrow if self._borrow is not None else self
+                    raise
+                if self._borrow is not None:
+                    self._borrow._poisoned = True
+                    if isinstance(error, OwnedTransferError):
+                        error.lease = self._borrow
+                        raise
+                    raise OwnedTransferError('IO_FAILED', self._borrow) from None
+                raise self._error(error) from None
+
+    def status(self):
+        return {'binding': dict(self._binding), 'acquired': self._acquired, 'poisoned': self._poisoned, 'closed': self._closed,
+                'closeUncertain': any(entry.phase == 'close-uncertain' for entry in self._handles),
+                'retainedHandles': len(self._handles), 'borrowAttempted': self._borrow_attempted,
+                'borrowActive': self._borrow is not None and not self._borrow._closed,
+                'effectsAllowed': False, 'persistenceVerified': False,
+                'nativeInstallAccepted': False, 'nativeTerminalVerified': False}
