@@ -1,0 +1,22 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/reducers/index.ts",
+  "inputSHA256": "e59a69384003bade4d1216ee28a8347b38d27291f9b3688c82dc488c168a4e22",
+  "outputSHA256": "6cbd67e632d3f9bce384f9659bdf699b0b120663aed09eb2b7e51d45241fec7b",
+  "patchSHA256": "c8a850ecb5da2411ca2ba93842ecb59bae2370d8f03beba51e93aea051bf6bb0",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "powerLossPersistenceVerified": false,
+  "limitations": [
+    "Lifetime blocking reservation only; no registration, release or persistence transaction.",
+    "Reducers are trusted not to mutate closed-over previous state or direct external store references.",
+    "Raw main/database writers and arbitrary store.replaceReducer remain separate gates.",
+    "Protected descriptor-only spine bounded to 4096 profiles and 16384 aggregate own keys across every copied container; Reflect.ownKeys initially allocates a container key list.",
+    "One observed reducer factory and continuous root-state chain only; multiple factories, repeated initialization or root-chain discontinuity refuse reservation. Actual host-window/store binding remains a future coordinator gate."
+  ]
+}

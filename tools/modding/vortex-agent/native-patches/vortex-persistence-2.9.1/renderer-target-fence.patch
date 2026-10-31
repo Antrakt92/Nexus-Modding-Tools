@@ -1,0 +1,186 @@
+--- a/src/renderer/src/reducers/index.ts
++++ b/src/renderer/src/reducers/index.ts
+@@ -5,2 +5,3 @@
+ import * as path from "path";
++import { types as nativeTypes } from "util";
+ 
+@@ -52,2 +53,3 @@
+     } catch (unknownError) {
++      if (nativeRendererTarget !== undefined) nativeRendererTarget.phase = "held";
+       const err = unknownToError(unknownError);
+@@ -396,2 +398,170 @@
+ 
++
++// Internal lifetime fence only. No registration, release or installation authority.
++interface NativeRendererTarget {
++  owner: object;
++  factory: object;
++  gameId: string;
++  modId: string;
++  phase: "pending" | "reserved" | "held";
++}
++let nativeRendererTarget: NativeRendererTarget | undefined;
++let nativeRendererState: any;
++let nativeRendererDepth = 0;
++let nativeRendererFactory: object | undefined;
++let nativeRendererAmbiguous = false;
++
++function targetFailure(): never {
++  if (nativeRendererTarget !== undefined) nativeRendererTarget.phase = "held";
++  throw new Error("NATIVE_RENDERER_TARGET_HELD");
++}
++
++function targetObject(value: any, budget: { remaining: number }): Record<string, any> {
++  if (value === null || typeof value !== "object" || nativeTypes.isProxy(value)) targetFailure();
++  const proto = Object.getPrototypeOf(value);
++  if (proto !== null) {
++    if (nativeTypes.isProxy(proto) || Object.getPrototypeOf(proto) !== null) targetFailure();
++    const ctor = Object.getOwnPropertyDescriptor(proto, "constructor");
++    if (ctor === undefined || !("value" in ctor) || typeof ctor.value !== "function" || nativeTypes.isProxy(ctor.value)
++        || Function.prototype.toString.call(ctor.value) !== "function Object() { [native code] }") targetFailure();
++    const prototype = Object.getOwnPropertyDescriptor(ctor.value, "prototype");
++    if (prototype === undefined || !("value" in prototype) || prototype.value !== proto) targetFailure();
++  }
++  const keys = Reflect.ownKeys(value);
++  budget.remaining -= keys.length;
++  if (budget.remaining < 0) targetFailure();
++  for (const key of keys) {
++    const d = Object.getOwnPropertyDescriptor(value, key);
++    if (typeof key !== "string" || d === undefined || !("value" in d) || !d.enumerable) targetFailure();
++  }
++  return value;
++}
++
++function targetRequired(value: Record<string, any>, key: string): any {
++  const descriptor = Object.getOwnPropertyDescriptor(value, key);
++  if (descriptor === undefined || !("value" in descriptor) || !descriptor.enumerable) targetFailure();
++  return descriptor.value;
++}
++
++function targetCopy(value: any, budget: { remaining: number }): Record<string, any> {
++  const result = Object.create(null);
++  for (const key of Object.keys(targetObject(value, budget))) result[key] = value[key];
++  return result;
++}
++
++// Clone only the protected working spine, not the whole collection or arbitrary
++// mod payloads. Reducers remain trusted not to mutate closed-over prior state.
++function targetWorkingState(state: any, reservation: NativeRendererTarget, copy = false): any {
++  const budget = { remaining: 16384 };
++  const view = (value: any) => copy ? targetCopy(value, budget) : targetObject(value, budget);
++  const root = view(state);
++  const persistent = view(targetRequired(root, "persistent"));
++  const mods = view(targetRequired(persistent, "mods"));
++  const game = Object.hasOwn(mods, reservation.gameId) ? view(mods[reservation.gameId]) : undefined;
++  if (game !== undefined && Object.hasOwn(game, reservation.modId)) targetFailure();
++  const profiles = view(targetRequired(persistent, "profiles"));
++  if (Object.keys(profiles).length > 4096) targetFailure();
++  for (const id of Object.keys(profiles)) {
++    const profile = view(profiles[id]);
++    if (Object.hasOwn(profile, "modState")) {
++      const modState = view(profile.modState);
++      if (Object.hasOwn(modState, reservation.modId)) targetFailure();
++      if (copy) profile.modState = modState;
++    }
++    if (copy) profiles[id] = profile;
++  }
++  if (copy) {
++    // Do not invent an absent game container merely to perform a check.
++    if (Object.hasOwn(mods, reservation.gameId)) mods[reservation.gameId] = game;
++    persistent.mods = mods;
++    persistent.profiles = profiles;
++    root.persistent = persistent;
++  }
++  return root;
++}
++
++export function reserveNativeRendererTarget(gameId: string, modId: string): object {
++  const valid = (id: string) => typeof id === "string"
++    && /^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$/.test(id)
++    && !["__proto__", "constructor", "prototype"].includes(id);
++  if (!valid(gameId) || !valid(modId) || nativeRendererFactory === undefined || nativeRendererTarget !== undefined || nativeRendererDepth !== 0) {
++    throw new Error("NATIVE_RENDERER_TARGET_REFUSED");
++  }
++  const reservation: NativeRendererTarget = { owner: Object.freeze({}), factory: nativeRendererFactory, gameId, modId, phase: "pending" };
++  nativeRendererTarget = reservation;
++  try {
++    if (nativeRendererAmbiguous) targetFailure();
++    targetWorkingState(nativeRendererState, reservation);
++    reservation.phase = "reserved";
++    return reservation.owner;
++  } catch (err) {
++    reservation.phase = "held";
++    throw err;
++  }
++}
++
++export function checkNativeRendererTarget(owner: object): void {
++  const reservation = nativeRendererTarget;
++  if (reservation === undefined || reservation.owner !== owner || reservation.phase !== "reserved"
++      || nativeRendererDepth !== 0) throw new Error("NATIVE_RENDERER_TARGET_REFUSED");
++  try {
++    targetWorkingState(nativeRendererState, reservation);
++  } catch {
++    targetFailure();
++  }
++}
++
++export function getNativeRendererTargetStatus() {
++  return Object.freeze({ phase: nativeRendererTarget?.phase ?? "not_reserved",
++    gameId: nativeRendererTarget?.gameId, modId: nativeRendererTarget?.modId,
++    effectsAllowed: false, installationPermit: false, releaseSupported: false });
++}
++
++function fenceNativeRendererTarget(reduce: Reducer<any>): Reducer<any> {
++  // enableBatching recursively calls this leaf fence for every nested item.
++  const leaf = (state: any, action: any) => {
++    const reservation = nativeRendererTarget;
++    if (reservation === undefined) return reduce(state, action);
++    if (reservation.phase !== "reserved") targetFailure();
++    const working = targetWorkingState(state, reservation, true);
++    const result = reduce(working, action);
++    if (reservation.phase !== "reserved") targetFailure();
++    targetWorkingState(result, reservation);
++    return result;
++  };
++  const batched = enableBatching(leaf);
++  const factory = Object.freeze({});
++  return (state: any, action: any) => {
++    const reservation = nativeRendererTarget;
++    if (reservation === undefined) {
++      // Preserve original inactive batching/reentry behavior; only retain the
++      // latest observed root for a future synchronous reservation.
++      nativeRendererDepth++;
++      try {
++        const result = batched(state, action);
++        if (nativeRendererFactory !== undefined
++            && (nativeRendererFactory !== factory || state !== nativeRendererState)) nativeRendererAmbiguous = true;
++        nativeRendererState = result;
++        nativeRendererFactory = factory;
++        return result;
++      } finally { nativeRendererDepth--; }
++    }
++    if (nativeRendererDepth !== 0 || reservation.factory !== factory
++        || state !== nativeRendererState || reservation.phase !== "reserved") targetFailure();
++    nativeRendererDepth++;
++    try {
++      // Empty/nested-empty batches call no leaf: validate at both boundaries.
++      targetWorkingState(state, reservation);
++      const result = batched(state, action);
++      if (reservation.phase !== "reserved") targetFailure();
++      targetWorkingState(result, reservation);
++      nativeRendererState = result;
++      return result;
++    } catch (err) {
++      reservation.phase = "held";
++      throw err;
++    } finally { nativeRendererDepth--; }
++  };
++}
++
+ function reducers(extensionReducers: IExtensionReducer[], onError: (err: Error) => void) {
+@@ -400,3 +570,3 @@
+   // asynchronously before hydration via sanitizeHydrationState()
+-  return enableBatching(deriveReducer("", tree, () => Decision.SANITIZE, onError));
++  return fenceNativeRendererTarget(deriveReducer("", tree, () => Decision.SANITIZE, onError));
+ }

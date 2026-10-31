@@ -276,7 +276,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "4d848e820964fde93457204ba739b7cc10510275a4b3d6e1f3f16127dfad2fcf"
+      "sha256_lf": "abb8e37cc5b0635fb674f430a02bfdb7a6bbd36c6c9f2807143e0d54f22e2394"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -288,7 +288,7 @@
     },
     {
       "path": "docs/NATIVE-ADOPTION-BOUNDARY.md",
-      "sha256_lf": "954fd0869d2fd2ae5eb3d6fdc0d4940a30c64a28ea24c1f346f6be3c15d37800"
+      "sha256_lf": "00ccec2792b3147caefccb006d448fa435472f11d72523ebdc998b43b1841c8c"
     },
     {
       "path": "docs/NATIVE-CALLBACK-PATCH.md",
@@ -1371,6 +1371,14 @@
       "sha256_lf": "4db4ecd26a180915c18f0176e9986853183b1a011ac10bf1618a91698637a43c"
     },
     {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-persistence-2.9.1/renderer-target-fence.json",
+      "sha256_lf": "eb2a434bb7d90fa0171f73ad3951130148dcb710a7fa84f0db2a55187f15f6d0"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-persistence-2.9.1/renderer-target-fence.patch",
+      "sha256_lf": "c8a850ecb5da2411ca2ba93842ecb59bae2370d8f03beba51e93aea051bf6bb0"
+    },
+    {
       "path": "tools/modding/vortex-agent/native-patches/vortex-persistence-2.9.1/target-reservation.json",
       "sha256_lf": "9ca6e118bb6c4362a3033fdd93cedce422c3f114f27c176c6d6b12bfae8ab2fd"
     },
@@ -1445,6 +1453,10 @@
     {
       "path": "tools/modding/vortex-agent/native-renderer-acknowledged-flush.test.mjs",
       "sha256_lf": "c901994021618dc3ee369cf25b32034d80bb80c68cebae775140c8e35af7a0e1"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-renderer-target-fence.test.mjs",
+      "sha256_lf": "8b938ff860ee88b84e57d8f3b6c9c835e0b06e0699dde64f7fe38158d03b2308"
     },
     {
       "path": "tools/modding/vortex-agent/native-source-series.json",

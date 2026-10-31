@@ -99,6 +99,77 @@ resynchronize the renderer before any safe release; a late diff cannot become
 permission to overwrite the new record. Neither reservation nor a clean database
 snapshot establishes filesystem custody, crash recovery or an installation permit.
 
+In this pinned upstream revision, the production `getDatabase` search finds only
+the getter definition. Current `writePersistedValue` callers write app fields,
+and backup import/key repair run before `initMainPersistence`. These are exposed
+bypass APIs, not evidence that a conflicting target write is currently running.
+A future backend fence must account for previously issued raw connections and
+Tables at execution time; checking only a connection getter cannot revoke them.
+
+## Renderer target fence
+
+The prepared `renderer-target-fence.patch` wraps the actual root reducer, inside
+recursive batching and outside the combining reducer's exception handler. Its
+internal reservation requires the new target to be absent from the selected
+game's mods and every profile's mod state. A disabled tombstone also conflicts.
+The internal exports are `reserveNativeRendererTarget(gameId, modId)`,
+`checkNativeRendererTarget(owner)` and `getNativeRendererTargetStatus()`. The
+owner is an opaque object identity; status exposes no owner. There is no
+registration action, release, reset or installation permit.
+
+The fence checks individual nested batch items as well as the outer transaction.
+Hydration, replacement hydration and main-process pushes use the same boundary.
+A protected mutation rejects the whole dispatch; with the normal immutable
+reducer contract, earlier unrelated items in the same batch are not committed. A combining reducer's swallowed exception still
+invalidates the reservation. Protected working containers are detached before
+calling reducers so an in-place write cannot corrupt the previous target spine.
+Unrelated nested payloads remain shared: reducers are trusted not to mutate
+closed-over old state or arbitrary external references.
+
+Without a reservation, the original reducer/batching path retains its behavior
+and performs no protected-container traversal. Active checks share a 16,384
+container-entry budget across the inspected root, maps and profile containers,
+with at most 4,096 profiles. Only a leaf reducer input receives working copies;
+reservation, owner checks and post-validation do not allocate copied maps. These bounds do not prove a measured
+installation speedup or bound temporary allocation by `Reflect.ownKeys`.
+
+This is a lifetime renderer hold, not an attestation of the native window/store,
+a persistence transaction or a fence against arbitrary replacement reducers.
+Multiple observed factories, repeated initialization and a discontinuous root
+state chain refuse admission, including two stores reusing one reducer function.
+The coordinator still needs to bind the actual host, flush older pending diffs,
+reserve main persistence and verify registration before any future safe release.
+
+### Renderer fence checks
+
+```powershell
+$env:VORTEX_EXTENSION_ADMISSION_REPO = 'ABSOLUTE_OFFICIAL_GIT_CACHE'
+$env:VORTEX_EXTENSION_ADMISSION_DEPS = 'ABSOLUTE_QUALIFIED_NODE_MODULES'
+node --test tools/modding/vortex-agent/native-renderer-target-fence.test.mjs
+```
+
+All 24 cases ran without skips. The suite executes the pinned actual root reducer
+functions with Redux/redux-act/batching, controlled extension reducers and utility
+facades. It covers nested and empty batches, hydration/push, in-place target
+writes, swallowed exceptions, ambiguous stores, inherited getters, malformed
+prototypes, sticky failure and the shared traversal budget. Together with the
+assembly/manager/marker suites, the run passed 65 cases; the seven original
+source-experiment cases also passed separately. These remain source tests, not Electron/database
+or native filesystem acceptance.
+
+The final composed renderer passed the actual TypeScript and webpack targets
+with the official compiler configuration and lockfile unchanged. All 13 renderer
+inputs matched the actual TypeScript Program and new bundle source map: the ten
+mod-management/transfer sources, this reducer, the acknowledged diff middleware
+and unchanged state-diff control. Seven other persistence sources retained their
+prior main/preload/shared Program/map baseline; those projects were not rebuilt
+for this renderer-only change. This remains an isolated development build.
+
+The unmodified upstream `src/reducers/index.test.ts` could not import because the
+qualified dependency tree lacks `winapi-bindings/build/Release/winapi`. Vitest ran
+zero cases in that suite. No native mock, dependency install or weakened assertion
+was introduced to turn this failure into a pass.
+
 ## Next implementation gates
 
 Implement these boundaries before exposing an install endpoint:
