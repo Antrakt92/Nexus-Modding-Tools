@@ -1,0 +1,45 @@
+--- a/src/renderer/src/extensions/download_management/index.ts
++++ b/src/renderer/src/extensions/download_management/index.ts
+@@ -704,39 +704,10 @@
+     description: {
+       short: "Folder transfer was interrupted",
+       long:
+-        "An attempt to move the download folder was interrupted. You should let " +
+-        "Vortex clean up now, otherwise you may be left with unnecessary copies of files.",
++        "An attempt to move the download folder was interrupted. Review the source and " +
++        "destination folders before changing or removing files. Vortex has kept the " +
++        "transfer marker; this warning does not automatically clean up either folder.",
+     },
+-    automaticFix: () =>
+-      new PromiseBB<void>((fixResolve, fixReject) => {
+-        api.sendNotification({
+-          id: "transfer-cleanup",
+-          message: "Cleaning up interrupted transfer",
+-          type: "activity",
+-        });
+-        // the transfer works by either copying the files or creating hard links
+-        // and only deleting the source when everything is transferred successfully,
+-        // so in case of an interrupted transfer we can always just delete the
+-        // incomplete target because the source is still there
+-        return fs
+-          .removeAsync(transferDestination)
+-          .then(() => {
+-            api.store.dispatch(setTransferDownloads(undefined));
+-            fixResolve();
+-          })
+-          .catch((err) => {
+-            if (err.code === "ENOENT") {
+-              // Destination is already gone, that's fine.
+-              api.store.dispatch(setTransferDownloads(undefined));
+-              fixResolve();
+-            } else {
+-              fixReject(err);
+-            }
+-          })
+-          .finally(() => {
+-            api.dismissNotification("transfer-cleanup");
+-          });
+-      }),
+   };
+ 
+   return PromiseBB.resolve(result);

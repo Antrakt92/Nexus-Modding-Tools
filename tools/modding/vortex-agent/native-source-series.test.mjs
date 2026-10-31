@@ -15,7 +15,7 @@ const dummy = () => Object.fromEntries(NATIVE_SOURCE_PATHS.map(file => [file, Bu
 const reject = (input, code = 'INPUT') => assert.throws(() => assembleNativeSources(input),
   error => error.message === 'NATIVE_SOURCE_SERIES_'+code);
 const integration = (name, action) => test(name, {
-  skip: process.env.VORTEX_NATIVE_SOURCE_ROOT ? false : 'Set VORTEX_NATIVE_SOURCE_ROOT to the exact original six-file source root',
+  skip: process.env.VORTEX_NATIVE_SOURCE_ROOT ? false : 'Set VORTEX_NATIVE_SOURCE_ROOT to the exact original ten-file source root',
 }, action);
 const originals = () => Object.fromEntries(NATIVE_SOURCE_PATHS.map(file => [file,
   fs.readFileSync(path.join(process.env.VORTEX_NATIVE_SOURCE_ROOT, file))]));
@@ -88,7 +88,7 @@ test('fixed packet is checked, but an unpinned original can never assemble', () 
 });
 
 test('pinned series closes all fixed nodes, exact source chains and cross-file manager dependencies', () => {
-  assert.equal(series.patches.length, 21); assert.equal(series.files.length, 6);
+  assert.equal(series.patches.length, 28); assert.equal(series.files.length, 10);
   assert.deepEqual([...series.files.map(row => row.path)].sort(), [...NATIVE_SOURCE_PATHS].sort());
   const done = new Map(), current = new Map(series.files.map(row => [row.path, row.originalSHA256]));
   for (const row of series.patches) {
@@ -110,6 +110,26 @@ test('an extra packet file or missing fixed patch fails closed before examining 
   const first = await extra.load(); assert.throws(() => first(dummy()), /^Error: NATIVE_SOURCE_SERIES_PACKET$/);
   const missing = clonePacket(t); fs.unlinkSync(path.join(missing.packet, series.patches[0].name+'.patch'));
   const second = await missing.load(); assert.throws(() => second(dummy()), /^Error: NATIVE_SOURCE_SERIES_PACKET$/);
+});
+
+test('both download safeguards are mandatory and test-only patches stay outside the runtime packet', async t => {
+  const names = ['download-pending-transfer-hold', 'download-transfer-cleanup-hold'];
+  for (const name of names) {
+    assert.equal(series.patches.filter(row => row.name === name).length, 1);
+    for (const suffix of ['.json', '.patch']) {
+      const fixture = clonePacket(t);
+      fs.unlinkSync(path.join(fixture.packet, name+suffix));
+      const assemble = await fixture.load();
+      assert.throws(() => assemble(dummy()), /^Error: NATIVE_SOURCE_SERIES_PACKET$/);
+    }
+  }
+  const fixture = clonePacket(t);
+  const testsPacket = path.join(HERE, 'native-patches/vortex-tests-2.9.1');
+  for (const suffix of ['.json', '.patch']) fs.copyFileSync(
+    path.join(testsPacket, 'staging-transfer-vitest'+suffix),
+    path.join(fixture.packet, 'staging-transfer-vitest'+suffix));
+  const assemble = await fixture.load();
+  assert.throws(() => assemble(dummy()), /^Error: NATIVE_SOURCE_SERIES_PACKET$/);
 });
 
 test('altered source context, redirected manifest and rewritten series cannot relax fixed pins', async t => {
@@ -152,7 +172,7 @@ test('a previously read packet changing before read verification is refused', as
   assert(mutated);
 });
 
-integration('all six final sources equal independent exact application and return detached immutable observations', () => {
+integration('all ten final sources equal independent exact application and return detached immutable observations', () => {
   const input = originals(), result = assembleNativeSources(input);
   assert(Object.isFrozen(result)); assert(Object.isFrozen(result.sources)); assert(Object.isFrozen(result.receipt));
   const expected = Object.fromEntries(Object.entries(input).map(([file, bytes]) => [file, bytes.toString('utf8')]));
@@ -166,7 +186,7 @@ integration('all six final sources equal independent exact application and retur
     assert.equal(sha(result.sources[row.path]), row.finalSHA256);
   }
   assert(Object.isFrozen(result.receipt.sources)); assert(Object.isFrozen(result.receipt.sources[0]));
-  assert(Object.isFrozen(result.receipt.patches[0])); assert.equal(result.receipt.patches.length, 21);
+  assert(Object.isFrozen(result.receipt.patches[0])); assert.equal(result.receipt.patches.length, 28);
   assert.equal(result.receipt.preparedOnly, true);
   for (const flag of ['nativeAdmission', 'effectsAllowed', 'typecheckVerified', 'nativeAcceptanceVerified', 'installed'])
     assert.equal(result.receipt[flag], false);
@@ -198,4 +218,11 @@ integration('packet drift after assembly cannot produce a receipt for otherwise 
   try {assert.throws(() => assemble(input), /^Error: NATIVE_SOURCE_SERIES_PACKET$/);}
   finally {fs.opendirSync = open;}
   assert(mutated);
+});
+
+integration('both added download originals require their independently pinned bytes', () => {
+  for (const file of NATIVE_SOURCE_PATHS.filter(file => file.includes('/download_management/'))) {
+    const changed = originals(); changed[file][0] ^= 1;
+    reject(changed, 'INPUT_SHA256');
+  }
 });

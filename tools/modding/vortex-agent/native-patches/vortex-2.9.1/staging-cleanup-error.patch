@@ -1,0 +1,18 @@
+--- a/src/renderer/src/util/transferPath.ts
++++ b/src/renderer/src/util/transferPath.ts
+@@ -342,6 +342,10 @@
+         //  up properly.
+-        log(
+-          "error",
+-          "Failed to remove source directory",
+-          err.stack !== undefined ? err.stack : err,
+-        );
++        try {
++          log(
++            "error",
++            "Failed to remove source directory",
++            err.stack !== undefined ? err.stack : err,
++          );
++        } catch {
++          // Diagnostic failure cannot replace the original cleanup outcome.
++        }

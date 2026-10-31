@@ -1,7 +1,7 @@
 # Assemble the reviewed Vortex source patches
 
-`native-source-series.mjs` applies the fixed sequence of 21 reviewed patches to
-six original files from Vortex `v2.9.1`, commit
+`native-source-series.mjs` applies the fixed sequence of 28 reviewed patches to
+ten original files from Vortex `v2.9.1`, commit
 `c80326367cbe6d96621ad6cf4a5488ef49bac110`. It replaces manually composing separate
 patch chains before compilation. It does not change an installed application or
 make native installation available through MCP.
@@ -56,7 +56,7 @@ the callback's at-most-once behavior.
 Use a complete isolated official workspace, its pinned package manager and frozen
 dependency graph for compilation. Build the renderer's workspace prerequisites,
 then run its actual TypeScript and webpack targets without changing compiler
-options or substituting declaration stubs. Bind the check to all six resulting
+options or substituting declaration stubs. Bind the check to all ten resulting
 source hashes. Preserve baseline errors separately from errors introduced by the
 patch series. Never use an installed Vortex directory as the build output.
 
@@ -91,10 +91,10 @@ node --test tools/modding/vortex-agent/native-source-series.test.mjs
 
 The first command covers portable input and packet checks. The second also
 exercises exact original-source assembly and output isolation. The fixture root
-must still contain the six original files, not their patched replacements.
+must still contain the ten original files, not their patched replacements.
 Neither command proves compilation, host loading or a successful mod install.
 
-## Renderer qualification — 31 October 2026
+## Renderer qualification â€” 31 October 2026
 
 The original complete official workspace passed its dependency-aware renderer
 typecheck and webpack build. Applying the first 17 patches exposed the three
@@ -128,3 +128,27 @@ configuration and lockfile. All six final source hashes again matched the actual
 Program and webpack map contents. Its combined adapter suite passed 850 tests
 without failures or skips. The installed archive still matches the six official
 original sources; none of these prepared application changes is loaded there.
+
+## Transfer packet â€” 31 October 2026
+
+The current 28-patch / ten-source graph adds joined staging transfer callbacks,
+exclusive copy collision refusal, cleanup-error preservation, staging Settings
+ownership/context checks and report-only interrupted-transfer warnings. The two
+download warning/cleanup patches are included in the exact runtime packet. The
+separately pinned upstream test adapter remains outside that packet.
+
+The expanded graph passed the actual renderer TypeScript and webpack targets
+with the original compiler configuration and lockfile unchanged. All ten final
+source hashes matched both the TypeScript Program and webpack source-map content.
+This qualifies the renderer source build; it does not qualify main/preload
+rebuilds, installed loading or native installation.
+
+The six upstream transfer tests passed with a separately pinned mock adapter for
+Node's copyFile callback. The original mock lacked that export and two tests
+failed before the adapter. All original bytes and assertions are preserved
+outside its fs-mock insertion. The source-backed callback suites passed 55 tests;
+two additional checks verify the test adapter's pins and insertion-only boundary.
+The TypeScript wrapper could not print Unicode to its CP1252 console after
+writing its successful compiler result; that failed wrapper attempt was retained.
+No compiler configuration or expectation was relaxed. See
+[transfer bounds](NATIVE-STAGING-TRANSFER.md).

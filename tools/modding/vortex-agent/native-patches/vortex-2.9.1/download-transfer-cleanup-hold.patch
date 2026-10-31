@@ -1,0 +1,60 @@
+--- a/src/renderer/src/extensions/download_management/views/Settings.tsx
++++ b/src/renderer/src/extensions/download_management/views/Settings.tsx
+@@ -54,3 +54,3 @@
+ import { getSafe } from "../../../util/storeHelper";
+-import { cleanFailedTransfer, testPathTransfer, transferPath } from "../../../util/transferPath";
++import { testPathTransfer, transferPath } from "../../../util/transferPath";
+ import {
+@@ -513,3 +513,2 @@
+ 
+-    let deleteOldDestination = true;
+     this.nextState.progress = 0;
+@@ -542,3 +541,2 @@
+           .catch(CleanupFailedException, (err) => {
+-            deleteOldDestination = false;
+             onSetTransfer(undefined);
+@@ -625,41 +623,5 @@
+           .finally(() => {
+-            const state = this.context.api.store.getState();
+-            // Any transfers would've completed at this point.
+-            //  Check if we still have the transfer state populated,
+-            //  if it is - that means that the user has cancelled the transfer,
+-            //  we need to cleanup.
+-            const pendingTransfer: string[] = [
+-              "persistent",
+-              "transactions",
+-              "transfer",
+-              "downloads",
+-            ];
+-            if (getSafe(state, pendingTransfer, undefined) !== undefined && deleteOldDestination) {
+-              return cleanFailedTransfer(newPath)
+-                .then(() => {
+-                  onSetTransfer(undefined);
+-                  this.nextState.busy = undefined;
+-                })
+-                .catch(UserCanceled, () => {
+-                  this.nextState.busy = undefined;
+-                })
+-                .catch((err) => {
+-                  this.nextState.busy = undefined;
+-                  if (err.code === "ENOENT") {
+-                    // Folder is already gone, that's fine.
+-                    onSetTransfer(undefined);
+-                  } else if (err.code === "EPERM") {
+-                    onShowError(
+-                      "Destination folder is not writable",
+-                      "Vortex is unable to clean up " +
+-                        "the destination folder due to a permissions issue.",
+-                      false,
+-                    );
+-                  } else {
+-                    onShowError("Transfer clean-up failed", err, true);
+-                  }
+-                });
+-            } else {
+-              this.nextState.busy = undefined;
+-            }
++            // A failed/canceled transfer may target a nonempty existing folder.
++            // Preserve both its data and pending marker for explicit reconciliation.
++            this.nextState.busy = undefined;
+           }),

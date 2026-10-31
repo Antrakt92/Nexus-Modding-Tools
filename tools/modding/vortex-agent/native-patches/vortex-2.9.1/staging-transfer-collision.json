@@ -1,0 +1,29 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/util/transferPath.ts",
+  "originalSourceSHA256": "ee41c5b132fa207d00f746133e35d74f9a5811e0aa36a1ec86857b20a7a50513",
+  "prerequisitePatch": "staging-transfer-join.patch",
+  "prerequisitePatchSHA256": "76d9dc361b4a063a3a915dea5e0d0a0669675770fa0594fcf8006d2efc47c45e",
+  "inputSHA256": "f4886e06be46c9be06b4f6765bce038c10909688abc02b81849709a44e837a98",
+  "outputSHA256": "6c22f7b8c4526b7e0beace5697548eec674aee8f666fd36d8981b56c9b38eeae",
+  "patchSHA256": "f506444715fc503fb7d3cb6faa44b4bdb6bdc5517982966ae26f4a9069f35cca",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "nativeTerminalGuarantee": false,
+  "globalIdleGuarantee": false,
+  "noReplacementGuarantee": false,
+  "ownerReservationGuarantee": false,
+  "installationPermit": false,
+  "testSourceEnvironment": "VORTEX_NATIVE_TRANSFER_PATH",
+  "limitations": [
+    "Prepared source only; full renderer build and installed acceptance remain separate.",
+    "Hardlink EEXIST now rejects; initial cross-volume and every fallback/subsequent file copy use fixed node:fs COPYFILE_EXCL.",
+    "No stat-only equality exception or overwrite fallback; failed transfer leaves source cleanup disabled and partial destination held.",
+    "This is leaf destination collision refusal, not hostile ancestor/source ownership, rollback, durable recovery or native installation authority.",
+    "Node copyFile failure cleanup and concurrent directory/path mutation remain outside a physical custody guarantee."
+  ]
+}
