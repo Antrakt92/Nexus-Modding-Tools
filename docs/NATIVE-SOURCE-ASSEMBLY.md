@@ -309,3 +309,22 @@ guard rejects the late result while retaining one underlying logical operation.
 These source/controlled-fixture checks do not qualify native IPC transport,
 ExtensionManager construction or installed loading. Readiness replies keep all
 native/installation authority false; see [observation scope](NATIVE-ADOPTION-BOUNDARY.md#core-readiness-observation).
+
+## Isolated Electron IPC check — 31 October 2026
+
+Three fresh Electron 44.2.0 SDK applications exercised the assembled main handler,
+the upstream IPC wrapper/preload exposure and the renderer reply validator over
+actual `ipcRenderer.invoke`. The owned primary window received the exact reply;
+a second window was refused before waiting for backend readiness. During a
+same-URL reload, the original main handler recorded its context refusal before
+the retained readiness promise was completed; the new frame then received a
+valid reply. All three cases passed, with zero mutation calls and normal app
+exit. Their owned process jobs reached zero active processes before release.
+
+The fixture used hidden windows, separate temporary profiles and the application's
+`nodeIntegration:true` / `contextIsolation:false` preload branch. The SDK's 73-file
+inventory matched its retained checksums. Backend readiness and persistence were
+controlled facades: this checks native transport and frame invalidation, not full
+Vortex startup, installed native modules, registration or installation. The
+installed application was unchanged. Request filtering and a dead-loopback proxy
+are fixture controls, not OS-wide network isolation.
