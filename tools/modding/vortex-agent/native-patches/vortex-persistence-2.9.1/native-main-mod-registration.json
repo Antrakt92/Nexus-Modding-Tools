@@ -1,0 +1,28 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/main/src/store/ReduxPersistorIPC.ts",
+  "originalSourceSHA256": "2a86c8e57e643172e8babf3474bd2e697a1cf8b3f3e3f3ea1f44934781a737e3",
+  "inputSHA256": "85a0340ccc4927875d65e3c8a34b8ad8654120c6bb2d6bee8859c2d4b144bc04",
+  "outputSHA256": "3282d18a18638a6552fa52b01916890cc20ad8d37ea96f3828f5ff6ca6b03b09",
+  "patchSHA256": "9dd0fb8184f00cf5dbef5e5dc8000c07c3e206357b5abe6efa887ae92e2e8396",
+  "prerequisitePatch": "native-main-sql-admission.patch",
+  "prerequisitePatchSHA256": "c4e6980946efa25697bda75956bd3ad24563218f16c36777f356000f7a97ab72",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "powerLossPersistenceVerified": false,
+  "releaseSupported": false,
+  "trackedInstallComplete": false,
+  "limitations": [
+    "Fixed minimal new-mod registration plus operation marker in one owned connection transaction; no renderer adoption, payload publication, release or tracked installation completion.",
+    "Only archiveId:null supported; no invented archive association or Nexus attributes.",
+    "Unknown BEGIN/COMMIT/readback stays held without replay; no power-loss guarantee."
+  ],
+  "requiredCompanionPatch": "native-owned-mod-registration.patch",
+  "requiredCompanionPatchSHA256": "17a96234582b17dabafab567a8a5386a0ae28b29aa9d9e7e987db3dcbf593687",
+  "requiredCompanionOutputSHA256": "bf7d7295dcb15c146ffaaea33223eab964cc36c4c1fe9e34cb7b52fc1941a853"
+}

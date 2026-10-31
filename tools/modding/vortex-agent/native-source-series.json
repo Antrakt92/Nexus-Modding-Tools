@@ -67,7 +67,7 @@
     {
       "path": "src/main/src/store/LevelPersist.ts",
       "originalSHA256": "742929670876a79c7332a13d16381cf2098ee55f57f838e3e35668853d1455a1",
-      "finalSHA256": "ef39796be6ba9aa2f8d4030686ef1a3f30175db8c289fdce80301c5c5ba1d00f"
+      "finalSHA256": "bf7d7295dcb15c146ffaaea33223eab964cc36c4c1fe9e34cb7b52fc1941a853"
     },
     {
       "path": "src/main/src/store/QueryRegistry.ts",
@@ -77,7 +77,7 @@
     {
       "path": "src/main/src/store/ReduxPersistorIPC.ts",
       "originalSHA256": "2a86c8e57e643172e8babf3474bd2e697a1cf8b3f3e3f3ea1f44934781a737e3",
-      "finalSHA256": "85a0340ccc4927875d65e3c8a34b8ad8654120c6bb2d6bee8859c2d4b144bc04"
+      "finalSHA256": "3282d18a18638a6552fa52b01916890cc20ad8d37ea96f3828f5ff6ca6b03b09"
     },
     {
       "path": "src/main/src/store/mainPersistence.ts",
@@ -1055,6 +1055,36 @@
       "requiredCompanionPatch": null,
       "requiredCompanionPatchSHA256": null,
       "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "native-owned-mod-registration",
+      "packet": "persistence",
+      "path": "src/main/src/store/LevelPersist.ts",
+      "manifestSHA256": "bc8ada030fe43caded0633e71e56c0fa18a1c46db51237bb9fe5f300ccf908d1",
+      "patchSHA256": "17a96234582b17dabafab567a8a5386a0ae28b29aa9d9e7e987db3dcbf593687",
+      "inputSHA256": "ef39796be6ba9aa2f8d4030686ef1a3f30175db8c289fdce80301c5c5ba1d00f",
+      "outputSHA256": "bf7d7295dcb15c146ffaaea33223eab964cc36c4c1fe9e34cb7b52fc1941a853",
+      "prerequisitePatch": "native-backend-sql-admission.patch",
+      "prerequisitePatchSHA256": "5c19256cbc96a9e8b269296fda3a7754ecee36e7054c49ae5ecd6385e6669f63",
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": null,
+      "requiredCompanionPatchSHA256": null,
+      "requiredCompanionOutputSHA256": null
+    },
+    {
+      "name": "native-main-mod-registration",
+      "packet": "persistence",
+      "path": "src/main/src/store/ReduxPersistorIPC.ts",
+      "manifestSHA256": "557a17d6b43896a29c7df30f1a248fd7ab8efb05d6266d5e473147e4b2614a86",
+      "patchSHA256": "9dd0fb8184f00cf5dbef5e5dc8000c07c3e206357b5abe6efa887ae92e2e8396",
+      "inputSHA256": "85a0340ccc4927875d65e3c8a34b8ad8654120c6bb2d6bee8859c2d4b144bc04",
+      "outputSHA256": "3282d18a18638a6552fa52b01916890cc20ad8d37ea96f3828f5ff6ca6b03b09",
+      "prerequisitePatch": "native-main-sql-admission.patch",
+      "prerequisitePatchSHA256": "c4e6980946efa25697bda75956bd3ad24563218f16c36777f356000f7a97ab72",
+      "requiredManagerPatchSHA256": null,
+      "requiredCompanionPatch": "native-owned-mod-registration.patch",
+      "requiredCompanionPatchSHA256": "17a96234582b17dabafab567a8a5386a0ae28b29aa9d9e7e987db3dcbf593687",
+      "requiredCompanionOutputSHA256": "bf7d7295dcb15c146ffaaea33223eab964cc36c4c1fe9e34cb7b52fc1941a853"
     }
   ]
 }

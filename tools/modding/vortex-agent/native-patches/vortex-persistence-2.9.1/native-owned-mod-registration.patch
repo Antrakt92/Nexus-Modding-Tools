@@ -1,0 +1,229 @@
+--- a/src/main/src/store/LevelPersist.ts
++++ b/src/main/src/store/LevelPersist.ts
+@@ -1,2 +1,4 @@
++import { createHash as nativeRegistrationHash } from "crypto";
++import { TextDecoder as NativeRegistrationDecoder, types as nativeRegistrationTypes } from "util";
+ import * as path from "node:path";
+ 
+@@ -48,4 +50,50 @@
+ function delay(ms: number): Promise<void> {
+   return new Promise((resolve) => setTimeout(resolve, ms));
++}
++
++export interface NativeNewModRegistrationRequest {
++  schema: "native-new-mod-registration-request/1";
++  operationId: string; nativeJobId: string; requestSHA256: string; planId: string;
++  gameId: string; modId: string; installationPath: string; payloadSHA256: string; archiveId: null;
++}
++export function snapshotNativeNewModRegistration(bytes: Uint8Array): NativeNewModRegistrationRequest {
++  try {
++    if (!nativeRegistrationTypes.isUint8Array(bytes) || nativeRegistrationTypes.isProxy(bytes)) throw new Error("NATIVE_REGISTRATION_REQUEST");
++    const typed = Object.getPrototypeOf(Uint8Array.prototype);
++    const size = Object.getOwnPropertyDescriptor(typed, "byteLength")?.get?.call(bytes);
++    const buffer = Object.getOwnPropertyDescriptor(typed, "buffer")?.get?.call(bytes);
++    if (typeof size !== "number" || size < 1 || size > 8192 || nativeRegistrationTypes.isSharedArrayBuffer(buffer)) throw new Error("NATIVE_REGISTRATION_REQUEST");
++    const copy = new Uint8Array(size); Uint8Array.prototype.set.call(copy, bytes);
++    const text = new NativeRegistrationDecoder("utf-8", { fatal: true }).decode(copy);
++    const value: unknown = JSON.parse(text);
++    const keys = ["schema", "operationId", "nativeJobId", "requestSHA256", "planId", "gameId", "modId", "installationPath", "payloadSHA256", "archiveId"];
++    if (value === null || typeof value !== "object" || Array.isArray(value) || Object.keys(value).length !== keys.length
++        || keys.some(key => !Object.hasOwn(value, key))) throw new Error("NATIVE_REGISTRATION_REQUEST");
++    const data = value as Record<string, unknown>;
++    const id = (key: string) => {
++      const candidate = data[key];
++      return typeof candidate === "string" && /^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/.test(candidate)
++        && !["__proto__", "constructor", "prototype"].includes(candidate);
++    };
++    const hash = (key: string) => { const candidate = data[key]; return typeof candidate === "string" && /^[a-f0-9]{64}$/.test(candidate); };
++    const leaf = data.installationPath;
++    if (typeof leaf !== "string" || leaf.length < 1 || leaf.length > 255 || !/^[\x20-\x7e]+$/.test(leaf)
++        || /[<>:"/\\|?*]/.test(leaf) || /[. ]$/.test(leaf) || [".", ".."].includes(leaf)
++        || /^(?:con|prn|aux|nul|conin\$|conout\$|com[1-9]|lpt[1-9])(?:\.|$)/i.test(leaf)
++        || ["__proto__", "constructor", "prototype", "__folder_managed_by_vortex"].includes(leaf.toLowerCase())) throw new Error("NATIVE_REGISTRATION_REQUEST");
++    if (data.schema !== "native-new-mod-registration-request/1" || typeof data.operationId !== "string" || !/^op_[a-f0-9]{32}$/.test(data.operationId)
++        || typeof data.nativeJobId !== "string" || !/^exec_[a-f0-9]{32}$/.test(data.nativeJobId)
++        || !hash("requestSHA256") || !hash("planId") || !hash("payloadSHA256") || !id("gameId") || !id("modId")
++        || data.installationPath !== data.modId || /[. ]$/.test(String(data.modId)) || data.archiveId !== null) throw new Error("NATIVE_REGISTRATION_REQUEST");
++    const canonical = JSON.stringify(Object.fromEntries(keys.map(key => [key, data[key]])));
++    if (text !== canonical) throw new Error("NATIVE_REGISTRATION_CANONICAL");
++    return Object.freeze(value) as NativeNewModRegistrationRequest;
++  } catch { throw new Error("NATIVE_REGISTRATION_REQUEST"); }
++}
++interface NativeRegistrationAttempt {
++  backendOwner: object; sqlOwner: object; registry: QueryRegistry;
++  phase: "claimed" | "writing" | "committed" | "held";
++  transaction: "not_started" | "begin_pending" | "open" | "commit_pending" | "committed" | "rollback_pending" | "rolled_back" | "unknown";
++  commitAttempted: boolean;
+ }
+ 
+@@ -120,4 +168,6 @@
+   #mNativeDrain: (() => void) | undefined;
+   #mNativeSQLAttempted = false;
++  #mNativeRegistration: NativeRegistrationAttempt | undefined;
++  #mNativeRegistrationChecking = false;
+   #mNativeSQL: { owner: object; backendOwner: object; registry: QueryRegistry; singleton: DuckDBSingleton } | undefined;
+ 
+@@ -173,4 +223,5 @@
+       throw new Error("NATIVE_BACKEND_WRITE_REFUSED");
+     }
++    if (this.#mNativeRegistration !== undefined && ["claimed", "writing"].includes(this.#mNativeRegistration.phase)) throw new Error("NATIVE_REGISTRATION_BUSY");
+     if (this.#mNativeActive !== 0 || this.#mNativeIneligible()) {
+       hold.phase = "held";
+@@ -197,11 +248,14 @@
+   public checkNativeSQLAdmission(owner: object, backendOwner: object, registry: QueryRegistry): void {
+     LevelPersist.prototype.checkNativeBackendWriteOwner.call(this, backendOwner);
++    this.#checkNativeSQLIdentity(owner, backendOwner, registry);
++    LevelPersist.prototype.checkNativeBackendWriteOwner.call(this, backendOwner);
++  }
++  #checkNativeSQLIdentity(owner: object, backendOwner: object, registry: QueryRegistry): void {
+     const record = this.#mNativeSQL;
+-    if (record === undefined || record.owner !== owner || record.backendOwner !== backendOwner
+-        || record.registry !== registry) throw new Error("NATIVE_BACKEND_SQL_REFUSED");
++    if (record === undefined || record.owner !== owner || record.backendOwner !== backendOwner || record.registry !== registry) throw new Error("NATIVE_BACKEND_SQL_REFUSED");
+     try {
+-      if (DuckDBSingleton.getInstance() !== record.singleton) throw new Error("NATIVE_BACKEND_SQL_HELD");
+-      DuckDBSingleton.prototype.checkNativeSQLConnections.call(record.singleton, owner);
+-      LevelPersist.prototype.checkNativeBackendWriteOwner.call(this, backendOwner);
++      if (nativeRegistrationGetPool() !== record.singleton) throw new Error("NATIVE_BACKEND_SQL_HELD");
++      nativeRegistrationSQLCheck.call(record.singleton, owner);
++      if (nativeRegistrationGetPool() !== record.singleton) throw new Error("NATIVE_BACKEND_SQL_HELD");
+     } catch {
+       if (this.#mNativeWriteHold !== undefined) this.#mNativeWriteHold.phase = "held";
+@@ -210,6 +264,120 @@
+   }
+ 
++  #nativeRegistrationHeld(attempt: NativeRegistrationAttempt): boolean { return attempt.phase === "held"; }
++
++  #checkOwnedRegistration(attempt: NativeRegistrationAttempt, terminal = false): void {
++    const hold = this.#mNativeWriteHold;
++    if (this.#mNativeRegistrationChecking) {
++      if (hold !== undefined) hold.phase = "held";
++      attempt.phase = "held";
++      throw new Error("NATIVE_REGISTRATION_HELD");
++    }
++    this.#mNativeRegistrationChecking = true;
++    try {
++      const pending = ["begin_pending", "commit_pending"].includes(attempt.transaction) ? 1 : 0;
++      const open = ["open", "commit_pending"].includes(attempt.transaction);
++      if (this.#mNativeRegistration !== attempt || hold === undefined || hold.owner !== attempt.backendOwner || hold.phase !== "reserved"
++          || this.#mNativeActive !== (terminal ? 0 : 1) || this.#mNativeWriteFailed || this.#mNativeRawExposed || this.#mNativeCloseAttempted
++          || this.#mNativeTransactionPending !== pending || this.#mInTransaction !== open || this.#nativeRegistrationHeld(attempt)
++          || (terminal && (attempt.phase !== "committed" || attempt.transaction !== "committed"))) throw new Error("NATIVE_REGISTRATION_HELD");
++      this.#checkNativeSQLIdentity(attempt.sqlOwner, attempt.backendOwner, attempt.registry);
++      if (this.#mNativeRegistration !== attempt || hold.phase !== "reserved" || this.#mNativeActive !== (terminal ? 0 : 1) || this.#nativeRegistrationHeld(attempt)) throw new Error("NATIVE_REGISTRATION_HELD");
++    } catch (error) {
++      if (hold !== undefined) hold.phase = "held";
++      attempt.phase = "held";
++      throw error;
++    } finally { this.#mNativeRegistrationChecking = false; }
++  }
++
++  /** Observe this operation's ownership; completion still requires its exact returned promise. */
++  public checkNativeNewModRegistration(backendOwner: object, sqlOwner: object, registry: QueryRegistry): void {
++    const attempt = this.#mNativeRegistration;
++    if (attempt === undefined || attempt.backendOwner !== backendOwner || attempt.sqlOwner !== sqlOwner || attempt.registry !== registry) throw new Error("NATIVE_REGISTRATION_REFUSED");
++    this.#checkOwnedRegistration(attempt, attempt.phase === "committed");
++  }
++
++  /** Fixed one-shot primitive; this does not authorize tracked installation or release. */
++  public async registerNativeNewMod(backendOwner: object, sqlOwner: object, registry: QueryRegistry, bytes: Uint8Array) {
++    const hold = this.#mNativeWriteHold, sql = this.#mNativeSQL;
++    if (hold === undefined || hold.owner !== backendOwner || hold.phase !== "reserved" || sql === undefined
++        || sql.owner !== sqlOwner || sql.backendOwner !== backendOwner || sql.registry !== registry || this.#mNativeRegistration !== undefined) throw new Error("NATIVE_REGISTRATION_REFUSED");
++    const attempt: NativeRegistrationAttempt = { backendOwner, sqlOwner, registry, phase: "claimed", transaction: "not_started", commitAttempted: false };
++    this.#mNativeRegistration = attempt;
++    this.#mNativeActive++;
++    try {
++      this.#checkOwnedRegistration(attempt);
++      const request = snapshotNativeNewModRegistration(bytes);
++      const record = { id: request.modId, state: "installed", type: "", installationPath: request.installationPath };
++      const recordSHA256 = nativeRegistrationHash("sha256").update(JSON.stringify(record)).digest("hex");
++      const marker = { schema: "native-new-mod-registration/1", operationId: request.operationId, nativeJobId: request.nativeJobId,
++        requestSHA256: request.requestSHA256, planId: request.planId, payloadSHA256: request.payloadSHA256, recordSHA256, archiveId: null };
++      const prefix = ["persistent", "mods", request.gameId, request.modId].join(SEPARATOR);
++      const rows = Object.entries(record).map(([key, value]) => ({ key: prefix + SEPARATOR + key, value: JSON.stringify(value) }));
++      rows.push({ key: prefix + SEPARATOR + "attributes" + SEPARATOR + "__nmtNativeRegistration", value: JSON.stringify(marker) });
++      this.#checkOwnedRegistration(attempt);
++      attempt.transaction = "begin_pending";
++      this.#mNativeTransactionPending++;
++      try { await this.#mConnection.run("BEGIN TRANSACTION"); }
++      catch (error) { attempt.transaction = "unknown"; throw error; }
++      finally { this.#mNativeTransactionPending--; }
++      this.#mInTransaction = true;
++      attempt.transaction = "open";
++      this.#checkOwnedRegistration(attempt);
++      const conflict = await nativeRegistrationConflictQuery.call(this, request.gameId, request.modId);
++      this.#checkOwnedRegistration(attempt);
++      if (conflict !== false) throw new Error("NATIVE_REGISTRATION_CONFLICT");
++      attempt.phase = "writing";
++      const placeholders = rows.map((_row, index) => `($${index * 2 + 1}, $${index * 2 + 2})`).join(", ");
++      await this.#mConnection.run(`INSERT INTO ${this.#mAlias}.kv VALUES ${placeholders}`, rows.flatMap(row => [row.key, row.value]));
++      this.#checkOwnedRegistration(attempt);
++      attempt.commitAttempted = true;
++      attempt.transaction = "commit_pending";
++      this.#mNativeTransactionPending++;
++      try { await this.#mConnection.run("COMMIT"); }
++      catch (error) { attempt.transaction = "unknown"; throw error; }
++      finally { this.#mNativeTransactionPending--; }
++      this.#mInTransaction = false;
++      attempt.transaction = "committed";
++      this.#checkOwnedRegistration(attempt);
++      const reader = await this.#mConnection.runAndReadAll(
++        `WITH keys AS (SELECT key, value, string_split(key, '###') AS parts FROM ${this.#mAlias}.kv)
++         SELECT key, value FROM keys WHERE key = $1 OR starts_with(key, $1 || '###')
++           OR key IN ('persistent', 'persistent###mods', 'persistent###profiles', $2)
++           OR (starts_with(key, 'persistent###profiles###') AND (array_length(parts) = 3
++             OR (list_extract(parts, 4) = 'modState' AND (array_length(parts) = 4 OR list_extract(parts, 5) = $3)))) LIMIT 6`,
++        [prefix, ["persistent", "mods", request.gameId].join(SEPARATOR), request.modId]);
++      this.#checkOwnedRegistration(attempt);
++      const observed = reader.getRows();
++      if (!Array.isArray(observed) || observed.length !== rows.length) throw new Error("NATIVE_REGISTRATION_READBACK");
++      const expected = new Map(rows.map(row => [row.key, row.value]));
++      for (const row of observed) {
++        if (!Array.isArray(row) || row.length !== 2 || typeof row[0] !== "string" || expected.get(row[0]) !== row[1]) throw new Error("NATIVE_REGISTRATION_READBACK");
++        expected.delete(row[0]);
++      }
++      this.#checkOwnedRegistration(attempt);
++      if (expected.size !== 0) throw new Error("NATIVE_REGISTRATION_READBACK");
++      attempt.phase = "committed";
++      return Object.freeze({ schema: "native-new-mod-registration-observed/1", operationId: request.operationId, nativeJobId: request.nativeJobId,
++        requestSHA256: request.requestSHA256, recordSHA256, commitObserved: true, readbackVerified: true,
++        trackedInstallComplete: false, effectsAllowed: false, installationPermit: false, powerLossPersistenceVerified: false });
++    } catch (primary) {
++      attempt.phase = "held";
++      this.#mNativeWriteFailed = true;
++      hold.phase = "held";
++      // Only this owned pre-COMMIT transaction may be rolled back. Never retry an unknown COMMIT.
++      if (attempt.transaction === "open" && !attempt.commitAttempted) {
++        attempt.transaction = "rollback_pending";
++        this.#mNativeTransactionPending++;
++        try { await this.#mConnection.run("ROLLBACK"); attempt.transaction = "rolled_back"; this.#mInTransaction = false; }
++        catch { attempt.transaction = "unknown"; }
++        finally { this.#mNativeTransactionPending--; }
++      }
++      throw primary;
++    } finally { this.#mNativeActive--; }
++  }
++
+   public getNativeBackendWriteStatus() {
+     return Object.freeze({ phase: this.#mNativeWriteHold?.phase ?? "not_reserved",
++      nativeRegistrationPhase: this.#mNativeRegistration?.phase ?? "not_attempted", nativeRegistrationTransaction: this.#mNativeRegistration?.transaction ?? "not_started",
+       activeIntents: this.#mNativeActive, transactionPending: this.#mNativeTransactionPending,
+       inTransaction: this.#mInTransaction, writeFailureObserved: this.#mNativeWriteFailed,
+@@ -228,4 +396,8 @@
+   ): Promise<T> {
+     const hold = this.#mNativeWriteHold;
++    if (this.#mNativeRegistration !== undefined) {
++      if (hold !== undefined) hold.phase = "held";
++      throw new Error("NATIVE_REGISTRATION_OWNS_CONNECTION");
++    }
+     if (hold !== undefined) {
+       // Existing transactions must still be allowed to COMMIT/ROLLBACK. This is
+@@ -551,3 +723,7 @@
+ }
+ 
++const nativeRegistrationConflictQuery = LevelPersist.prototype.hasNewModRegistrationConflict;
++const nativeRegistrationSQLCheck = DuckDBSingleton.prototype.checkNativeSQLConnections;
++const nativeRegistrationGetPool = DuckDBSingleton.getInstance;
++
+ export default LevelPersist;

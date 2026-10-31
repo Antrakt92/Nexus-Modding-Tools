@@ -1,0 +1,25 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/main/src/store/LevelPersist.ts",
+  "originalSourceSHA256": "742929670876a79c7332a13d16381cf2098ee55f57f838e3e35668853d1455a1",
+  "inputSHA256": "ef39796be6ba9aa2f8d4030686ef1a3f30175db8c289fdce80301c5c5ba1d00f",
+  "outputSHA256": "bf7d7295dcb15c146ffaaea33223eab964cc36c4c1fe9e34cb7b52fc1941a853",
+  "patchSHA256": "17a96234582b17dabafab567a8a5386a0ae28b29aa9d9e7e987db3dcbf593687",
+  "prerequisitePatch": "native-backend-sql-admission.patch",
+  "prerequisitePatchSHA256": "5c19256cbc96a9e8b269296fda3a7754ecee36e7054c49ae5ecd6385e6669f63",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "installationPermit": false,
+  "powerLossPersistenceVerified": false,
+  "releaseSupported": false,
+  "trackedInstallComplete": false,
+  "limitations": [
+    "Fixed minimal new-mod registration plus operation marker in one owned connection transaction; no renderer adoption, payload publication, release or tracked installation completion.",
+    "Only archiveId:null supported; no invented archive association or Nexus attributes.",
+    "Unknown BEGIN/COMMIT/readback stays held without replay; no power-loss guarantee."
+  ]
+}

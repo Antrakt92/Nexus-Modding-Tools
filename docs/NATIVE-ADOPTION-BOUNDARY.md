@@ -582,6 +582,40 @@ and retires that owner; the already acknowledged snapshot is not replayed. The
 caller must first restore main write availability. This local API does not unlock
 main, prove that it is writable, or implement the installation coordinator.
 
+## Owned database registration
+
+The prepared main method `registerNativeNewMod(owner, bytes)` consumes one attempt
+under its existing target reservation before parsing or awaiting. Its bounded
+canonical UTF-8 descriptor fixes the operation/job/plan identifiers, target and
+payload digest; it accepts no SQL, row paths, callbacks or arbitrary attributes.
+Windows staging basenames use the existing install-plan restrictions.
+
+The actual Level method keeps ordinary writers blocked while its own active and
+transaction counters describe BEGIN, write, COMMIT and rollback waits. Dedicated
+operation checks validate that ownership during the flight. Idle reservation
+checks return BUSY for a healthy active registration without damaging its owner;
+neither check grants operation completion.
+
+On the same private connection, the method begins a transaction, rechecks target
+and all-profile absence, inserts the four minimal mod fields plus
+`attributes.__nmtNativeRegistration`, commits and checks a bounded exact readback.
+The marker records the operation/job identifiers, plan/request/payload hashes and
+derived record hash in the same physical transaction. These hashes still require
+the future coordinator's verified input binding; caller-provided digests are not
+filesystem custody or installation authority.
+
+This slice accepts `archiveId:null` and omits the mod's archive association. It
+does not silently invent one or accept an unverified download ID. Consequently,
+`trackedInstallComplete` stays false. A complete tracked installation must add
+the verified frozen-plan association before this path is exposed to agents.
+
+Failure permanently holds the attempt. Pre-COMMIT rollback is joined while
+preserving the original thrown value. Unknown BEGIN/COMMIT and failed post-commit
+readback cannot trigger a retry, refund or invented rollback of committed data.
+The minimal record does not create profile state; even an existing disabled
+profile reference refuses admission. Renderer adoption and hold release are not
+implemented by this primitive.
+
 ## Next implementation gates
 
 The separate [native transaction fixture](NATIVE-LEVEL-PIVOT-TRANSACTIONS.md)
@@ -598,8 +632,10 @@ Implement these boundaries before exposing an install endpoint:
    whose success immediately resumes ordinary sends.
 2. Publish the verified payload through an actual no-replace owned primitive.
    Keep partial output held; discovery of a directory is not registration.
-3. Register one exact new owner and verify every profile remains disabled. Use a
-   bounded operation binding and coordinate renderer diffs with main persistence.
+3. Connect the owned registration primitive to verified payload/operation evidence
+   and the tracked archive association, then adopt the exact committed record in
+   the renderer. Verify every profile remains disabled and coordinate renderer
+   diffs with main persistence.
 4. Obtain per-registration completion from the actual native backend. Test restart
    readback and lost replies; do not retry with new operation IDs.
 5. Reconcile unfinished intents before discovery/cleanup can claim their output.
