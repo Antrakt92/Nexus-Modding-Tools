@@ -584,6 +584,10 @@ main, prove that it is writable, or implement the installation coordinator.
 
 ## Next implementation gates
 
+The separate [native transaction fixture](NATIVE-LEVEL-PIVOT-TRANSACTIONS.md)
+checks the pinned real LevelDB backend rather than a DuckDB memory KV table.
+It does not by itself implement an owner-authorized registration write.
+
 Implement these boundaries before exposing an install endpoint:
 
 1. Connect target admission before conflicting native side effects. The prepared

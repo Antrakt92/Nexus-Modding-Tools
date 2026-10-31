@@ -1,0 +1,19 @@
+{
+  "schema": "native-level-pivot-transaction-inputs/1",
+  "repository": "https://github.com/Nexus-Mods/duckdb-level-pivot",
+  "sourceCommit": "329121d729dc40d303db304f945ca789754a0d06",
+  "pagesCommit": "e00cbc4fef52e877c843d6186b558bdd0300483e",
+  "compressedGitBlob": "6a6fde6e19de2f390e5c985c610ec3a1cef71c54",
+  "compressedBytes": 8003501,
+  "compressedSHA256": "68d730e53a1a582e2b27adda6decad5e1b9c5fc58083e871208b8095042e0ca4",
+  "rawBytes": 22611478,
+  "rawSHA256": "61769a589fb9277fd70816816b6aa580ee4dde6d55f951c2423c14d72ae45fb7",
+  "footer": ["", "", "", "CPP", "329121d", "v1.5.1", "windows_amd64", "4"],
+  "license": "MIT",
+  "nodeAPIVersion": "1.5.1-r.1",
+  "duckdbVersion": "v1.5.1",
+  "signatureAuthenticated": false,
+  "nativeCommitIOErrorInjected": false,
+  "powerLossPersistenceVerified": false,
+  "installationPermit": false
+}

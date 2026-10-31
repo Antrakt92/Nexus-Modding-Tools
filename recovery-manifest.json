@@ -196,7 +196,7 @@
     },
     {
       "path": "docs/AGENT-WORKFLOW.md",
-      "sha256_lf": "84a7822db212529fdf910c492e01f39e53e48d4c0e012d798b90df422cff606c"
+      "sha256_lf": "748f50eb9fce55f8b53d34c033e9043fedbdf256c86777032e1d819b9536ef84"
     },
     {
       "path": "docs/ARCHIVE-TEMP-CUSTODY.md",
@@ -260,7 +260,7 @@
     },
     {
       "path": "docs/LICENSES.md",
-      "sha256_lf": "0517ae770c892445fcce08770d5af91547f70691a0f064d66e99db5a2d8bb0bc"
+      "sha256_lf": "af9a9f52a37a01e40e5dcc994a9d6810ba8cb1eab92c51f6209dc833cbdc17d7"
     },
     {
       "path": "docs/LIFECYCLE-IMPLEMENTATION.md",
@@ -288,7 +288,7 @@
     },
     {
       "path": "docs/NATIVE-ADOPTION-BOUNDARY.md",
-      "sha256_lf": "6d49cd39b35ee6cf75422a85e3836d350a7a70ff0b77ddc13adf5516473ded39"
+      "sha256_lf": "d3c805366c11e94902c6843812e43e1bcb5713757711e05072f4debb6e8ac865"
     },
     {
       "path": "docs/NATIVE-CALLBACK-PATCH.md",
@@ -317,6 +317,10 @@
     {
       "path": "docs/NATIVE-HELPER-PREPARATION.md",
       "sha256_lf": "ae52753a117b8a4a56505f16d42dc99cbb035dee4f99cbbcc578268e4096e1de"
+    },
+    {
+      "path": "docs/NATIVE-LEVEL-PIVOT-TRANSACTIONS.md",
+      "sha256_lf": "60f6773e97f6db02f73aab9df52b807005c77a77c12e07fdf511f059e05acf73"
     },
     {
       "path": "docs/NATIVE-LIFECYCLE-GATES.md",
@@ -1021,6 +1025,14 @@
     {
       "path": "tools/modding/vortex-agent/native-legacy-rollback-primary.test.mjs",
       "sha256_lf": "65f07d4d2a9fb74f61d971dbfee7c41d9213bacaa54f2333dbe03d800b1a936c"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-level-pivot-inputs.json",
+      "sha256_lf": "206d92960897d5e9b82b9d2d7768de36bfc240b24019b010950beb7f96954c58"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-level-pivot-transaction.test.mjs",
+      "sha256_lf": "007ecf5529cb11b0ea49ab6b67eec2670a6bd1c0a0f51ac9c68b0cb6dc027e1c"
     },
     {
       "path": "tools/modding/vortex-agent/native-lifecycle-handler-patch.test.mjs",
