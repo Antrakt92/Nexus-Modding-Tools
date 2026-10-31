@@ -17,6 +17,9 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Bound HTTP audit-server startup and preserve bind failures instead of waiting
+  indefinitely for `listening`. Test-only cleanup closes the exact owned server;
+  regression coverage includes occupied ports, deadlines and unfinished uploads.
 - Prepare a Vortex transfer-worker join patch: after failure, stop new callbacks
   and wait for started mkdir/copy callbacks before returning the first error to
   cleanup. It preserves normal concurrency and leaves global dependency helpers
