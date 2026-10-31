@@ -20,6 +20,7 @@ is a fallback after an uncertain tracked operation.
 | Native ownership | No replacement, exclusive owner/path reservation and owned cleanup | Missing from the reviewed ordinary host contract |
 | Native activity | [Core-tail diagnostic patch](NATIVE-ACTIVITY-PATCH.md), separate IDs and joined error cleanup | Prepared only; no extractor/process exit proof or native dispatch acknowledgement |
 | Native terminal | Exact intent/job binding and proven extractor/mandatory cleanup completion | Not accepted by the reviewed ordinary host contract |
+| Dispatch data contract | Closed full-plan request and bounded synchronous consumed-ID model with operation/job exclusion | Offline only; caller-provided lifetime claims, no native invocation or persistence |
 | Durable executor | [Fixed native dispatch contract](NATIVE-DISPATCH-CONTRACT.md), one server-owned ID and durable per-effect intents | Not implemented by the data model or diagnostic registry |
 | New local ZIP | Atomic no-clobber import, or separately accepted direct-local contract | Not implemented |
 | Enable/deploy | Reuse existing reviewed operations after accepted disabled installation | Not connected to installation |
