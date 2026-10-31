@@ -1,6 +1,6 @@
 # Assemble the reviewed Vortex source patches
 
-`native-source-series.mjs` applies the fixed sequence of 28 reviewed patches to
+`native-source-series.mjs` applies the fixed sequence of 29 reviewed patches to
 ten original files from Vortex `v2.9.1`, commit
 `c80326367cbe6d96621ad6cf4a5488ef49bac110`. It replaces manually composing separate
 patch chains before compilation. It does not change an installed application or
@@ -131,7 +131,7 @@ original sources; none of these prepared application changes is loaded there.
 
 ## Transfer packet â€” 31 October 2026
 
-The current 28-patch / ten-source graph adds joined staging transfer callbacks,
+The 28-patch / ten-source graph adds joined staging transfer callbacks,
 exclusive copy collision refusal, cleanup-error preservation, staging Settings
 ownership/context checks and report-only interrupted-transfer warnings. The two
 download warning/cleanup patches are included in the exact runtime packet. The
@@ -152,3 +152,23 @@ The TypeScript wrapper could not print Unicode to its CP1252 console after
 writing its successful compiler result; that failed wrapper attempt was retained.
 No compiler configuration or expectation was relaxed. See
 [transfer bounds](NATIVE-STAGING-TRANSFER.md).
+
+## Downloads Settings owner — 31 October 2026
+
+The current 29-patch / ten-source graph adds whole-operation ownership to Downloads
+Settings after the destination-cleanup safeguard. It captures the global download
+pattern and resolved paths before normalization, checks context/marker readback,
+and joins the returned transfer, tag, elevation and reporting tails. The original
+telemetry wrapper is source-tested; diagnostic failures cannot release started
+work early or replace its primary failure.
+
+All 18 new source-backed cases passed, together with the previous 55 transfer
+cases. The exact graph passed its 14 checks. The full renderer TypeScript and
+webpack targets passed with unchanged compiler configuration/lock, and all ten
+final source hashes matched the actual Program and bundle map. Only Downloads
+Settings changed from the qualified 28-patch renderer. The unchanged upstream
+transfer tests retain their separately recorded six-case acceptance.
+
+This is source/build qualification. Native child completion, physical custody,
+main persistence acknowledgement, background download writers and installation
+remain separate gates. The installed Vortex application was not replaced.

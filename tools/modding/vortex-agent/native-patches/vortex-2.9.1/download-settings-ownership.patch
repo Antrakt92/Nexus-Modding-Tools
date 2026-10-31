@@ -1,0 +1,385 @@
+--- a/src/renderer/src/extensions/download_management/views/Settings.tsx
++++ b/src/renderer/src/extensions/download_management/views/Settings.tsx
+@@ -1,5 +1,5 @@
+ import * as path from "path";
+ 
+-import { getErrorMessageOrDefault } from "@vortex/shared";
++import { getErrorCode, getErrorMessageOrDefault, unknownToError } from "@vortex/shared";
+ import PromiseBB from "bluebird";
+ import * as React from "react";
+@@ -64,4 +64,5 @@
+   Content,
+ } from "../../../util/util";
++import InstallManager from "../../mod_management/InstallManager";
+ import getTextMod from "../../mod_management/texts";
+ import { PREMIUM_PATH } from "../../nexus_integration/constants";
+@@ -111,4 +112,15 @@
+   onSetMaxBandwidth: (bps: number) => void;
+   onSetCollectionConcurrency: (enabled: boolean) => void;
++}
++
++interface IDownloadPathOperation {
++  readonly oldSetting: string | undefined;
++  readonly newSetting: string;
++  readonly oldPath: string;
++  readonly newPath: string;
++  readonly activeGameId: string | undefined;
++  readonly activeProfileId: string | undefined;
++  readonly instanceId: string;
++  readonly stagingPath: string | undefined;
+ }
+ 
+@@ -389,10 +401,29 @@
+   };
+ 
+-  private onApply = () => {
+-    getNormalizeFunc(getDownloadPath(this.state.downloadPath)).then((normalize) =>
+-      this.apply(normalize),
+-    );
+-  };
+-
++  private onApply = (): void => {
++    let reported = false;
++    const report = (error: unknown) => {
++      if (reported || error instanceof UserCanceled) return;
++      reported = true;
++      try { this.props.onShowError("Failed to move directories", unknownToError(error), !(error instanceof ProcessCanceled)); }
++      catch { try { log("warn", "Download transfer failure could not be reported"); } catch { /* Reporting only. */ } }
++    };
++    try {
++      void InstallManager.trackNativeLifecycleCall(async () => {
++        const state = this.context.api.getState();
++        const oldSetting = this.props.downloadPath;
++        const newSetting = this.state.downloadPath;
++        const operation: IDownloadPathOperation = Object.freeze({
++          oldSetting, newSetting, oldPath: getDownloadPath(oldSetting), newPath: getDownloadPath(newSetting),
++          activeGameId: selectors.activeGameId(state), activeProfileId: selectors.activeProfileId(state),
++          instanceId: this.props.instanceId, stagingPath: this.props.modsInstallPath,
++        });
++        this.assertDownloadOperation(operation);
++        const normalize = await getNormalizeFunc(operation.newPath);
++        this.assertDownloadOperation(operation);
++        return this.apply(normalize, operation, () => { reported = true; });
++      }).catch(report);
++    } catch (error) { report(error); }
++  };
+   private openUrl = (evt) => {
+     const url = evt.currentTarget.getAttribute("data-url");
+@@ -431,8 +462,24 @@
+   };
+ 
+-  private apply = (normalize: (input: string) => string) => {
++  private assertDownloadOperation(operation: IDownloadPathOperation, committed: boolean = false, marker?: string): void {
++    const state = this.context.api.getState();
++    const setting = state.settings.downloads.path;
++    const profile = state.persistent.profiles[operation.activeProfileId];
++    if (selectors.activeGameId(state) !== operation.activeGameId
++        || selectors.activeProfileId(state) !== operation.activeProfileId
++        || (profile !== undefined && profile.gameId !== operation.activeGameId)
++        || setting !== (committed ? operation.newSetting : operation.oldSetting)
++        || getDownloadPath(setting) !== (committed ? operation.newPath : operation.oldPath)
++        || selectors.installPath(state) !== operation.stagingPath
++        || state.app.instanceId !== operation.instanceId
++        || getSafe(state, ["persistent", "transactions", "transfer", "downloads"], undefined) !== marker) {
++      throw new ProcessCanceled("Download transfer context changed");
++    }
++  }
++
++  private apply = (normalize: (input: string) => string, operation: IDownloadPathOperation, markReported: () => void) => {
+     const { t, onSetDownloadPath, onShowDialog, onShowError, onSetTransfer } = this.props;
+-    const newPath: string = getDownloadPath(this.state.downloadPath);
+-    const oldPath: string = getDownloadPath(this.props.downloadPath);
++    const { newPath, oldPath, newSetting } = operation;
++    this.assertDownloadOperation(operation);
+ 
+     const vortexPath = getVortexPath("application");
+@@ -452,4 +499,5 @@
+       }
+     } catch (err) {
++      if (getErrorCode(err) !== "ENOENT") throw err;
+       // new directory doesn't exist. good
+     }
+@@ -512,21 +560,30 @@
+     };
+ 
++    let primaryFailed = false;
++    let primaryError: unknown;
++    let committed = false;
++    const expectedMarker = oldPath !== newPath ? newPath : undefined;
+     this.nextState.progress = 0;
+     this.nextState.busy = t("Moving");
+-    return withTrackedActivity(
+-      "vortex.downloads",
+-      "downloads.transfer",
+-      {
+-        "downloads.transfer.from": oldPath,
+-        "downloads.transfer.to": newPath,
+-      },
+-      (_setAttribute, _setError) =>
+-        testPathTransfer(oldPath, newPath)
+-          .then(() => fs.ensureDirWritableAsync(newPath, this.confirmElevate))
+-          .then(() => this.checkTargetEmpty(oldPath, newPath))
++    let work: PromiseBB<void> | undefined;
++    const perform = () => {
++      if (work !== undefined) return work;
++      work = PromiseBB.resolve().then(() => {
++        this.assertDownloadOperation(operation);
++        return testPathTransfer(oldPath, newPath);
++      })
++          .then(() => { this.assertDownloadOperation(operation); return fs.ensureDirWritableAsync(newPath, () => {
++            this.assertDownloadOperation(operation);
++            return this.confirmElevate().then(() => { this.assertDownloadOperation(operation); });
++          }); })
++          .then(() => { this.assertDownloadOperation(operation); return this.checkTargetEmpty(oldPath, newPath, operation.instanceId); })
+           .then(() => {
++            this.assertDownloadOperation(operation);
+             if (oldPath !== newPath) {
+               this.nextState.busy = t("Moving download folder");
+-              return this.transferPath().then(() => writeDownloadsTag(this.context.api, newPath));
++              return this.transferPath(operation).then(() => {
++                this.assertDownloadOperation(operation, false, newPath);
++                return writeDownloadsTag(this.context.api, newPath);
++              });
+             } else {
+               return PromiseBB.resolve();
+@@ -534,14 +591,32 @@
+           })
+           .then(() => {
++            this.assertDownloadOperation(operation, false, expectedMarker);
+             onSetTransfer(undefined);
+-            onSetDownloadPath(this.state.downloadPath);
++            this.assertDownloadOperation(operation);
++            onSetDownloadPath(newSetting);
++            committed = true;
++            this.assertDownloadOperation(operation, committed);
+             this.context.api.events.emit("did-move-downloads");
++            this.assertDownloadOperation(operation, committed);
+           })
+-          .catch(UserCanceled, () => null)
+-          .catch(CleanupFailedException, (err) => {
++          .catch((err) => {
++            primaryFailed = true;
++            primaryError = err;
++            let reportedHere = false;
++            return PromiseBB.resolve().then(async () => {
++              if (err instanceof UserCanceled) return;
++              throw err;
++            })
++          .catch(CleanupFailedException, async (err) => {
++            this.assertDownloadOperation(operation, false, expectedMarker);
+             onSetTransfer(undefined);
+-            onSetDownloadPath(this.state.downloadPath);
++            this.assertDownloadOperation(operation);
++            onSetDownloadPath(newSetting);
++            committed = true;
++            this.assertDownloadOperation(operation, committed);
+             this.context.api.events.emit("did-move-downloads");
+-            onShowDialog(
++            this.assertDownloadOperation(operation, committed);
++            reportedHere = true; markReported();
++            await onShowDialog(
+               "info",
+               "Cleanup failed",
+@@ -558,17 +633,20 @@
+             );
+ 
++            this.assertDownloadOperation(operation, committed);
+             if (!(err.errorObject instanceof UserCanceled)) {
+               this.context.api.showErrorNotification("Clean-up failed", err.errorObject);
+             }
+           })
+-          .catch(InsufficientDiskSpace, () => notEnoughDiskSpace())
+-          .catch(UnsupportedOperatingSystem, () =>
++          .catch(InsufficientDiskSpace, async () => { reportedHere = true; markReported(); await notEnoughDiskSpace(); })
++          .catch(UnsupportedOperatingSystem, () => {
++            reportedHere = true; markReported();
+             onShowError(
+               "Unsupported operating system",
+               "This functionality is currently unavailable for your operating system!",
+               false,
+-            ),
+-          )
+-          .catch(NotFound, () =>
++            );
++          })
++          .catch(NotFound, () => {
++            reportedHere = true; markReported();
+             onShowError(
+               "Invalid destination",
+@@ -576,8 +654,10 @@
+                 "destination",
+               false,
+-            ),
+-          )
+-          .catch((err) => {
+-            if (err !== null) {
++            );
++          })
++          .catch((reportError) => {
++            if (reportedHere || reportError !== err) return;
++            if (err !== null && err !== undefined) {
++              reportedHere = true; markReported();
+               if (err.code === "EPERM") {
+                 onShowError("Directories are locked", err, false);
+@@ -620,12 +700,29 @@
+               }
+             }
++          }).finally(() => { throw err; });
+           })
+           .finally(() => {
+             // A failed/canceled transfer may target a nonempty existing folder.
+             // Preserve both its data and pending marker for explicit reconciliation.
+-            this.nextState.busy = undefined;
+-          }),
+-      {},
+-    );
++            try {
++              this.nextState.busy = undefined;
++              this.assertDownloadOperation(operation, committed, committed ? undefined : expectedMarker);
++              if (!primaryFailed && getSafe(this.context.api.getState(), ["persistent", "transactions", "transfer", "downloads"], undefined) !== undefined) {
++                throw new ProcessCanceled("Download transfer requires reconciliation");
++              }
++            } catch (error) { if (primaryFailed) throw primaryError; throw error; }
++          }).then(() => {});
++      return work;
++    };
++    const settleWork = (telemetryFailed: boolean, error?: unknown): PromiseBB<void> => {
++      if (work === undefined) {
++        return PromiseBB.reject(telemetryFailed ? error : new ProcessCanceled("Download transfer callback not observed"));
++      }
++      return work;
++    };
++    return PromiseBB.try(() => withTrackedActivity(
++      "vortex.downloads", "downloads.transfer",
++      { "downloads.transfer.from": oldPath, "downloads.transfer.to": newPath }, perform, {},
++    )).then(() => settleWork(false), (error) => settleWork(true, error));
+   };
+ 
+@@ -643,9 +740,9 @@
+       [{ label: "Cancel" }, { label: "Create as Administrator" }],
+     ).then((result) =>
+-      result.action === "Cancel" ? PromiseBB.reject(new UserCanceled()) : PromiseBB.resolve(),
++      result.action === "Create as Administrator" ? PromiseBB.resolve() : PromiseBB.reject(new UserCanceled()),
+     );
+   };
+ 
+-  private checkTargetEmpty(oldDownloadPath: string, newDownloadPath: string) {
++  private checkTargetEmpty(oldDownloadPath: string, newDownloadPath: string, instanceId: string) {
+     let queue = PromiseBB.resolve();
+     let fileCount = 0;
+@@ -678,13 +775,9 @@
+     }
+     // ensure the destination directories are empty
+-    return queue.then(
+-      () =>
+-        new PromiseBB((resolve, reject) => {
+-          if (fileCount > 0 && tagInstance !== this.props.instanceId) {
+-            if (tagInstance !== undefined) {
+-              return this.props.onShowDialog(
+-                "question",
+-                "Confirm",
+-                {
++    return queue.then(async () => {
++      if (fileCount > 0 && tagInstance !== instanceId) {
++        if (tagInstance !== undefined) {
++          const result = await this.props.onShowDialog(
++            "question", "Confirm", {
+                   text:
+                     "This is an existing download folder for a different Vortex " +
+@@ -695,43 +788,22 @@
+                     'There is no "undo" for this! ' +
+                     "Please continue only if you're absolutely certain.",
+-                },
+-                [
+-                  {
+-                    label: "Cancel",
+-                    action: () => reject(new UserCanceled()),
+-                    default: true,
+-                  },
+-                  { label: "Continue", action: () => resolve() },
+-                ],
+-              );
+-            } else {
+-              this.props.onShowDialog(
+-                "info",
+-                "Invalid Destination",
+-                {
+-                  text: "The destination folder has to be empty",
+-                },
+-                [
+-                  {
+-                    label: "Ok",
+-                    action: () => reject(new UserCanceled()),
+-                    default: true,
+-                  },
+-                ],
+-              );
+-            }
+-          } else {
+-            resolve();
+-          }
+-        }),
+-    );
++            },
++            [{ label: "Cancel", default: true }, { label: "Continue" }],
++          );
++          if (result.action !== "Continue") throw new UserCanceled();
++        } else {
++          await this.props.onShowDialog("info", "Invalid Destination", { text: "The destination folder has to be empty" }, [{ label: "Ok", default: true }]);
++          throw new UserCanceled();
++        }
++      }
++    });
+   }
+ 
+-  private transferPath() {
++  private transferPath(operation: IDownloadPathOperation) {
+     const { t, onSetTransfer, onShowDialog } = this.props;
+-    const oldPath = getDownloadPath(this.props.downloadPath);
+-    const newPath = getDownloadPath(this.state.downloadPath);
+-
++    const { oldPath, newPath } = operation;
++    this.assertDownloadOperation(operation);
+     this.context.api.events.emit("will-move-downloads");
++    this.assertDownloadOperation(operation);
+     let sourceIsMissing = false;
+     return fs
+@@ -747,9 +819,10 @@
+         //  for all these cases, but we may have to add other error codes if different
+         //  error cases pop up.
+-        sourceIsMissing = ["ENOENT", "UNKNOWN"].indexOf(err.code) !== -1;
+-        log("warn", "Transfer failed - missing source directory", err);
++        sourceIsMissing = ["ENOENT", "UNKNOWN"].includes(getErrorCode(err));
++        try { log("warn", "Transfer failed - missing source directory", err); } catch { /* Diagnostic only. */ }
+         return sourceIsMissing ? PromiseBB.resolve(undefined) : PromiseBB.reject(err);
+       })
+       .then((stats) => {
++        this.assertDownloadOperation(operation);
+         const queryReset =
+           stats !== undefined
+@@ -774,11 +847,13 @@
+                 [{ label: "Cancel" }, { label: "Reinitialize" }],
+               ).then((result) =>
+-                result.action === "Cancel"
+-                  ? PromiseBB.reject(new UserCanceled())
+-                  : PromiseBB.resolve(),
++                result.action === "Reinitialize"
++                  ? PromiseBB.resolve()
++                  : PromiseBB.reject(new UserCanceled()),
+               );
+ 
+         return queryReset.then(() => {
++          this.assertDownloadOperation(operation);
+           onSetTransfer(newPath);
++          this.assertDownloadOperation(operation, false, newPath);
+           return transferPath(oldPath, newPath, (from: string, to: string, progress: number) => {
+             log("debug", "transfer downloads", { from, to });
+@@ -790,5 +865,7 @@
+             }
+           }).catch((err) =>
+-            sourceIsMissing && err.path === oldPath ? PromiseBB.resolve() : PromiseBB.reject(err),
++            sourceIsMissing && !(err instanceof UserCanceled) && !(err instanceof ProcessCanceled)
++              && ["ENOENT", "UNKNOWN"].includes(getErrorCode(err)) && err.path === oldPath
++              ? PromiseBB.resolve() : PromiseBB.reject(err),
+           );
+         });

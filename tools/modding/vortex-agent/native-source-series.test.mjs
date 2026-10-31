@@ -88,7 +88,7 @@ test('fixed packet is checked, but an unpinned original can never assemble', () 
 });
 
 test('pinned series closes all fixed nodes, exact source chains and cross-file manager dependencies', () => {
-  assert.equal(series.patches.length, 28); assert.equal(series.files.length, 10);
+  assert.equal(series.patches.length, 29); assert.equal(series.files.length, 10);
   assert.deepEqual([...series.files.map(row => row.path)].sort(), [...NATIVE_SOURCE_PATHS].sort());
   const done = new Map(), current = new Map(series.files.map(row => [row.path, row.originalSHA256]));
   for (const row of series.patches) {
@@ -112,8 +112,8 @@ test('an extra packet file or missing fixed patch fails closed before examining 
   const second = await missing.load(); assert.throws(() => second(dummy()), /^Error: NATIVE_SOURCE_SERIES_PACKET$/);
 });
 
-test('both download safeguards are mandatory and test-only patches stay outside the runtime packet', async t => {
-  const names = ['download-pending-transfer-hold', 'download-transfer-cleanup-hold'];
+test('all download safeguards are mandatory and test-only patches stay outside the runtime packet', async t => {
+  const names = ['download-pending-transfer-hold', 'download-transfer-cleanup-hold', 'download-settings-ownership'];
   for (const name of names) {
     assert.equal(series.patches.filter(row => row.name === name).length, 1);
     for (const suffix of ['.json', '.patch']) {
@@ -186,7 +186,7 @@ integration('all ten final sources equal independent exact application and retur
     assert.equal(sha(result.sources[row.path]), row.finalSHA256);
   }
   assert(Object.isFrozen(result.receipt.sources)); assert(Object.isFrozen(result.receipt.sources[0]));
-  assert(Object.isFrozen(result.receipt.patches[0])); assert.equal(result.receipt.patches.length, 28);
+  assert(Object.isFrozen(result.receipt.patches[0])); assert.equal(result.receipt.patches.length, 29);
   assert.equal(result.receipt.preparedOnly, true);
   for (const flag of ['nativeAdmission', 'effectsAllowed', 'typecheckVerified', 'nativeAcceptanceVerified', 'installed'])
     assert.equal(result.receipt[flag], false);

@@ -1,0 +1,31 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/extensions/download_management/views/Settings.tsx",
+  "originalSourceSHA256": "4a7d38409c276dc8f61f0a2a01e52de8bc47d7e9e1fadcc867812e2c417ee89d",
+  "inputSHA256": "a5d10fefc98115411930cab28b4345d681cb60b51ac16cbe3a44f08c2e24037a",
+  "outputSHA256": "0c47662eaad2bb7c1a5f1fb919bd53ed81050500d19c1bde64e6a3bbe2820faa",
+  "patchSHA256": "a4d93c88955c680ad18b0697517eaf296d5ca0c168bbd3d41d654b37c5d31ed9",
+  "prerequisitePatch": "download-transfer-cleanup-hold.patch",
+  "prerequisitePatchSHA256": "ea32c6feeb28dae5264933757e1c175d5716bfe3c2ce9821b3e7e7f86c7fe14c",
+  "requiredManagerPatchSHA256": "dbcac46a4b9814ee33f899d6d8697e4d3aeb966c2b5f9bda931b12ae3064e9d7",
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "nativeTerminalGuarantee": false,
+  "globalIdleGuarantee": false,
+  "installationPermit": false,
+  "preparedOnly": true,
+  "telemetrySource": {
+    "upstreamPath": "src/renderer/src/util/errorHandling.ts",
+    "sha256": "de1abda61ea25549ee9adde5e87d2ba1532aa644787527796a8433700f2acf01",
+    "testSourceEnvironment": "VORTEX_NATIVE_ERROR_HANDLING_SOURCE"
+  },
+  "limitations": [
+    "Prepared exact source only; full renderer qualification and installed-host acceptance remain separate.",
+    "One shared memory owner covers normalization and all returned Downloads Settings tails. Context assertions do not provide a global lock or physical filesystem custody.",
+    "Copy-complete cleanup failure commits the frozen new setting and clears the marker, then rejects conservatively. No rollback or durable persistence acknowledgement is claimed.",
+    "Background downloads, other writers, native job/registration authority and crash recovery are not implemented."
+  ]
+}
