@@ -104,8 +104,9 @@ Missing source causes explicit skips, not acceptance. No VM is a security sandbo
 
 Full application build/typecheck, import-cycle/renderer acceptance, physical
 filesystem completion and extension-listener termination remain unproved.
-Arbitrary Redux/profile/extension writers and startup incomplete-install cleanup
-are not covered by these patches. Host-wide idle, durable dispatch, new-only
+Arbitrary Redux/profile/extension writers are not covered by these patches.
+[Startup incomplete-install cleanup](NATIVE-STARTUP-CLEANUP.md) has a separate
+prepared ownership patch. Host-wide idle, durable dispatch, new-only
 registration, terminal release and safe keeper/removal still require their gates.
 Never patch the installed app or treat this source preparation as permission to
 run a legacy installer or clear an unresolved journal.

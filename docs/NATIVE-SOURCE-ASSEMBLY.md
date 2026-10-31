@@ -1,6 +1,6 @@
 # Assemble the reviewed Vortex source patches
 
-`native-source-series.mjs` applies the fixed sequence of 20 reviewed patches to
+`native-source-series.mjs` applies the fixed sequence of 21 reviewed patches to
 six original files from Vortex `v2.9.1`, commit
 `c80326367cbe6d96621ad6cf4a5488ef49bac110`. It replaces manually composing separate
 patch chains before compilation. It does not change an installed application or
@@ -120,3 +120,11 @@ workspace's dependency audit also remains separate: its pinned graph reported
 210 advisories, including six critical records, during this qualification.
 Successful compilation does not resolve those advisories or establish runtime
 safety. Source receipts therefore continue to leave native admission disabled.
+
+The subsequent 21-patch series adds
+[startup cleanup ownership](NATIVE-STARTUP-CLEANUP.md). It passed the same
+dependency-aware TypeScript and webpack targets with unchanged official
+configuration and lockfile. All six final source hashes again matched the actual
+Program and webpack map contents. Its combined adapter suite passed 850 tests
+without failures or skips. The installed archive still matches the six official
+original sources; none of these prepared application changes is loaded there.

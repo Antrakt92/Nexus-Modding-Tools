@@ -12,7 +12,9 @@ is a fallback after an uncertain tracked operation.
 
 | Stage | Evidence or deliverable | Current boundary |
 | --- | --- | --- |
-| Native source | Vortex tag `v2.9.1`, commit `c80326367cbe6d96621ad6cf4a5488ef49bac110`; five reviewed installed renderer entries byte-identical to upstream | Source identity, not new native safety APIs |
+| Native source | Vortex tag `v2.9.1`, commit `c80326367cbe6d96621ad6cf4a5488ef49bac110`; six installed renderer entries rechecked byte-identical to the official originals | Current installed package contains the original implementation, not the prepared safety patches |
+| Renderer qualification | [Complete source assembly](NATIVE-SOURCE-ASSEMBLY.md), actual TypeScript and webpack targets, unchanged official compiler configuration/lock and all six sources bound to Program and source-map contents | Isolated development renderer only; no main-process/native ABI, installed loading or registration acceptance |
+| Startup cleanup | [Synchronous cleanup ownership](NATIVE-STARTUP-CLEANUP.md), stop on deletion failure and retain the incomplete-install record | Prepared core path only; no physical cleanup permission, durable crash recovery or installed-host acceptance |
 | Archive seal and temp handoff | [Archive/temp custody](ARCHIVE-TEMP-CUSTODY.md), 35 Windows tests and one actual owned-SDK extraction followed by transfer through the original held root | Normal path with surviving keeper only; crash lifetime, no-clobber extraction and native installation remain unproved |
 | Keeper-crash mechanics | [Controlled Windows process experiment](NATIVE-CRASH-CUSTODY.md), surviving custodian, creation-time Job assignment and exact process/thread takeover | Isolated installed-7z fixture only; no SDK/Vortex launcher integration or arbitrary-supervisor-crash guarantee |
 | Controlled guardian loss | [Process containment and held intent](NATIVE-CRASH-CUSTODY.md#loss-of-the-guardian), suspended/running reader cases and independent journal binding | Isolated fixture; no general crash recovery, successor filesystem permit or native installation |

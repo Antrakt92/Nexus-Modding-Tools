@@ -1,0 +1,51 @@
+--- a/src/renderer/src/extensions/mod_management/index.ts
++++ b/src/renderer/src/extensions/mod_management/index.ts
+@@ -1181,7 +1181,25 @@
+     });
+ }
+ 
+-function cleanupIncompleteInstalls(api: IExtensionApi) {
++function cleanupIncompleteInstalls(api: IExtensionApi): void {
++  const report = (error: unknown) => {
++    try {
++      api.showErrorNotification("Failed to clean up incomplete installations", unknownToError(error), {
++        allowReport: !(error instanceof ProcessCanceled || error instanceof UserCanceled),
++      });
++    } catch {
++      try { log("warn", "Incomplete installation cleanup failure could not be reported"); } catch { /* Reporting only. */ }
++    }
++  };
++  try {
++    // The action runs synchronously; ownership settlement alone uses a microtask.
++    void InstallManager.trackNativeLifecycleCall(() => cleanupIncompleteInstallsTracked(api)).catch(report);
++  } catch (error) {
++    report(error);
++  }
++}
++
++function cleanupIncompleteInstallsTracked(api: IExtensionApi): void {
+   const store: Redux.Store<IState> = api.store;
+ 
+   const { mods } = store.getState().persistent;
+@@ -1203,17 +1221,15 @@
+           try {
+             fs.removeSync(fullPath);
+           } catch (err) {
+-            const code = getErrorCode(err);
+-            if (code !== "ENOENT") {
+-              log("error", "failed to clean up", err);
++            if (getErrorCode(err) !== "ENOENT") {
++              throw err;
+             }
+           }
+           try {
+             fs.removeSync(fullPath + ".installing");
+           } catch (err) {
+-            const code = getErrorCode(err);
+-            if (code !== "ENOENT") {
+-              log("error", "failed to clean up", err);
++            if (getErrorCode(err) !== "ENOENT") {
++              throw err;
+             }
+           }
+         }

@@ -9,7 +9,7 @@ import {applyExact} from './native-patch-test-fixture.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PACKET = path.join(HERE, 'native-patches/vortex-2.9.1');
-const SERIES_SHA256 = '9709581335003820a7f10f305ca62cff6d3b213765de2177b1c9650065f1fba0';
+const SERIES_SHA256 = 'cece9f4851a18672594c61b74b76eb2909ea5d7261396c234f410d75a9c4dad1';
 export const NATIVE_SOURCE_PATHS = Object.freeze([
   'src/renderer/src/extensions/mod_management/eventHandlers.ts',
   'src/renderer/src/extensions/mod_management/index.ts',
@@ -91,7 +91,7 @@ function readPacket() {
   need(sha(raw) === SERIES_SHA256, 'SERIES');
   const series = strict.parseStrictJSON(raw, {maxBytes: 64*1024, maxDepth: 8, maxTokens: 8000});
   need(series.schema === 'native-source-series/1' && series.files.length === 6
-    && series.patches.length === 20 && exact(Object.fromEntries(series.files.map(row => [row.path, true])), NATIVE_SOURCE_PATHS), 'SERIES');
+    && series.patches.length === 21 && exact(Object.fromEntries(series.files.map(row => [row.path, true])), NATIVE_SOURCE_PATHS), 'SERIES');
   const names = series.patches.flatMap(row => [row.name+'.json', row.name+'.patch']).sort();
   const inventory = () => {
     const directory = fs.opendirSync(PACKET), actual = [];
