@@ -1,0 +1,31 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/extensions/mod_management/InstallManager.ts",
+  "originalSourceSHA256": "577d56a8728052069f850face9bb57437dbf2886bd41409fe6a66cfefc08ed33",
+  "prerequisitePatch": "transfer-join.patch",
+  "prerequisitePatchSHA256": "20e5e5bbf5e8a814fc89fbb16f75147d3b7b26b4b3be6f47c3dba6765caf700f",
+  "inputSHA256": "61abf69a0a11579da830a93c04cba7ca7dac36faf090d4685ed026c9bf385480",
+  "outputSHA256": "ab3aa908239f13f753801bdc1c3a4a57da5ec750b3cc67430be3d9429c750f67",
+  "patchSHA256": "baf14e57097fe39f4a42ce5b3bda594e3b90d1f39d27885215b212bf5b300fa3",
+  "scope": "Renderer-class installation-route ownership and opaque permanent exclusion reservation; no dispatch, registration or release API.",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "nativeTerminalGuarantee": false,
+  "globalIdleGuarantee": false,
+  "noReplacementGuarantee": false,
+  "importNoClobberGuarantee": false,
+  "ownerReservationGuarantee": false,
+  "installationPermit": false,
+  "testSourceEnvironment": "VORTEX_NATIVE_INSTALL_MANAGER",
+  "limitations": [
+    "Prepared exact-source only; no full application build, installed host acceptance or installation permit.",
+    "Known manager installation, simulation and dependency routes only; removal/create-mod, deployment and other extensions require separate admission.",
+    "Reservation is permanent for this loaded class; no release, retry, timeout or recovery API.",
+    "Request/durable intent, capability admission and physical path authority remain unproved.",
+    "Renderer reload destroys in-memory ownership; durable reconciliation remains required."
+  ]
+}

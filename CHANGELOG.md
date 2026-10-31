@@ -17,6 +17,10 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Prepare shared install-manager exclusion covering queued installs, simulation,
+  dependencies and their completion tails. Native dispatch and registration
+  remain disabled; this source patch is not an installed application update.
+
 - Add an internal background ZIP worker with original-handle handoff, bounded
   control delivery and immutable operation/job bindings. This runs in own scratch;
   Vortex registration and the public installation endpoint remain unavailable.

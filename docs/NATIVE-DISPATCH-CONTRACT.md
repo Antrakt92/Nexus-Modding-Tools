@@ -129,6 +129,11 @@ exercise local filesystem mechanics, not Vortex or hardware power loss:
 node --test tools/modding/vortex-agent/native-intent-journal.test.mjs tools/modding/vortex-agent/plan-journal.test.mjs
 ```
 
+The [prepared manager exclusion](NATIVE-MANAGER-EXCLUSION.md) now accounts for
+legacy installation/simulation/dependency tails and an opaque permanent renderer-
+class reservation. It is not connected to this dispatch request, supplies no
+release API and does not exclude removal/create-mod or other lifecycle writers.
+
 ### Native invocation remains held
 
 Required order:

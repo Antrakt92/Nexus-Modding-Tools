@@ -1,0 +1,650 @@
+--- a/src/renderer/src/extensions/mod_management/InstallManager.ts
++++ b/src/renderer/src/extensions/mod_management/InstallManager.ts
+@@ -2,6 +2,7 @@
+  * @see docs/mod-management/collections.md - For collections & phased installation documentation
+  */
+ 
++import { randomBytes } from "crypto";
+ import * as os from "os";
+ import * as path from "path";
+ 
+@@ -219,6 +220,7 @@
+ // Interface for tracking active installation information
+ // Diagnostic lifetime is one InstallManager instance, not a durable native API.
+ interface INativeInstallActivity {
++  legacyOwnership: object;
+   nativeJobId: string;
+   state: "queued" | "running" | "settled";
+   coreStarted: boolean;
+@@ -565,6 +567,101 @@
+   //  to inspect the state of ongoing installations
+   private mActiveInstalls: Map<string, IActiveInstallation> = new Map();
+ 
++  // Shared by managers in this loaded renderer class; not a durable host lock.
++  private static mNativeRendererGeneration = `renderer_${randomBytes(16).toString("hex")}`;
++  private static mNativeManagers: Set<InstallManager> = new Set();
++  private static mNativeLegacyCalls: Set<object> = new Set();
++  private static mNativeExclusiveOwner: object | undefined;
++  private static mNativeExclusiveManager: InstallManager | undefined;
++
++  public getNativeInstallExclusion() {
++    return {
++      rendererGeneration: InstallManager.mNativeRendererGeneration,
++      managerScopeId: this.mNativeInstallScopeId,
++      legacyCalls: InstallManager.mNativeLegacyCalls.size,
++      exclusiveHeld: InstallManager.mNativeExclusiveOwner !== undefined,
++      effectsAllowed: false,
++      globalIdleVerified: false,
++    };
++  }
++
++  // Internal reservation only. No listener, dispatch, registration or release API.
++  public reserveNativeInstallExclusion(): object {
++    this.registerNativeManager();
++    if (InstallManager.mNativeExclusiveOwner !== undefined
++        || InstallManager.mNativeLegacyCalls.size !== 0
++        || InstallManager.nativeLegacyStatePending()) {
++      throw new ProcessCanceled("Native installation exclusion busy");
++    }
++    const owner = Object.freeze({});
++    InstallManager.mNativeExclusiveOwner = owner;
++    InstallManager.mNativeExclusiveManager = this;
++    return owner;
++  }
++
++  public checkNativeInstallExclusion(owner: object): void {
++    if (InstallManager.mNativeExclusiveOwner === undefined
++        || InstallManager.mNativeExclusiveOwner !== owner
++        || InstallManager.mNativeExclusiveManager !== this) {
++      throw new ProcessCanceled("Native installation exclusion owner mismatch");
++    }
++  }
++
++  private registerNativeManager(): void {
++    if (!InstallManager.mNativeManagers.has(this)) {
++      if (InstallManager.mNativeManagers.size >= 32) {
++        throw new ProcessCanceled("Native manager capacity exhausted");
++      }
++      InstallManager.mNativeManagers.add(this);
++    }
++  }
++
++  private static nativeLegacyStatePending(): boolean {
++    for (const manager of InstallManager.mNativeManagers) {
++      if (manager.mPendingInstalls.size !== 0 || manager.mActiveInstalls.size !== 0
++          || manager.mNativeInstallActivities.size !== 0
++          || manager.mOptionalDownloadsInFlight.size !== 0) {
++        return true;
++      }
++      for (const key in manager.mDependencyInstalls) {
++        if (Object.prototype.hasOwnProperty.call(manager.mDependencyInstalls, key)) {
++          return true;
++        }
++      }
++    }
++    return false;
++  }
++
++  private beginNativeLegacyCall(): object {
++    if (InstallManager.mNativeExclusiveOwner !== undefined
++        || InstallManager.mNativeLegacyCalls.size >= 4096) {
++      throw new ProcessCanceled("Native installation exclusion held");
++    }
++    this.registerNativeManager();
++    const owner = Object.freeze({});
++    InstallManager.mNativeLegacyCalls.add(owner);
++    return owner;
++  }
++
++  private endNativeLegacyCall(owner: object): void {
++    if (!InstallManager.mNativeLegacyCalls.delete(owner)) {
++      throw new ProcessCanceled("Native installation activity owner mismatch");
++    }
++  }
++
++  private trackNativeLegacyCall<T>(action: () => T): T {
++    const owner = this.beginNativeLegacyCall();
++    // A synchronous throw may follow effects without a joinable tail. Keep it
++    // held; caller callbacks, debug cleanup and timeouts cannot refund ownership.
++    const result = action();
++    if (result !== null && result !== undefined && typeof (result as any).then === "function") {
++      return Promise.resolve(result).finally(() => this.endNativeLegacyCall(owner)) as T;
++    }
++    this.endNativeLegacyCall(owner);
++    return result;
++  }
++
++
+   // Independent of dependency deduplication and debug tracking cleanup.
+   private static mNativeManagerSequence = 0;
+   private mNativeInstallScopeId = InstallManager.allocateNativeInstallScope();
+@@ -627,8 +724,9 @@
+       throw new ProcessCanceled("Native installation sequence collision");
+     }
+     this.mNativeInstallSequence = next;
++    const legacyOwnership = this.beginNativeLegacyCall();
+     const job: INativeInstallActivity = {
+-      nativeJobId, state: "queued", coreStarted: false, coreTailSettled: false,
++      legacyOwnership, nativeJobId, state: "queued", coreStarted: false, coreTailSettled: false,
+       callbackOutcome: "not_observed", coreRejected: false, metadataPending: false,
+     };
+     this.mNativeInstallActivities.set(nativeJobId, job);
+@@ -649,6 +747,7 @@
+         this.mNativeInstallTerminals.delete(oldest.value);
+       }
+     }
++    this.endNativeLegacyCall(job.legacyOwnership);
+   }
+ 
+   private observeNativeInstallMetadata(job: INativeInstallActivity, result: Promise<void>): void {
+@@ -684,6 +783,10 @@
+   );
+ 
+   constructor(api: IExtensionApi, installPath: (gameId: string) => string) {
++    if (InstallManager.mNativeExclusiveOwner !== undefined) {
++      throw new ProcessCanceled("Native installation exclusion held");
++    }
++    this.registerNativeManager();
+     this.mApi = api;
+     this.mGetInstallPath = installPath;
+     this.mNotificationAggregator = new NotificationAggregator(api);
+@@ -691,65 +794,67 @@
+     api.onAsync(
+       "install-from-dependencies",
+       (dependentId: string, rules: IModRule[], recommended: boolean, profileId?: string) => {
+-        profileId =
+-          profileId || lastActiveProfileForGame(api.getState(), activeGameId(api.getState()));
+-        const contextName = recommended ? "install-recommendations" : "install-dependencies";
+-        const batchedContext = getBatchContext(contextName, "", true);
+-        batchedContext?.set("profileId", profileId);
+-        const profile = profileById(api.getState(), profileId);
+-        if (profile === undefined) {
+-          return Promise.reject(new ProcessCanceled("No game active"));
+-        }
+-        const { mods } = api.getState().persistent;
+-        const collection = mods[profile.gameId]?.[dependentId];
+-
+-        if (collection === undefined) {
+-          return Promise.resolve();
+-        }
+-
+-        const instPath = this.mGetInstallPath(profile.gameId);
+-
+-        const filtered = rules.filter(
+-          (iter) => collection.rules?.find((rule) => _.isEqual(iter, rule)) !== undefined,
+-        );
+-
+-        if (recommended) {
+-          return withActivityTracking(
+-            api.store.dispatch,
+-            "installing_dependencies",
+-            dependentId,
+-            this.withDependenciesContext("install-recommendations", profile.id, () =>
+-              this.installRecommendationsImpl(
+-                api,
+-                profile,
+-                profile.gameId,
+-                dependentId,
+-                modName(collection),
+-                filtered,
+-                instPath,
+-                true,
++        return this.trackNativeLegacyCall(() => {
++          profileId =
++            profileId || lastActiveProfileForGame(api.getState(), activeGameId(api.getState()));
++          const contextName = recommended ? "install-recommendations" : "install-dependencies";
++          const batchedContext = getBatchContext(contextName, "", true);
++          batchedContext?.set("profileId", profileId);
++          const profile = profileById(api.getState(), profileId);
++          if (profile === undefined) {
++            return Promise.reject(new ProcessCanceled("No game active"));
++          }
++          const { mods } = api.getState().persistent;
++          const collection = mods[profile.gameId]?.[dependentId];
++
++          if (collection === undefined) {
++            return Promise.resolve();
++          }
++
++          const instPath = this.mGetInstallPath(profile.gameId);
++
++          const filtered = rules.filter(
++            (iter) => collection.rules?.find((rule) => _.isEqual(iter, rule)) !== undefined,
++          );
++
++          if (recommended) {
++            return withActivityTracking(
++              api.store.dispatch,
++              "installing_dependencies",
++              dependentId,
++              this.withDependenciesContext("install-recommendations", profile.id, () =>
++                this.installRecommendationsImpl(
++                  api,
++                  profile,
++                  profile.gameId,
++                  dependentId,
++                  modName(collection),
++                  filtered,
++                  instPath,
++                  true,
++                ),
+               ),
+-            ),
+-          );
+-        } else {
+-          return withActivityTracking(
+-            api.store.dispatch,
+-            "installing_dependencies",
+-            dependentId,
+-            this.withDependenciesContext("install-collections", profile.id, () =>
+-              this.installDependenciesImpl(
+-                api,
+-                profile,
+-                profile.gameId,
+-                dependentId,
+-                modName(collection),
+-                filtered,
+-                instPath,
+-                true,
++            );
++          } else {
++            return withActivityTracking(
++              api.store.dispatch,
++              "installing_dependencies",
++              dependentId,
++              this.withDependenciesContext("install-collections", profile.id, () =>
++                this.installDependenciesImpl(
++                  api,
++                  profile,
++                  profile.gameId,
++                  dependentId,
++                  modName(collection),
++                  filtered,
++                  instPath,
++                  true,
++                ),
+               ),
+-            ),
+-          );
+-        }
++            );
++          }
++        });
+       },
+     );
+ 
+@@ -774,6 +879,9 @@
+     });
+ 
+     api.events.on("did-finish-download", (downloadId: string, state: string) => {
++      if (InstallManager.mNativeExclusiveOwner !== undefined) {
++        return;
++      }
+       if (state === "finished") {
+         const context = getBatchContext("install-recommendations", "");
+         const sourceModId = context?.get?.("sourceModId", null);
+@@ -785,6 +893,14 @@
+   }
+ 
+   private handleDownloadFinished(
++    api: IExtensionApi,
++    downloadId: string,
++    sourceModId?: string,
++  ): boolean {
++    return this.trackNativeLegacyCall(() => this.handleDownloadFinishedLegacyBody(api, downloadId, sourceModId));
++  }
++
++  private handleDownloadFinishedLegacyBody(
+     api: IExtensionApi,
+     downloadId: string,
+     sourceModId?: string,
+@@ -882,6 +998,10 @@
+   }
+ 
+   private handleDownloadFailed(api: IExtensionApi, downloadId: string) {
++    return this.trackNativeLegacyCall(() => this.handleDownloadFailedLegacyBody(api, downloadId));
++  }
++
++  private handleDownloadFailedLegacyBody(api: IExtensionApi, downloadId: string) {
+     const state = api.getState();
+     const download = state.persistent.downloads.files[downloadId];
+ 
+@@ -956,6 +1076,10 @@
+   }
+ 
+   private handleDownloadSkipped(api: IExtensionApi, sourceModId: string, dep: IDependency) {
++    return this.trackNativeLegacyCall(() => this.handleDownloadSkippedLegacyBody(api, sourceModId, dep));
++  }
++
++  private handleDownloadSkippedLegacyBody(api: IExtensionApi, sourceModId: string, dep: IDependency) {
+     if (!sourceModId || !dep) {
+       return;
+     }
+@@ -1166,6 +1290,19 @@
+   }
+ 
+   public simulate(
++    api: IExtensionApi,
++    gameId: string,
++    archivePath: string,
++    tempPath: string,
++    extractList?: IFileListItem[],
++    unattended?: boolean,
++    installChoices?: any,
++    progress?: (entries: string[], percent: number) => void,
++  ): Promise<IInstallResult> {
++    return this.trackNativeLegacyCall(() => this.simulateLegacyBody(api, gameId, archivePath, tempPath, extractList, unattended, installChoices, progress));
++  }
++
++  private simulateLegacyBody(
+     api: IExtensionApi,
+     gameId: string,
+     archivePath: string,
+@@ -2549,6 +2686,17 @@
+     silent: boolean,
+     allowAutoDeploy?: boolean,
+   ): Promise<void> {
++    return this.trackNativeLegacyCall(() => this.installDependenciesLegacyBody(api, profile, gameId, modId, silent, allowAutoDeploy));
++  }
++
++  private installDependenciesLegacyBody(
++    api: IExtensionApi,
++    profile: IProfile,
++    gameId: string,
++    modId: string,
++    silent: boolean,
++    allowAutoDeploy?: boolean,
++  ): Promise<void> {
+     const state: IState = api.store.getState();
+     const mod: IMod = state.persistent.mods[gameId]?.[modId];
+ 
+@@ -2599,6 +2747,15 @@
+   }
+ 
+   public installRecommendations(
++    api: IExtensionApi,
++    profile: IProfile,
++    gameId: string,
++    modId: string,
++  ): Promise<void> {
++    return this.trackNativeLegacyCall(() => this.installRecommendationsLegacyBody(api, profile, gameId, modId));
++  }
++
++  private installRecommendationsLegacyBody(
+     api: IExtensionApi,
+     profile: IProfile,
+     gameId: string,
+@@ -2689,6 +2846,10 @@
+   }
+ 
+   private setModSize(api: IExtensionApi, modId: string, gameId: string): Promise<void> {
++    return this.trackNativeLegacyCall(() => this.setModSizeLegacyBody(api, modId, gameId));
++  }
++
++  private setModSizeLegacyBody(api: IExtensionApi, modId: string, gameId: string): Promise<void> {
+     const state = api.getState();
+     const stagingFolder = installPathForGame(state, gameId);
+     const mod = state.persistent.mods[gameId]?.[modId];
+@@ -2712,6 +2873,10 @@
+    * Clean up pending and active installations for a specific source mod
+    */
+   private cleanupPendingInstalls(sourceModId: string, hard: boolean = false): void {
++    return this.trackNativeLegacyCall(() => this.cleanupPendingInstallsLegacyBody(sourceModId, hard));
++  }
++
++  private cleanupPendingInstallsLegacyBody(sourceModId: string, hard: boolean = false): void {
+     // Clean up pending installs
+     const pendingKeysToRemove = Array.from(this.mPendingInstalls.keys()).filter((key) =>
+       key.includes(sourceModId),
+@@ -2766,6 +2931,18 @@
+     recommended: boolean,
+     phase: number = 0,
+   ): void {
++    return this.trackNativeLegacyCall(() => this.queueInstallationLegacyBody(api, dep, downloadId, gameId, sourceModId, recommended, phase));
++  }
++
++  private queueInstallationLegacyBody(
++    api: IExtensionApi,
++    dep: IDependency,
++    downloadId: string,
++    gameId: string,
++    sourceModId: string,
++    recommended: boolean,
++    phase: number = 0,
++  ): void {
+     this.mPhaseTracker.ensure(sourceModId);
+     const phaseState = this.mPhaseTracker.get(sourceModId);
+     const phaseNum = phase ?? 0;
+@@ -2836,6 +3013,19 @@
+     recommended: boolean,
+     phase: number,
+   ): void {
++    void this.trackNativeLegacyCall(() => this.startQueuedInstallationLegacyBody(api, dep, downloadId, gameId, sourceModId, recommended, phase))
++      .catch(() => { /* Existing dependency reporter already observed failure. */ });
++  }
++
++  private startQueuedInstallationLegacyBody(
++    api: IExtensionApi,
++    dep: IDependency,
++    downloadId: string,
++    gameId: string,
++    sourceModId: string,
++    recommended: boolean,
++    phase: number,
++  ): Promise<void> {
+     const phaseState = this.mPhaseTracker.get(sourceModId);
+     const installKey = this.generateDependencyInstallKey(sourceModId, downloadId);
+     this.mPendingInstalls.set(installKey, dep);
+@@ -2851,7 +3041,7 @@
+     // whole pipeline deadlocks. The actual install concurrency is already capped at
+     // MAX_SIMULTANEOUS_INSTALLS by that inner mInstallLimit; this outer limiter only bounds
+     // how many downloaded dependencies are orchestrated/queued ahead.
+-    this.mDependencyPipelineLimit
++    return this.mDependencyPipelineLimit
+       .do(async () => {
+         const startTime = Date.now();
+ 
+@@ -3177,6 +3367,10 @@
+   private mOptionalDownloadsInFlight = new Set<string>();
+ 
+   private pollAllPhasesComplete(api: IExtensionApi, sourceModId: string): Promise<void> {
++    return this.trackNativeLegacyCall(() => this.pollAllPhasesCompleteLegacyBody(api, sourceModId));
++  }
++
++  private pollAllPhasesCompleteLegacyBody(api: IExtensionApi, sourceModId: string): Promise<void> {
+     const POLL_MS = 500;
+     // If no progress (new mods reaching terminal state) is made for this
+     // duration, attempt a rescue (force-clean stuck installs + requeue).
+@@ -3358,6 +3552,16 @@
+   }
+ 
+   public pollPhaseSettlement(
++    api: IExtensionApi,
++    sourceModId: string,
++    options: {
++      phase?: number; // Specific phase to poll (for deploy)
++    },
++  ): Promise<void> {
++    return this.trackNativeLegacyCall(() => this.pollPhaseSettlementLegacyBody(api, sourceModId, options));
++  }
++
++  private pollPhaseSettlementLegacyBody(
+     api: IExtensionApi,
+     sourceModId: string,
+     options: {
+@@ -3651,6 +3855,15 @@
+     allMods: ICollectionModInstallInfo[],
+     currentPhase: number,
+   ): void {
++    return this.trackNativeLegacyCall(() => this.reQueueDownloadedModsLegacyBody(api, sourceModId, allMods, currentPhase));
++  }
++
++  private reQueueDownloadedModsLegacyBody(
++    api: IExtensionApi,
++    sourceModId: string,
++    allMods: ICollectionModInstallInfo[],
++    currentPhase: number,
++  ): void {
+     const phaseState = this.mPhaseTracker.get(sourceModId);
+     if (!phaseState) {
+       return;
+@@ -3784,6 +3997,10 @@
+   }
+ 
+   public markPhaseDeployed(sourceModId: string, phase: number): void {
++    return this.trackNativeLegacyCall(() => this.markPhaseDeployedLegacyBody(sourceModId, phase));
++  }
++
++  private markPhaseDeployedLegacyBody(sourceModId: string, phase: number): void {
+     this.mPhaseTracker.ensure(sourceModId);
+     const phaseState = this.mPhaseTracker.get(sourceModId);
+     phaseState.deployedPhases.add(phase);
+@@ -3791,6 +4008,15 @@
+ 
+   // Schedule a deploy once all installers for a specific phase have finished
+   public scheduleDeployOnPhaseSettled(
++    api: IExtensionApi,
++    sourceModId: string,
++    phase: number,
++    deployOnSettle?: boolean,
++  ): Promise<void> | undefined {
++    return this.trackNativeLegacyCall(() => this.scheduleDeployOnPhaseSettledLegacyBody(api, sourceModId, phase, deployOnSettle));
++  }
++
++  private scheduleDeployOnPhaseSettledLegacyBody(
+     api: IExtensionApi,
+     sourceModId: string,
+     phase: number,
+@@ -3863,6 +4089,10 @@
+    * denominator instead of stalling.
+    */
+   private driveSelectedOptionals(api: IExtensionApi, sourceModId: string): void {
++    return this.trackNativeLegacyCall(() => this.driveSelectedOptionalsLegacyBody(api, sourceModId));
++  }
++
++  private driveSelectedOptionalsLegacyBody(api: IExtensionApi, sourceModId: string): void {
+     const state = api.getState();
+     const session = getCollectionActiveSession(state);
+     if (session === undefined || session.collectionId !== sourceModId) {
+@@ -3952,6 +4182,10 @@
+    * ordering themselves (see admitSettledOptionalPhase).
+    */
+   private markPhaseDownloadsFinished(sourceModId: string, phase: number, api: IExtensionApi) {
++    return this.trackNativeLegacyCall(() => this.markPhaseDownloadsFinishedLegacyBody(sourceModId, phase, api));
++  }
++
++  private markPhaseDownloadsFinishedLegacyBody(sourceModId: string, phase: number, api: IExtensionApi) {
+     this.mPhaseTracker.ensure(sourceModId);
+     const state = this.mPhaseTracker.get(sourceModId);
+     state.downloadsFinished.add(phase);
+@@ -3972,6 +4206,10 @@
+   }
+ 
+   private startPendingForPhase(sourceModId: string, phase: number) {
++    return this.trackNativeLegacyCall(() => this.startPendingForPhaseLegacyBody(sourceModId, phase));
++  }
++
++  private startPendingForPhaseLegacyBody(sourceModId: string, phase: number) {
+     const phaseState = this.mPhaseTracker.get(sourceModId);
+     if (!phaseState) {
+       // Phase state was cleaned up, nothing to start
+@@ -4030,6 +4268,10 @@
+    * reconstructs as terminal.
+    */
+   private admitSettledOptionalPhase(sourceModId: string, api: IExtensionApi): void {
++    return this.trackNativeLegacyCall(() => this.admitSettledOptionalPhaseLegacyBody(sourceModId, api));
++  }
++
++  private admitSettledOptionalPhaseLegacyBody(sourceModId: string, api: IExtensionApi): void {
+     const phaseState = this.mPhaseTracker.get(sourceModId);
+     // already admitted - skip the scan, which would otherwise repeat on every 500ms tick
+     if (phaseState === undefined || phaseState.downloadsFinished.has(OPTIONAL_PHASE)) {
+@@ -4079,6 +4321,10 @@
+    * (terminal, revertible on retry) so the collection completes visibly ("N mods failed").
+    */
+   private failOutstandingMembers(api: IExtensionApi, sourceModId: string): void {
++    return this.trackNativeLegacyCall(() => this.failOutstandingMembersLegacyBody(api, sourceModId));
++  }
++
++  private failOutstandingMembersLegacyBody(api: IExtensionApi, sourceModId: string): void {
+     const session = getCollectionActiveSession(api.getState());
+     if (session === undefined || session.collectionId !== sourceModId) {
+       return;
+@@ -4098,6 +4344,10 @@
+   }
+ 
+   private maybeAdvancePhase(sourceModId: string, api: IExtensionApi) {
++    return this.trackNativeLegacyCall(() => this.maybeAdvancePhaseLegacyBody(sourceModId, api));
++  }
++
++  private maybeAdvancePhaseLegacyBody(sourceModId: string, api: IExtensionApi) {
+     const state = this.mApi.getState();
+     const phaseState = this.mPhaseTracker.get(sourceModId);
+     if (!phaseState) {
+@@ -4209,6 +4459,10 @@
+    * dependency installs would fail.
+    */
+   private repairRules(api: IExtensionApi, mod: IMod, gameId: string) {
++    return this.trackNativeLegacyCall(() => this.repairRulesLegacyBody(api, mod, gameId));
++  }
++
++  private repairRulesLegacyBody(api: IExtensionApi, mod: IMod, gameId: string) {
+     const state: IState = api.store.getState();
+     const mods = state.persistent.mods[gameId];
+ 
+@@ -7424,6 +7678,19 @@
+     installPath: string,
+     silent: boolean,
+   ): Promise<void> {
++    return this.trackNativeLegacyCall(() => this.installDependenciesImplLegacyBody(api, profile, gameId, modId, name, rules, installPath, silent));
++  }
++
++  private installDependenciesImplLegacyBody(
++    api: IExtensionApi,
++    profile: IProfile,
++    gameId: string,
++    modId: string,
++    name: string,
++    rules: IModRule[],
++    installPath: string,
++    silent: boolean,
++  ): Promise<void> {
+     const filteredRules = filterDependencyRules(rules);
+ 
+     if (filteredRules.length === 0) {
+@@ -7605,6 +7872,19 @@
+   }
+ 
+   private installRecommendationsImpl(
++    api: IExtensionApi,
++    profile: IProfile,
++    gameId: string,
++    modId: string,
++    name: string,
++    rules: IRule[],
++    installPath: string,
++    silent: boolean,
++  ): Promise<void> {
++    return this.trackNativeLegacyCall(() => this.installRecommendationsImplLegacyBody(api, profile, gameId, modId, name, rules, installPath, silent));
++  }
++
++  private installRecommendationsImplLegacyBody(
+     api: IExtensionApi,
+     profile: IProfile,
+     gameId: string,
+@@ -8143,6 +8423,15 @@
+     ruleId?: string,
+     sourceModId?: string,
+   ): void {
++    return this.trackNativeLegacyCall(() => this.writeCollectionSessionLegacyBody(reference, outcome, ruleId, sourceModId));
++  }
++
++  private writeCollectionSessionLegacyBody(
++    reference: IModReference,
++    outcome: CollectionInstallOutcome,
++    ruleId?: string,
++    sourceModId?: string,
++  ): void {
+     const plan = sessionWriteForDependency(this.mApi.getState(), reference, outcome, ruleId);
+     if (plan === null) {
+       this.warnUnmatchedSessionWrite(reference, outcome, ruleId, sourceModId);
