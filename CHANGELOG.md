@@ -17,6 +17,9 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Add opt-in Windows custody tests with a separate surviving custodian and a
+  controlled caller crash. Document the observed early-release gap in child-only
+  handle inheritance; SDK/Vortex integration and general recovery remain unproved.
 - Add internal archive/temp custody and handoff through the original held
   directory handle. Windows tests and an actual 7z fixture cover the normal path;
   crash custody, no-clobber extraction and Vortex installation remain unproved.

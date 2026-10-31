@@ -80,3 +80,9 @@ verified the payload by hash/readback and refused early parent close. Sharing
 fences remained through borrower close and were released after explicit parent
 close. This proves normal-path compatibility with a surviving keeper. It does
 not establish crash lifetime, a rebuilt Vortex package or native installation.
+
+A separate [controlled caller-crash experiment](NATIVE-CRASH-CUSTODY.md) tests
+a surviving custodian in a fixed Win32 launcher. Child-only inherited handles
+were rejected after an observed early-release gap. That launcher is not yet
+connected to the SDK or Vortex; it does not upgrade this lease into an
+extractor-terminal or crash-recovery authority.
