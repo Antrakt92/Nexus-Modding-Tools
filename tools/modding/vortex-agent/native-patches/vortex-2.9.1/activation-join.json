@@ -1,0 +1,24 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/extensions/mod_management/util/activationStore.ts",
+  "originalSourceSHA256": "2232eb8d10050aa0fa53b44061f1114f27df4a88fb8c919a5c19f3a1b3cd0734",
+  "inputSHA256": "2232eb8d10050aa0fa53b44061f1114f27df4a88fb8c919a5c19f3a1b3cd0734",
+  "outputSHA256": "c6c86dd6a84a4925a30954d140972d26a37a12153004ed5f07bc63d3bdb655f6",
+  "patchSHA256": "097f02e0ecb437b3f147de385a58071557a93c8827db4520aaaf370d87a18785",
+  "scope": "Join every already-started deployed-file stat/unlink operation before settling the purge.",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "nativeTerminalGuarantee": false,
+  "globalIdleGuarantee": false,
+  "noReplacementGuarantee": false,
+  "testSourceEnvironment": "VORTEX_NATIVE_ACTIVATION_SOURCE",
+  "limitations": [
+    "Exact source patch only; no installed Vortex or upstream cache is changed.",
+    "First observed rejection is preserved; synchronous startup failure stops further starts and joins earlier operations.",
+    "Joining this batch does not prove native descendants, extension listeners, unrelated filesystem work or host-global quiescence."
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/extensions/mod_management/util/deploy.ts",
+  "originalSourceSHA256": "f877affe50d147620e3fb5fb010e84410fac1192a678d76f3408643b88e4fae2",
+  "inputSHA256": "f877affe50d147620e3fb5fb010e84410fac1192a678d76f3408643b88e4fae2",
+  "outputSHA256": "4500ed7578015989281edc6492f5b7e651a3ede533e892912b579909a7638e26",
+  "patchSHA256": "fe4d6d56f153ddc4f142034dd907f4d5c7d075c806839e1e534f73270b1fa575",
+  "scope": "Join started purge manifest/recovery operations and preserve the first relevant failure through post-purge and final notification/activity cleanup.",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "nativeTerminalGuarantee": false,
+  "globalIdleGuarantee": false,
+  "noReplacementGuarantee": false,
+  "testSourceEnvironment": "VORTEX_NATIVE_DEPLOY_SOURCE",
+  "limitations": [
+    "Exact source patch only; no installed Vortex or upstream cache is changed.",
+    "First observed rejection is preserved; synchronous startup failure stops further starts and joins earlier operations.",
+    "Joining this batch does not prove native descendants, extension listeners, unrelated filesystem work or host-global quiescence.",
+    "Non-cancellation purge failures remain primary if recovery also fails; a recovery failure replaces an otherwise swallowed ProcessCanceled.",
+    "The primary operation or recovery failure survives postPurge and final cleanup; filterManifest internal read tails remain unchanged."
+  ]
+}

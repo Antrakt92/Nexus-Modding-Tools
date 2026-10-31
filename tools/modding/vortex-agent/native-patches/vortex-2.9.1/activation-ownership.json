@@ -1,0 +1,26 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/extensions/mod_management/util/activationStore.ts",
+  "originalSourceSHA256": "2232eb8d10050aa0fa53b44061f1114f27df4a88fb8c919a5c19f3a1b3cd0734",
+  "prerequisitePatch": "activation-join.patch",
+  "prerequisitePatchSHA256": "097f02e0ecb437b3f147de385a58071557a93c8827db4520aaaf370d87a18785",
+  "inputSHA256": "c6c86dd6a84a4925a30954d140972d26a37a12153004ed5f07bc63d3bdb655f6",
+  "outputSHA256": "580490862738a404e204755c05aa3ed203248141297561d86a1a59d4ee71050b",
+  "patchSHA256": "b4deb74b1ea49c94a8b751698a9569eec85055f913a8c14b8c9c418de22f5f75",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "globalIdleGuarantee": false,
+  "nativeTerminalGuarantee": false,
+  "installationPermit": false,
+  "limitations": [
+    "Exact-source preparation only; no full application build or installed renderer acceptance.",
+    "Uses same manager activity set; rejection and unknown startup remain held.",
+    "Arbitrary Redux/extension writers and hidden imported helper tails remain separate gates.",
+    "No durable native dispatch, new-mod registration, release or cleanup permit."
+  ],
+  "requiredManagerPatchSHA256": "dbcac46a4b9814ee33f899d6d8697e4d3aeb966c2b5f9bda931b12ae3064e9d7"
+}

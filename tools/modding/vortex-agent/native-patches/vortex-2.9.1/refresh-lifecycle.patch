@@ -1,0 +1,249 @@
+--- a/src/renderer/src/extensions/mod_management/eventHandlers.ts
++++ b/src/renderer/src/extensions/mod_management/eventHandlers.ts
+@@ -173,16 +173,17 @@
+   const deployments: { [typeId: string]: IDeployedFile[] } = {};
+ 
+   try {
+-    await Promise.all(
+-      Object.keys(modPaths).map((modType) =>
++    await joinNativeLifecycle(
++      Object.keys(modPaths), (modType) =>
+         getManifest(api, modType, gameId).then((manifest) => {
+           manifests[modType] = manifest;
+           deployments[modType] = manifest.files;
+         }),
+-      ),
+     );
+     await api.emitAndAwait("will-purge", profile.id, deployments);
+     await oldActivator.prePurge(instPath);
++    let primaryFailed = false;
++    let primaryError: unknown;
+     try {
+       // sequential: purge order matters per mod type
+       for (const typeId of Object.keys(modPaths)) {
+@@ -208,8 +209,8 @@
+         }
+       }
+       // save (empty) activation - parallel is fine here, no ordering dependency
+-      await Promise.all(
+-        Object.keys(modPaths).map((typeId) =>
++      await joinNativeLifecycle(
++        Object.keys(modPaths), (typeId) =>
+           saveActivation(
+             gameId,
+             typeId,
+@@ -219,24 +220,35 @@
+             [],
+             oldActivator.id,
+           ),
+-        ),
+       );
++    } catch (error) {
++      primaryFailed = true;
++      primaryError = error;
+     } finally {
+-      await oldActivator.postPurge();
+-    }
++      try {
++        await oldActivator.postPurge();
++      } catch (error) {
++        if (!primaryFailed) throw error;
++      }
++    }
++    if (primaryFailed) throw primaryError;
+   } catch (err) {
+     if (err instanceof ProcessCanceled) {
+-      return;
+-    }
+-    if (err instanceof TemporaryError) {
+-      api.showErrorNotification("Purge failed, please try again", err.message, {
+-        allowReport: false,
+-      });
+-      return;
+-    }
+-    api.showErrorNotification("Purge failed", err, {
+-      allowReport: ["ENOENT", "ENOTFOUND"].indexOf(getErrorCode(err)) !== -1,
+-    });
++      throw err;
++    }
++    try {
++      if (err instanceof TemporaryError) {
++        api.showErrorNotification("Purge failed, please try again", err.message, {
++          allowReport: false,
++        });
++      } else {
++        api.showErrorNotification("Purge failed", err, {
++          allowReport: ["ENOENT", "ENOTFOUND"].indexOf(getErrorCode(err)) !== -1,
++        });
++      }
++    } finally {
++      throw err;
++    }
+   }
+ }
+ 
+@@ -268,6 +280,30 @@
+   activators: IDeploymentMethod[],
+   newGame: string,
+ ) {
++  const report = (error: unknown) => {
++    try {
++      showError(api.store.dispatch, "Refresh operation refused", unknownToError(error), {
++        allowReport: !(error instanceof ProcessCanceled || error instanceof UserCanceled),
++      });
++    } catch { /* Notification failure cannot release uncertain ownership. */ }
++  };
++  try {
++    void InstallManager.trackNativeLifecycleCall(() => {
++      try { return onGameModeActivatedTracked(api, activators, newGame); } catch (error) {
++        report(error);
++        throw error;
++      }
++    }).catch(() => { /* Existing tail reports asynchronous errors; ownership remains held. */ });
++  } catch (error) {
++    report(error);
++  }
++}
++
++function onGameModeActivatedTracked(
++  api: IExtensionApi,
++  activators: IDeploymentMethod[],
++  newGame: string,
++): Promise<void> | void {
+   // TODO: This function is a monster and needs to be refactored desperately, unfortunately
+   //   it's also sensitive code
+   const store = api.store;
+@@ -447,9 +483,8 @@
+                 : Promise.resolve(),
+             )
+             .catch((err) => {
+-              if (!(err instanceof ProcessCanceled)) {
+-                throw err;
+-              }
++              // A canceled purge is still a failed refresh prerequisite.
++              throw err;
+             });
+       }
+ 
+@@ -478,7 +513,7 @@
+   }
+ 
+   const knownMods: { [modId: string]: IMod } = getSafe(state, ["persistent", "mods", gameId], {});
+-  initProm()
++  return initProm()
+     .then(() =>
+       refreshMods(
+         api,
+@@ -493,24 +528,29 @@
+     )
+     .then(() => {
+       api.events.emit("mods-refreshed");
+-      return null;
++      return;
+     })
+     .catch((err: Error) => {
+-      if (err instanceof UserCanceled) return undefined;
+-      if (err instanceof ProcessCanceled) {
+-        log("warn", "Failed to refresh mods", getErrorMessageOrDefault(err));
+-        return;
+-      }
+-      if (err instanceof VortexError && err.data.kind === "fs:not-found") {
+-        // reconciling against a folder Vortex can't see would list every mod as
+-        // removed, so reconciliation is skipped
+-        showError(store.dispatch, "Staging folder is not available", err, { allowReport: false });
+-        return;
+-      }
+-      const error: any = err as any;
+-      const allowReport =
+-        error.allowReport !== undefined ? error.allowReport : !["ENOENT"].includes(error.code);
+-      showError(store.dispatch, "Failed to refresh mods", err, { allowReport });
++      try {
++        if (err instanceof UserCanceled) throw err;
++        if (err instanceof ProcessCanceled) {
++          log("warn", "Failed to refresh mods", getErrorMessageOrDefault(err));
++          throw err;
++        }
++        if (err instanceof VortexError && err.data.kind === "fs:not-found") {
++          // reconciling against a folder Vortex can't see would list every mod as
++          // removed, so reconciliation is skipped
++          showError(store.dispatch, "Staging folder is not available", err, { allowReport: false });
++          throw err;
++        }
++        const error: any = err as any;
++        const allowReport =
++          error.allowReport !== undefined ? error.allowReport : !["ENOENT"].includes(error.code);
++        showError(store.dispatch, "Failed to refresh mods", err, { allowReport });
++        throw err;
++      } finally {
++        throw err;
++      }
+     });
+ }
+ 
+@@ -519,13 +559,37 @@
+   previous: { [gameId: string]: string },
+   current: { [gameId: string]: string },
+ ) {
++  const report = (error: unknown) => {
++    try {
++      showError(api.store.dispatch, "Refresh operation refused", unknownToError(error), {
++        allowReport: !(error instanceof ProcessCanceled || error instanceof UserCanceled),
++      });
++    } catch { /* Notification failure cannot release uncertain ownership. */ }
++  };
++  try {
++    void InstallManager.trackNativeLifecycleCall(() => {
++      try { return onPathsChangedTracked(api, previous, current); } catch (error) {
++        report(error);
++        throw error;
++      }
++    }).catch(() => { /* Existing tail reports asynchronous errors; ownership remains held. */ });
++  } catch (error) {
++    report(error);
++  }
++}
++
++function onPathsChangedTracked(
++  api: IExtensionApi,
++  previous: { [gameId: string]: string },
++  current: { [gameId: string]: string },
++): Promise<void> | void {
+   const { store } = api;
+   const state = store.getState();
+   const profile = activeProfile(state);
+   const gameMode = profile?.gameId;
+   if (gameMode !== undefined && previous[gameMode] !== current[gameMode]) {
+     const knownMods = state.persistent.mods[gameMode] ?? {};
+-    refreshMods(
++    return refreshMods(
+       api,
+       gameMode,
+       installPath(state),
+@@ -535,15 +599,20 @@
+     )
+       .then(() => updateDeploymentMethod(api, profile))
+       .catch((err: Error) => {
+-        if (err instanceof VortexError && err.data.kind === "fs:not-found") {
+-          showError(store.dispatch, "Staging folder is not available", err, {
+-            allowReport: false,
++        try {
++          if (err instanceof VortexError && err.data.kind === "fs:not-found") {
++            showError(store.dispatch, "Staging folder is not available", err, {
++              allowReport: false,
++            });
++            throw err;
++          }
++          showError(store.dispatch, "Failed to refresh mods", err, {
++            allowReport: !(err instanceof UserCanceled),
+           });
+-          return;
++          throw err;
++        } finally {
++          throw err;
+         }
+-        showError(store.dispatch, "Failed to refresh mods", err, {
+-          allowReport: !(err instanceof UserCanceled),
+-        });
+       });
+   }
+ }

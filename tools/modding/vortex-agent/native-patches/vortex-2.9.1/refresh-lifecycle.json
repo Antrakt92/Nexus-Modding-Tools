@@ -1,0 +1,27 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/extensions/mod_management/eventHandlers.ts",
+  "originalSourceSHA256": "c45773ac110808acb3a3bf79bdcb1b3cab1ef498c6ddfdf7c29f11abb60733eb",
+  "prerequisitePatch": "lifecycle-handler-ownership.patch",
+  "prerequisitePatchSHA256": "3e754806735e77d2522a5bc25c554ac9ebfef41b2be0679c83bf0cb0370b82b0",
+  "inputSHA256": "56e3d15ce63e4617ef5aeb475a5cdef41709c49d84352e43b9dca5168512b0e6",
+  "outputSHA256": "ec749f966eaa909fdcb7c5efba24da758174bc0d00978ff078165849ccb2023b",
+  "patchSHA256": "4dedbd7082685052f440e7dcfd41af83d7c41eeab9bede69a55b39ce413d3902",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "nativeTerminalGuarantee": false,
+  "globalIdleGuarantee": false,
+  "noReplacementGuarantee": false,
+  "ownerReservationGuarantee": false,
+  "installationPermit": false,
+  "limitations": [
+    "Prepared exact-source only; no full application build or installed acceptance.",
+    "Public void refresh handlers retain their returned asynchronous chains through the shared lifecycle bridge; any rejection remains held.",
+    "Only local purgeOldMethod batches are joined; imported refreshMods, purgeMods, staging and extension internals remain separate source/termination gates.",
+    "No dispatch, registration, release, filesystem ownership or native installation permit."
+  ]
+}

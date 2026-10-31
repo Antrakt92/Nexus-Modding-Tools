@@ -58,8 +58,10 @@ this handling does not cancel the upstream download itself.
 
 This covers the reviewed installation manager, not all lifecycle effects.
 The [paired lifecycle handler patches](NATIVE-LIFECYCLE-HANDLERS.md) prepare
-shared admission for `onRemoveMods` and `onAddMod/create-mod`. General deployment,
-Redux writes, extension hooks and other extensions still need shared admission. A permanent class
+shared admission for `onRemoveMods` and `onAddMod/create-mod`.
+The [deployment/purge/refresh additions](NATIVE-DEPLOYMENT-LIFECYCLE.md) prepare
+shared ownership for their known core routes. Arbitrary Redux writes, extension
+hooks and other extensions still need independent admission. A permanent class
 reservation does not reserve staging directories or prove file ownership.
 
 The next integration must bind original request/job/packet/lifetime to the durable

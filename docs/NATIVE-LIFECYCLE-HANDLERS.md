@@ -49,6 +49,10 @@ suppression; the ownership hold remains separate from notification policy.
 
 ## Remaining lifecycle gates
 
+The [prepared deployment/purge/refresh stage](NATIVE-DEPLOYMENT-LIFECYCLE.md)
+addresses the core queue, writer and refresh dependencies below. It remains
+source preparation, with native/imported-helper acceptance still open.
+
 This is not host-wide exclusion. General deployment, purge, refresh/profile changes,
 Redux writers and asynchronous extension listeners still require integration.
 The source audit identified these next dependencies:

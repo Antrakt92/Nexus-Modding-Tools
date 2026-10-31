@@ -1,0 +1,108 @@
+--- a/src/renderer/src/extensions/mod_management/util/activationStore.ts
++++ b/src/renderer/src/extensions/mod_management/util/activationStore.ts
+@@ -1,4 +1,5 @@
++import InstallManager from "../InstallManager";
+ import * as path from "path";
+ 
+ import type msgpackT from "@msgpack/msgpack";
+ import { getErrorCode, getErrorMessageOrDefault, unknownToError } from "@vortex/shared";
+@@ -124,8 +125,16 @@
+   }
+ }
+ 
+ export function purgeDeployedFiles(basePath: string, files: IDeployedFile[]): Promise<void> {
++  try {
++    return InstallManager.trackNativeLifecycleCall(() => purgeDeployedFilesTracked(basePath, files));
++  } catch (error) {
++    return Promise.reject(error);
++  }
++}
++
++function purgeDeployedFilesTracked(basePath: string, files: IDeployedFile[]): Promise<void> {
+   return joinPurgeOperations(
+     files.map((file) => () => {
+       const fullPath = path.join(basePath, file.relPath);
+       return fs
+@@ -298,8 +307,23 @@
+   modType: string,
+   deployPath: string,
+   stagingPath: string,
+ ): Promise<void> {
++  try {
++    return InstallManager.trackNativeLifecycleCall(() => fallbackPurgeTypeTracked(api, activator, gameId, modType, deployPath, stagingPath));
++  } catch (error) {
++    return Promise.reject(error);
++  }
++}
++
++function fallbackPurgeTypeTracked(
++  api: IExtensionApi,
++  activator: IDeploymentMethod,
++  gameId: string,
++  modType: string,
++  deployPath: string,
++  stagingPath: string,
++): Promise<void> {
+   const state: IState = api.store.getState();
+   const typeTag = modType !== undefined && modType.length > 0 ? modType + "." : "";
+   const tagFileName = `vortex.deployment.${typeTag}json`;
+   const tagFilePath = path.join(deployPath, tagFileName);
+@@ -342,8 +366,16 @@
+ /**
+  * purge files using information from the manifest
+  */
+ export async function fallbackPurge(api: IExtensionApi, gameId?: string): Promise<void> {
++  try {
++    return InstallManager.trackNativeLifecycleCall(() => fallbackPurgeTracked(api, gameId));
++  } catch (error) {
++    return Promise.reject(error);
++  }
++}
++
++async function fallbackPurgeTracked(api: IExtensionApi, gameId?: string): Promise<void> {
+   const state: IState = api.store.getState();
+   if (gameId === undefined) {
+     gameId = activeGameId(state);
+   }
+@@ -363,8 +395,16 @@
+ 
+ const activationQueue = makeQueue();
+ 
+ export function withActivationLock(func: () => PromiseLike<any>, tryOnly: boolean = false) {
++  try {
++    return InstallManager.trackNativeLifecycleCall(() => withActivationLockTracked(func, tryOnly));
++  } catch (error) {
++    return Promise.reject(error);
++  }
++}
++
++function withActivationLockTracked(func: () => PromiseLike<any>, tryOnly: boolean = false) {
+   return activationQueue(func, tryOnly);
+ }
+ 
+ /**
+@@ -479,8 +519,24 @@
+   stagingPath: string,
+   activation: IDeployedFile[],
+   activatorId?: string,
+ ) {
++  try {
++    return InstallManager.trackNativeLifecycleCall(() => saveActivationTracked(gameId, modType, instance, gamePath, stagingPath, activation, activatorId));
++  } catch (error) {
++    return Promise.reject(error);
++  }
++}
++
++function saveActivationTracked(
++  gameId: string,
++  modType: string,
++  instance: string,
++  gamePath: string,
++  stagingPath: string,
++  activation: IDeployedFile[],
++  activatorId?: string,
++) {
+   const typeTag = modType !== undefined && modType.length > 0 ? modType + "." : "";
+   const dataRaw = {
+     instance,
+     version: CURRENT_VERSION,
