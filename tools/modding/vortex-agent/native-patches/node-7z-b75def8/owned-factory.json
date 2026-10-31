@@ -1,0 +1,119 @@
+{
+  "schema": "native-owned-factory-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/node-7z",
+  "upstreamCommit": "b75def8d0d7d81a03f4526c52b8ada9a34a06479",
+  "upstreamLicense": "ISC",
+  "prerequisitePatch": "error-close.patch",
+  "prerequisiteOutputSHA256": "5742753857b8940e9db6df92aabc21da1142efa88fc5df9045e1a4dfc3456050",
+  "files": [
+    {
+      "path": "util/run.js",
+      "patch": "owned-factory-run.patch",
+      "inputSHA256": "5742753857b8940e9db6df92aabc21da1142efa88fc5df9045e1a4dfc3456050",
+      "outputSHA256": "7eea38a1fe6724d169cfe1e11b9d2a712c61612e913a60f6f8d326b429ee0136",
+      "patchSHA256": "fcfad925a2e0b123aee0709a054f728d40fd00905cda9bf78542c2be32128d16"
+    },
+    {
+      "path": "util/run7z.js",
+      "patch": "owned-factory-run7z.patch",
+      "inputSHA256": "a89dc0a9acec8df2118e3a5b01029d11baab104e11c315b235468e7a3ec877c2",
+      "outputSHA256": "fa5fb2078bf068eb1e1363e44796e973057b6ea87b2d41b448d7a636479469a5",
+      "patchSHA256": "991dbd4c0454d5b57859ce2eeb8eb8ecc1a86062407384ab821780043145d82f"
+    },
+    {
+      "path": "lib/extractFull.js",
+      "patch": "owned-factory-extract-full.patch",
+      "inputSHA256": "77119ad909d8495c64f0d1920aa06283545d80b0438c56e298ce90de2c1d161d",
+      "outputSHA256": "d00ac760daf05dfbe9bd06dd7871f5324875af6ba45c6cf25bd20f38b0bc7846",
+      "patchSHA256": "1f87e7eafb7b114719d8e8090599cc17186d9f6b6ce360b2ac6a576eb6b36f55"
+    },
+    {
+      "path": "lib/index.js",
+      "patch": "owned-factory-index.patch",
+      "inputSHA256": "82e12f23999e46c24106b219f225ecfa6950029a1b344d9450c93bfdd379cfdb",
+      "outputSHA256": "b42b86a5b3d2e644db3652ea8afb94957e6388225bf6701515ebda437fa9b431",
+      "patchSHA256": "51bfd7615aa986ca27ba998cf78f688fa5be25555b3d6dc89312178ea59b085e"
+    }
+  ],
+  "copyMap": [
+    {
+      "source": "tools/modding/vortex-agent/owned-extractor-scope.cjs",
+      "target": "util/owned-extractor-scope.cjs",
+      "sha256": "2a5200be844a4bab0b1b3c15de00441876039a674e9c871e7bf29b7a0217bfec"
+    },
+    {
+      "source": "tools/modding/vortex-agent/child-terminal-observer.cjs",
+      "target": "util/child-terminal-observer.cjs",
+      "sha256": "0b59978e89d8393d4a0f1965ee1097de0b8ff6db34630538bb223816e448f119"
+    },
+    {
+      "source": "LICENSE",
+      "target": "util/OWNED-EXTRACTOR-LICENSE",
+      "sha256": "3c61a4b99007718626612c474991852b9428a3d4ed27a77e46b42fdfb80f896f"
+    }
+  ],
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "nativeTerminalGuarantee": false,
+  "noReplacementGuarantee": false,
+  "ownerReservationGuarantee": false,
+  "installationPermit": false,
+  "persistenceVerified": false,
+  "descendantsVerified": false,
+  "limitations": [
+    "Explicit per-instance branding only; caller binding claims are not native admission or global/durable job uniqueness.",
+    "Four attempted launches, one observed active child, one immutable archive/destination tuple; nested archives and interactive passwords refuse.",
+    "Existing SDK -y/default overwrite semantics remain; exclusive empty destination, archive seal and payload/cleanup ownership remain separate gates.",
+    "Arbitrary cancellation of an outer Bluebird promise does not revoke this owner; supported cancellation calls owner.cancel before wrapper cancellation.",
+    "Physical child/stdio closure is not descendant termination, atomic publication, persistence or native installation acceptance.",
+    "Current host integration remains absent; ordinary InstallManager supplies a password callback and must receive a separately reviewed strict callsite."
+  ],
+  "sourceFiles": [
+    {
+      "path": "LICENSE",
+      "bytes": 765,
+      "sha256": "25219a584599f047a3bf6e156ebb32162a37a0e76b057f5cf4b9286986403b63"
+    },
+    {
+      "path": "package.json",
+      "bytes": 1074,
+      "sha256": "5b45cde1f462059fc360c9776ce8ecd249a8789395096f7fdc48e0c960ed299e"
+    },
+    {
+      "path": "lib/index.js",
+      "bytes": 371,
+      "sha256": "82e12f23999e46c24106b219f225ecfa6950029a1b344d9450c93bfdd379cfdb"
+    },
+    {
+      "path": "lib/extractFull.js",
+      "bytes": 911,
+      "sha256": "77119ad909d8495c64f0d1920aa06283545d80b0438c56e298ce90de2c1d161d"
+    },
+    {
+      "path": "util/run.js",
+      "bytes": 2654,
+      "sha256": "219ccdb78bc5bf6a5a82be4a2fb7772c87834b1532bc8fa431bcde289f3dd571"
+    },
+    {
+      "path": "util/run7z.js",
+      "bytes": 610,
+      "sha256": "a89dc0a9acec8df2118e3a5b01029d11baab104e11c315b235468e7a3ec877c2"
+    },
+    {
+      "path": "util/passwordHandler.js",
+      "bytes": 711,
+      "sha256": "e3616eef04b1e7771080682f1e000d2ac20d765dbe03a818b4fe50ea6cb48f2d"
+    },
+    {
+      "path": "util/switches.js",
+      "bytes": 2063,
+      "sha256": "ec10e248272fba86072c32c724f6855b3bcf3099cc9c2e3df2d13686d8e545a8"
+    },
+    {
+      "path": "util/outputParse.js",
+      "bytes": 955,
+      "sha256": "47cb15d2303ba1307ecd68cf41785b586819f16fae41837d891a011193989cfc"
+    }
+  ]
+}

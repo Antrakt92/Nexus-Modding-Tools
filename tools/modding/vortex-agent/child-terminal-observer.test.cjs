@@ -6,7 +6,7 @@ const {EventEmitter} = require('node:events');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
-const {observeChildTerminal} = require('./child-terminal-observer.cjs');
+const {observeChildTerminal, copyChildBinding} = require('./child-terminal-observer.cjs');
 const NativePromise = Promise;
 const tick = () => new NativePromise(resolve => setImmediate(resolve));
 const binding = n => ({operationId: 'op_' + String(n).padStart(32, '0'), nativeJobId: 'exec_' + String(n).padStart(32, '0'),
@@ -43,6 +43,13 @@ function own(t, script, options = {}) {
   return {child, observer, done, get closed() {return closed;}};
 }
 function drain(child) {child.stdout?.resume(); child.stderr?.resume(); child.stdin?.end();}
+
+test('pure binding copy validates before any child or filesystem effect', () => {
+  const input = binding(1), copy = copyChildBinding(input);
+  assert(Object.isFrozen(copy)); input.requestSHA256 = 'c'.repeat(64);
+  assert.equal(copy.requestSHA256, 'a'.repeat(64));
+  assert.throws(() => copyChildBinding({...binding(1), extra: true}), /INVALID_BINDING/);
+});
 
 test('real clean child waits for its close and all three observed pipe closes', {timeout: 5000}, async t => {
   const f = own(t, 'process.stdin.resume();process.stdin.on("end",()=>process.exit(0))');

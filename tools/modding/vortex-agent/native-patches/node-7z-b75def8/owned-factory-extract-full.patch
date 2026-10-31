@@ -1,0 +1,38 @@
+--- a/lib/extractFull.js
++++ b/lib/extractFull.js
+@@ -3,6 +3,7 @@
+ var run7z = require('../util/run7z');
+ var pwHandle = require('../util/passwordHandler');
+ var path  = require('path');
++var ownership = require('../util/owned-extractor-scope.cjs');
+ 
+ /**
+  * Extract an archive with full paths.
+@@ -15,12 +16,25 @@
+  * @resolve {array} Arguments passed to the child-process.
+  * @reject {Error} The error as issued by 7-Zip.
+  */
+-module.exports = function (archive, dest, options, progress, passwordCB) {
++function invoke(runImpl, archive, dest, options, progress, passwordCB) {
+   if (typeof(options) === 'function') {
+     passwordCB = progress;
+     progress = options;
+     options = {};
+   }
+-  return run7z(['x', path.normalize(archive), '-o' + path.normalize(dest)],
++  return runImpl(['x', path.normalize(archive), '-o' + path.normalize(dest)],
+                options, '- ', pwHandle(passwordCB, progress));
+ };
++
++module.exports = function(archive, dest, options, progress, passwordCB) {
++  return invoke(run7z, archive, dest, options, progress, passwordCB);
++};
++module.exports.createOwned = function(owner) {
++  ownership.assertOwner(owner);
++  var ownedRun = run7z.createOwned(owner);
++  return function(archive, dest, options, progress, passwordCB) {
++    var prepared = ownership.prepareExtract(owner, archive, dest, options, progress, passwordCB);
++    return invoke(ownedRun, prepared.archivePath, prepared.destinationPath,
++      prepared.options, prepared.progress, undefined);
++  };
++};
