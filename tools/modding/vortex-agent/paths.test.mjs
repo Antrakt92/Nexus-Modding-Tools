@@ -135,7 +135,7 @@ test('compile proof binds the selected runtime and refuses an override changed a
   const config = 'export default defineConfig({ entry: { index: "src/index.ts" }, outDir: "dist" });';
   await fs.mkdir(path.join(temp, 'src'));
   const modules = ['paths.cjs', 'guard.cjs', 'extension.cjs', 'credential.cjs', 'inspection.cjs',
-    'lifecycle-inspection.cjs', 'serialization.cjs', 'download-identity.cjs', 'receipts.cjs', 'http-ingress.cjs', 'adapted.cjs', 'vortexControl.ts'];
+    'lifecycle-inspection.cjs', 'native-preflight.cjs', 'serialization.cjs', 'download-identity.cjs', 'receipts.cjs', 'http-ingress.cjs', 'adapted.cjs', 'vortexControl.ts'];
   for (const name of modules) await fs.writeFile(path.join(temp, 'src', name), 'fixture input');
   for (const name of ['package.json', 'pnpm-lock.yaml']) await fs.writeFile(path.join(temp, name), 'fixture input');
   await fs.writeFile(path.join(temp, 'tsup.config.ts'), config);

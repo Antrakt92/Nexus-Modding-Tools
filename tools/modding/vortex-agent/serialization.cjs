@@ -8,6 +8,24 @@ function insist(ok, code) { if (!ok) throw new Error(code); }
 // Policies apply to exact positions in outputs of named curated producers. They
 // are NOT a global exemption for arbitrary objects having a key named gameId/id.
 function operational(kind, trail) {
+  if (kind === 'read_native_preflight') {
+    if (trail.length === 1 && trail[0] === 'protocol') return 'protocol';
+    if (trail.length === 1 && trail[0] === 'schema') return 'nativePreflightSchema';
+    if (trail.length === 1 && trail[0] === 'status') return 'nativePreflightStatus';
+    if (trail.length === 1 && trail[0] === 'observedAtUTC') return 'at';
+    if (trail[0] === 'context') {
+      if (trail.length === 2 && ['gameId', 'profileId'].includes(trail[1])) return trail[1];
+      if (trail.length === 2 && PATH_FIELD.test(trail[1])) return 'absolutePath';
+      if (trail.length === 3 && trail[1] === 'filesystemIds' && PATH_FIELD.test(trail[2])) return 'filesystemId';
+    }
+    if (trail.length === 2 && trail[0] === 'appVersion' && trail[1] === 'value') return 'nativeAppVersion';
+    if (trail.length === 2 && ['appVersion', 'updater'].includes(trail[0]) && trail[1] === 'code') return 'nativePreflightCode';
+    if (trail.length === 2 && trail[0] === 'updater' && trail[1] === 'state') return 'nativeUpdaterState';
+    if (trail.length === 3 && trail[0] === 'deploymentTargets' && /^\d+$/.test(trail[1])) {
+      if (trail[2] === 'typeId') return 'nativeTypeId';
+      if (trail[2] === 'path') return 'absolutePath';
+    }
+  }
   if (kind === 'read_mod_lifecycle') {
     if (trail.length === 1 && ['protocol', 'gameId', 'profileId'].includes(trail[0])) return trail[0];
     if (trail[0] === 'mods' && /^\d+$/.test(trail[1])) {
@@ -61,9 +79,15 @@ function operational(kind, trail) {
   return null;
 }
 function validOperational(type, value) {
+  if (type === 'nativePreflightSchema') return value === 'native-preflight/1';
+  if (type === 'nativePreflightStatus') return ['ok', 'partial'].includes(value);
+  if (type === 'nativeAppVersion') return value.length <= 128 && /^\d{1,4}(?:\.\d{1,6}){2,3}(?:-[0-9A-Za-z][0-9A-Za-z.-]{0,63})?(?:\+[0-9A-Za-z][0-9A-Za-z.-]{0,31})?$/.test(value);
+  if (type === 'nativeTypeId') return /^[A-Za-z0-9_-]{0,128}$/.test(value) && !['__proto__', 'constructor', 'prototype'].includes(value);
+  if (type === 'nativePreflightCode') return /^NATIVE_PREFLIGHT_(?:APP_VERSION|UPDATER)_(?:TIMEOUT|INVALID|UNAVAILABLE)$/.test(value);
+  if (type === 'nativeUpdaterState') return ['disabled', 'idle', 'checking', 'available', 'downgrade-offered', 'downloading', 'staged', 'error'].includes(value);
   if (type === 'protocol') return value === 'vortex-agent/1';
   if (type === 'operation') return OPERATIONS.has(value);
-  if (type === 'extensionVersion') return value === '1.0.4';
+  if (type === 'extensionVersion') return value === '1.1.0';
   if (type === 'targetVortexVersion') return value === '2.7.2.0';
   // Vortex preserves an empty version when native metadata is unknown. Do not
   // fail an entire inventory or invent a version for that legitimate record.

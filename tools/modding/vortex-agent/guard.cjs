@@ -238,7 +238,7 @@ function createOperations(api, actions, selectors, options = {}) {
     });
   }
   return {
-    health: () => ({ protocol: PROTOCOL, extensionVersion: '1.0.4', targetVortexVersion: '2.7.2.0', ...context(api, selectors),
+    health: () => ({ protocol: PROTOCOL, extensionVersion: '1.1.0', targetVortexVersion: '2.7.2.0', ...context(api, selectors),
       security: 'per-user-DPAPI-bearer', installSupported: false, diskDeploymentVerified: false }),
     install_download: args => mutate('install_download', args, async () => {
       await archive(api, args, args.downloadId, selectors, catalog); check(args);

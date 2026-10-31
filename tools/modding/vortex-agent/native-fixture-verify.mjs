@@ -34,7 +34,7 @@ for (const suffix of ['enable', 'deploy', 'disable', 'restore']) {
   const completion = read(`local-state/vortex-agent-build/receipts/${input.runId}_${suffix}.completion.json`);
   assert.equal(completion.operationCompleted, true);
   assert.equal(completion.diskDeploymentVerified, false);
-  if (input.runtimeVersion === '1.0.4') { assert.equal(completion.receiptVersion, 2); assert.equal(completion.requestId, `${input.runId}_${suffix}`); }
+  if (['1.0.4', '1.1.0'].includes(input.runtimeVersion)) { assert.equal(completion.receiptVersion, 2); assert.equal(completion.requestId, `${input.runId}_${suffix}`); }
 }
 assert.equal(fs.existsSync(path.join(root, 'local-state/vortex-agent-build/receipts/unresolved.json')), false);
 assert.equal(fs.existsSync(path.join(root, 'local-state/vortex-agent-build/receipts/mutation.lock')), false);

@@ -18,7 +18,7 @@ test('packaged entrypoint and source/lockfile provenance match verified isolated
   assert.equal(await sha(path.join(ROOT, 'upstream/pnpm-lock.yaml')), provenance.lockfileSha256);
   for (const [name, hash] of Object.entries(provenance.sources)) assert.equal(await sha(path.join(provenance.maintainedSource, name)), hash, name);
   assert.equal(provenance.installSupported, false);
-  assert.equal(provenance.version, '1.0.4'); assert.equal(provenance.receiptVersion, 2);
+  assert.equal(provenance.version, '1.1.0'); assert.equal(provenance.receiptVersion, 2);
   assert.equal(await sha(path.join(ROOT, 'upstream/src/vortexControl.ts')), provenance.upstreamControlSha256);
   for (const name of Object.keys(provenance.sources).filter(name => name.endsWith('.cjs'))) assert.equal(await sha(path.join(ROOT, 'upstream/src', name)), provenance.sources[name]);
   assert.equal(provenance.authentication, 'Windows-DPAPI-CurrentUser-bearer');

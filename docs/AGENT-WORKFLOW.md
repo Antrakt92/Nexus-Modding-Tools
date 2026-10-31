@@ -16,6 +16,7 @@ missing capabilities rather than inventing another implementation.
 | Requested work | Skill | Maintained route |
 | --- | --- | --- |
 | Read Vortex profiles, mods, downloads, conflicts or dialogs | `vortex-nexus-api-audit` | Native curated MCP tools; bridge fallback; [adapter](../tools/modding/vortex-agent/README.md) |
+| Read actual deployment targets, application version or updater state | `vortex-nexus-api-audit` | [Resident native preflight](NATIVE-PREFLIGHT.md); fixed read-only getters, context/map drift detection and explicit unavailable values; no lifecycle permit |
 | Authorized host restart or retirement of a reconciled temporary helper | `vortex-mod-lifecycle` | [Native close procedure](AUTHORIZED-RESTART.md); exact main PID/generation, ordinary close of owned hidden windows, all-process exit and fresh readback; no force or generic shutdown endpoint |
 | Prepare an installed mod update or cleanup | `vortex-nexus-api-audit` | [Lifecycle preflight](LIFECYCLE-PERFORMANCE.md): one bounded `read_mod_lifecycle` snapshot for exact installed IDs, all-profile usage, native requires matches and global archive references; metadata only |
 | Find tracked archives for collection members | `vortex-nexus-api-audit`, then `vortex-mod-lifecycle` for effects | [Batch download lookup](COLLECTION-DOWNLOADS.md); exact Nexus pairs, compact candidates, no archive-integrity claim |

@@ -23,13 +23,23 @@ test('built extension wire: allowlist, SDK2 HTTP, legacy bridge, schemas and bro
     listener.listen = () => listen(0, '127.0.0.1'); return listener;
   } };
   const state = { confidential: { apiKey: 'unit-private-credential' }, settings: { profiles: { activeProfileId: 'p' }, gameMode: { discovered: { cyberpunk2077: { path: modelDir } } } },
-    persistent: { nexus: { userInfo: { username: 'wire', accountLabel: 'vortex-agent', accountVersion: '1.0.4', displayName: 'cyberpunk' } },
+    persistent: { nexus: { userInfo: { username: 'wire', accountLabel: 'vortex-agent', accountVersion: '1.1.0', displayName: 'cyberpunk' } },
       profiles: { p: { id: 'p', name: 'modeled', gameId: 'cyberpunk2077', modState: {} } }, mods: { cyberpunk2077: {} }, downloads: { files: {} } },
     session: { base: {}, notifications: { dialogs: [{ id: 'dialog', title: 'Modeled dialog', content: { message: 'nxm://game/files/1?key=private-nxm-value', input: [{ id: 'ordinary', label: 'field', value: 'unknown-sensitive-value', defaultValue: 'unknown-default' }] } }] } } };
   const api = { getState: () => state, store: { getState: () => state }, ext: {} };
   const vortex = { actions: {}, selectors: { activeProfileId: () => 'p', activeGameId: () => 'cyberpunk2077',
     knownGames: () => [{ id: 'cyberpunk2077' }], activeProfile: () => state.persistent.profiles.p,
     installPathForGame: () => modelDir, downloadPathForGame: () => modelDir }, util: {}, fs: {}, log: () => {} };
+  let nativeVersion = '2.9.1', nativeUpdaterFailure = false, nativeGetterCalls = 0;
+  vortex.util.getGame = () => ({getModPaths: () => ({'': modelDir, own_alias: modelDir})});
+  const nativePreflightWindow = () => ({api: {
+    app: {async getVersion() {nativeGetterCalls++; return nativeVersion;}},
+    updater: {async getStatus() {nativeGetterCalls++;
+      if (nativeUpdaterFailure) throw Error('https://private.invalid/private-updater-error');
+      return {seq:9,snapshot:{state:{type:'idle',releaseNotes:'unknown-private-release-notes',message:'unknown-private-updater-message'}},
+        changes:[{state:{type:'staged',version:'unknown-private-version'}}]};
+    }},
+  }});
   const module = { exports: {} };
   const sandboxRequire = id => {
     if (id === '@nexusmods/vortex-api') return vortex;
@@ -39,7 +49,7 @@ test('built extension wire: allowlist, SDK2 HTTP, legacy bridge, schemas and bro
   };
   vm.runInThisContext('(function(require,module,exports,__dirname,__filename){' + await fs.readFile(artifact, 'utf8') + '\n})')(sandboxRequire, module, module.exports, new URL('.', 'file:///' + artifact).pathname, artifact);
   assert.equal(typeof module.exports, 'function', 'Vortex entrypoint must be directly callable');
-  if (module.exports.start) module.exports.start(api, 0, { tokenProvider: async () => token });
+  if (module.exports.start) module.exports.start(api, 0, { tokenProvider: async () => token, nativePreflightWindow });
   else module.exports({ api, once: callback => callback() }); // baseline regression against old package
   await new Promise(resolve => listener.listening ? resolve() : listener.once('listening', resolve));
   const endpoint = `http://127.0.0.1:${listener.address().port}/mcp`;
@@ -55,12 +65,35 @@ test('built extension wire: allowlist, SDK2 HTTP, legacy bridge, schemas and bro
     assert.ok(init.result, JSON.stringify(init));
     const list = await call('tools/list', {});
     assert.deepEqual(list.tools.map(tool => tool.name).sort(), [
-      'health', 'reconcile_operation', 'list_profiles', 'list_mods', 'list_downloads',
+      'health', 'read_native_preflight', 'reconcile_operation', 'list_profiles', 'list_mods', 'list_downloads',
       'list_mod_rules', 'find_mod_dependents', 'read_mod_lifecycle', 'list_file_conflicts', 'list_known_mod_conflicts',
       'list_unsolved_conflicts', 'read_collection_health', 'list_dialogs', 'list_external_changes',
       'set_mods_enabled', 'deploy_mods', 'download_nexus',
     ].sort());
     assert.equal(list.tools.some(tool => tool.name === 'install_download'), false);
+    const nativeTool = list.tools.find(tool => tool.name === 'read_native_preflight');
+    assert.equal(nativeTool.inputSchema.additionalProperties, false);
+    assert.equal(nativeTool.annotations.readOnlyHint, true);
+    assert.equal(nativeTool.annotations.destructiveHint, false);
+    const nativeResult = await call('tools/call', {name:'read_native_preflight',arguments:{}});
+    assert.notEqual(nativeResult.isError,true,JSON.stringify(nativeResult));
+    const native = JSON.parse(nativeResult.content[0].text);
+    assert.equal(native.status,'ok'); assert.equal(native.appVersion.value,'2.9.1');
+    assert.deepEqual(native.updater,{available:true,state:'idle',sequence:9});
+    assert.deepEqual(native.deploymentTargets.map(row=>row.typeId),['','own_alias']);
+    assert.equal(native.deploymentTargets[0].path,await fs.realpath(modelDir));
+    assert.equal(native.shutdownPermit,false); assert.equal(native.sourceAdmissionVerified,false);
+    for (const marker of ['unknown-private','private-updater-error','private.invalid']) assert.ok(!nativeResult.content[0].text.includes(marker));
+    const gettersBeforeInvalid=nativeGetterCalls;
+    const invalidNative=await call('tools/call',{name:'read_native_preflight',arguments:{dispatch:'anything'}});
+    assert.equal(invalidNative.isError,true); assert.equal(nativeGetterCalls,gettersBeforeInvalid);
+    nativeVersion='';nativeUpdaterFailure=true;
+    const partialNative=await call('tools/call',{name:'read_native_preflight',arguments:{}});
+    const partial=JSON.parse(partialNative.content[0].text);
+    assert.equal(partial.status,'partial');assert.equal(partial.appVersion.available,false);assert.equal(partial.updater.available,false);
+    assert.equal(Object.hasOwn(partial.appVersion,'value'),false);
+    assert.ok(!partialNative.content[0].text.includes('private.invalid'));
+    nativeVersion='2.9.1';nativeUpdaterFailure=false;
     const writeSchema = list.tools.find(tool => tool.name === 'deploy_mods').outputSchema;
     assert.equal(writeSchema.properties.diskDeploymentVerified.const, false);
     assert.equal(writeSchema.properties.operationCompleted.const, true);
@@ -73,7 +106,7 @@ test('built extension wire: allowlist, SDK2 HTTP, legacy bridge, schemas and bro
     }
     const health = await call('tools/call', { name: 'health', arguments: {} });
     const healthInfo = JSON.parse(health.content[0].text);
-    assert.equal(healthInfo.protocol, 'vortex-agent/1'); assert.equal(healthInfo.extensionVersion, '1.0.4');
+    assert.equal(healthInfo.protocol, 'vortex-agent/1'); assert.equal(healthInfo.extensionVersion, '1.1.0');
     assert.equal(healthInfo.gameId, 'cyberpunk2077'); assert.equal(healthInfo.gamePath, await fs.realpath(modelDir));
     assert.ok(!Object.hasOwn(healthInfo, 'userInfo'));
     state.confidential.apiKey = (await fs.realpath(modelDir)).split(/[\\/]/).at(-1);
@@ -143,12 +176,18 @@ test('built extension wire: allowlist, SDK2 HTTP, legacy bridge, schemas and bro
     child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: 'init', method: 'initialize', params: { protocolVersion: '2024-11-05' } }) + '\n');
     await new Promise((resolve, reject) => { const timer = setTimeout(() => { clearInterval(poll); child.kill(); reject(new Error('stdio init timeout: ' + output + ' STDERR ' + error)); }, 10000);
       const poll = setInterval(() => { if (output.includes('"id":"init"')) { clearTimeout(timer); clearInterval(poll); resolve(); } }, 10); });
-    child.stdin.end(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n' + JSON.stringify({ jsonrpc: '2.0', id: 5, method: 'tools/list' }) + '\n');
+    child.stdin.end(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n'
+      + JSON.stringify({ jsonrpc: '2.0', id: 5, method: 'tools/list' }) + '\n'
+      + JSON.stringify({ jsonrpc: '2.0', id: 6, method: 'tools/call', params:{name:'read_native_preflight',arguments:{}} }) + '\n');
     const exit = await new Promise(resolve => child.on('exit', resolve));
     assert.equal(exit, 0, error);
     const messages = output.trim().split('\n').map(line => JSON.parse(line));
-    assert.equal(messages.length, 3); assert.equal(messages[0].error.code, -32700);
+    assert.equal(messages.length, 4); assert.equal(messages[0].error.code, -32700);
     assert.ok(messages.find(item => item.id === 5).result.tools);
+    assert.ok(messages.find(item => item.id === 5).result.tools.some(tool=>tool.name==='read_native_preflight'));
+    const stdioNative=JSON.parse(messages.find(item=>item.id===6).result.content[0].text);
+    assert.deepEqual(stdioNative.deploymentTargets.map(row=>row.typeId),['','own_alias']);
+    assert.equal(stdioNative.updater.state,'idle');assert.equal(stdioNative.shutdownPermit,false);
     for (const args of [['--health'], ['--call', 'list_dialogs', '{}']]) {
       const cli = spawn(process.execPath, ['--import', pathToFileURL(preload).href, bridge, ...args]);
       let stdout = '', stderr = ''; cli.stdout.on('data', data => stdout += data); cli.stderr.on('data', data => stderr += data);

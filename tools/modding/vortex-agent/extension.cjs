@@ -8,6 +8,7 @@ const control = require('./vortexControl');
 const { createOperations, safe } = require('./guard.cjs');
 const { dialogs, conflicts, externalChanges, listDownloads, collectionHealth, unresolvedConflicts } = require('./inspection.cjs');
 const { readModLifecycle } = require('./lifecycle-inspection.cjs');
+const { readNativePreflight } = require('./native-preflight.cjs');
 const { catalogFromDisk } = require('./download-identity.cjs');
 const ingress = require('./http-ingress.cjs');
 const { VERIFICATION } = require('./receipts.cjs');
@@ -48,6 +49,9 @@ function register(server, api, options = {}) {
     finally { release(); }
   });
   add('health', {}, operations.health);
+  add('read_native_preflight', {}, () => readNativePreflight(api, selectors, util,
+    options.nativePreflightWindow === undefined ? {} : {getWindow: options.nativePreflightWindow}), false,
+    'Read native deployment target aliases, actual app version and allowlisted updater status from the running renderer. Partial observations stay explicit. No installation, source admission, shutdown permission or native effects.');
   add('reconcile_operation', { requestId: z.string().regex(/^[a-zA-Z0-9_-]{8,80}$/) }, operations.reconcile_operation);
   add('list_profiles', { gameId: id.optional() }, a => control.listProfiles(api, a.gameId));
   add('list_mods', { ...read, enabledOnly: z.boolean().optional(), nameFilter: id.optional() }, a => {
@@ -97,8 +101,8 @@ function start(api, port = 3701, options = {}) {
       const parsed = await ingress.body(req, abort.signal);
       clearTimeout(timer); // This bounds ingress, not the lifetime of Vortex work.
       if (abort.signal.aborted) return;
-      server = new McpServer({ name: 'vortex-agent', version: '1.0.4' });
-      register(server, api, { credentials: [token] });
+      server = new McpServer({ name: 'vortex-agent', version: '1.1.0' });
+      register(server, api, { credentials: [token], nativePreflightWindow: options.nativePreflightWindow });
       const transport = new NodeStreamableHTTPServerTransport({ sessionIdGenerator: undefined });
       res.once('close', () => { void server.close().catch(() => {}); });
       await server.connect(transport); await transport.handleRequest(req, res, parsed);

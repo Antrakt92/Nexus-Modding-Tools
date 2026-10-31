@@ -211,7 +211,7 @@ export function handler(call = remote, {journal} = {}) {
         const info = parse(health.content?.find(c => c.type === 'text')?.text || '{}');
         if (health.isError || info.protocol !== 'vortex-agent/1') throw new Error('Wrong server on port 3701: vortex-agent/1 health required');
         initialized = true;
-        result = { protocolVersion: versions.includes(request.params?.protocolVersion) ? request.params.protocolVersion : '2025-11-25', capabilities: { tools: {} }, serverInfo: { name: 'vortex-agent-bridge', version: '1.0.4' } };
+        result = { protocolVersion: versions.includes(request.params?.protocolVersion) ? request.params.protocolVersion : '2025-11-25', capabilities: { tools: {} }, serverInfo: { name: 'vortex-agent-bridge', version: '1.1.0' } };
       } else if (request.method === 'ping') result = {};
       else if (['tools/list', 'tools/call'].includes(request.method)) {
         if (!initialized) throw new Error('Initialize the bridge first');

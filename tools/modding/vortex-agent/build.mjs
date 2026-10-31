@@ -9,7 +9,7 @@ const CACHE = paths.cache;
 const BUILD = paths.build;
 const source = path.dirname(fileURLToPath(import.meta.url));
 const vendor = path.join(source, '../../../dependencies/vortex-mcp');
-const modules = ['paths.cjs', 'guard.cjs', 'extension.cjs', 'credential.cjs', 'inspection.cjs', 'lifecycle-inspection.cjs', 'serialization.cjs', 'download-identity.cjs', 'receipts.cjs', 'http-ingress.cjs'];
+const modules = ['paths.cjs', 'guard.cjs', 'extension.cjs', 'credential.cjs', 'inspection.cjs', 'lifecycle-inspection.cjs', 'native-preflight.cjs', 'serialization.cjs', 'download-identity.cjs', 'receipts.cjs', 'http-ingress.cjs'];
 const sha = async file => crypto.createHash('sha256').update(await fs.readFile(file)).digest('hex');
 
 async function noReparsePaths(...files) {
@@ -117,7 +117,7 @@ async function preservePreviousBuild() {
   let previous;
   try { previous = JSON.parse(await fs.readFile(path.join(plugin, 'provenance.json'), 'utf8')); }
   catch (error) { if (error.code === 'ENOENT') return; throw error; }
-  if (previous.version === '1.0.4') return;
+  if (previous.version === '1.1.0') return;
   const digest = crypto.createHash('sha256').update(await fs.readFile(path.join(plugin, 'index.js'))).digest('hex');
   if (digest !== previous.pluginSha256) throw Error('Previous package provenance mismatch');
   const archive = path.join(BUILD, 'archives', previous.version + '-' + digest);
@@ -196,13 +196,13 @@ if (argv.includes('--prepare')) {
   await fs.copyFile(path.join(BUILD, 'upstream', 'adapted-dist', 'index.js'), path.join(plugin, 'index.js'));
   await fs.copyFile(path.join(BUILD, 'upstream', 'LICENSE.md'), path.join(plugin, 'LICENSE.md'));
   await fs.copyFile(path.join(tree, 'THIRD-PARTY-NOTICES.md'), path.join(plugin, 'THIRD-PARTY-NOTICES.md'));
-  await fs.writeFile(path.join(plugin, 'info.json'), JSON.stringify({ id: 'vortex-agent', name: 'Vortex Agent (guarded MCP)', author: 'Alan Tse; local adapted fork', version: '1.0.4', description: 'DPAPI-authenticated curated MCP adapter; native install refused; external disk verification required', type: 'extension' }, null, 2));
+  await fs.writeFile(path.join(plugin, 'info.json'), JSON.stringify({ id: 'vortex-agent', name: 'Vortex Agent (guarded MCP)', author: 'Alan Tse; local adapted fork', version: '1.1.0', description: 'DPAPI-authenticated curated MCP adapter; native install refused; external disk verification required', type: 'extension' }, null, 2));
   const sources = {};
   for (const name of [...modules, 'build.mjs', 'bridge.mjs', 'manage-install.py']) sources[name] = await sha(path.join(source, name));
   for (const name of modules) if (await sha(path.join(BUILD, 'upstream/src', name)) !== sources[name]) throw Error('Build copy differs: ' + name);
   await checkBuildTree(path.join(BUILD, 'upstream'));
   await fs.writeFile(path.join(plugin, 'provenance.json'), JSON.stringify({ upstream: 'https://github.com/alandtse/vortex-mcp', commit: PIN,
-    maintainedSource: source, workspaceRoot: runtimeWorkspace(), protocol: 'vortex-agent/1', version: '1.0.4', installSupported: false, receiptVersion: 2,
+    maintainedSource: source, workspaceRoot: runtimeWorkspace(), protocol: 'vortex-agent/1', version: '1.1.0', installSupported: false, receiptVersion: 2,
     packageSchemaVersion: 2,
     licenseFileSHA256: { 'LICENSE.md': await sha(path.join(plugin, 'LICENSE.md')),
       'THIRD-PARTY-NOTICES.md': await sha(path.join(plugin, 'THIRD-PARTY-NOTICES.md')) },

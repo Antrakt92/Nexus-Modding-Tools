@@ -46,7 +46,7 @@ class UpgradeTests(unittest.TestCase):
         self.marker = self.receipts / 'unresolved.json'
         self.marker.write_bytes(b'{"requestId":"uncertain-original"}')
         self.old = package(self.plugins / 'vortex-agent', '1.0.3', b'synthetic old bundle', historical=True)
-        self.new = package(self.source, '1.0.4', b'synthetic new bundle')
+        self.new = package(self.source, '1.1.0', b'synthetic new bundle')
         other = self.plugins / 'unrelated'
         other.mkdir()
         (other / 'sentinel').write_bytes(b'untouched')
@@ -230,7 +230,7 @@ class UpgradeTests(unittest.TestCase):
         receipt = self.matching_target()
         original = receipt.read_bytes()
         info = self.plugins / 'vortex-agent/info.json'
-        info.write_text(json.dumps({'id': 'foreign-plugin', 'version': '1.0.4'}))
+        info.write_text(json.dumps({'id': 'foreign-plugin', 'version': '1.1.0'}))
         with self.assertRaisesRegex(RuntimeError, 'identity'):
             upgrade.sync_provenance(self.new)
         self.assertEqual(receipt.read_bytes(), original)
@@ -351,7 +351,7 @@ class UpgradeTests(unittest.TestCase):
     def test_external_metadata_sync_refuses_wrong_runtime_bundle_sources_or_reparse(self):
         target = self.matching_target(); original = target.read_bytes(); receipts = upgrade.receipt_pins()
         external = self.root / 'external'
-        package(external, '1.0.4', b'synthetic new bundle')
+        package(external, '1.1.0', b'synthetic new bundle')
         metadata = external / 'provenance.json'; valid = json.loads(metadata.read_text())
         maintained = self.root / 'external-maintained'; maintained.mkdir()
         (maintained / 'bridge.mjs').write_bytes(b'changed maintained source')

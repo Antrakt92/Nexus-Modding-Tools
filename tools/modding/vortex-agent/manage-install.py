@@ -222,7 +222,7 @@ def verify_runtime_workspace(provenance):
 def install(expected_sha, from_sha=None, package_root=None):
     stopped()
     source = SOURCE if package_root is None else absolute_root(package_root, 'Package root')
-    provenance = package(source, expected_sha, '1.0.4')
+    provenance = package(source, expected_sha, '1.1.0')
     verify_runtime_workspace(provenance)
     verify_sources(provenance)
     target = PLUGINS / 'vortex-agent'
@@ -250,7 +250,7 @@ def install(expected_sha, from_sha=None, package_root=None):
         staged = temp_parent / ('vortex-agent-upgrade-' + run.name)
         old = temp_parent / ('vortex-agent-old-' + run.name)
         shutil.copytree(source, staged)
-        staged_provenance = package(staged, expected_sha, '1.0.4')
+        staged_provenance = package(staged, expected_sha, '1.1.0')
         stopped()
         verify_runtime_workspace(staged_provenance)
         verify_sources(staged_provenance)
@@ -262,7 +262,7 @@ def install(expected_sha, from_sha=None, package_root=None):
                 package(target, from_sha, allow_historical=True)
                 target.rename(old)
             staged.rename(target)
-            package(target, expected_sha, '1.0.4')
+            package(target, expected_sha, '1.1.0')
             if receipt_pins() != pins:
                 raise RuntimeError('Receipt pins changed during upgrade')
         except BaseException:
@@ -277,7 +277,7 @@ def install(expected_sha, from_sha=None, package_root=None):
                 package(old, from_sha, allow_historical=True)
                 old.rename(target)
             raise
-        result = {'installed': str(target), 'version': '1.0.4', 'sha256': expected_sha, 'oldBundleBackup': str(run / 'old-plugin') if from_sha else None,
+        result = {'installed': str(target), 'version': '1.1.0', 'sha256': expected_sha, 'oldBundleBackup': str(run / 'old-plugin') if from_sha else None,
                   'receiptPins': str(run / 'receipt-pins.json'), 'receiptsUnchanged': True, 'restartPerformed': False}
         (run / 'upgrade.json').write_text(json.dumps(result, indent=2), encoding='utf-8')
         print(json.dumps(result))
@@ -286,8 +286,8 @@ def sync_provenance(expected_sha, package_root=None):
     source = SOURCE if package_root is None else absolute_root(package_root, 'Package root')
     target = PLUGINS / 'vortex-agent'
     with install_lock():
-        provenance = package(source, expected_sha, '1.0.4')
-        package(target, expected_sha, '1.0.4')
+        provenance = package(source, expected_sha, '1.1.0')
+        package(target, expected_sha, '1.1.0')
         verify_runtime_workspace(provenance)
         verify_sources(provenance)
         pins = receipt_pins()

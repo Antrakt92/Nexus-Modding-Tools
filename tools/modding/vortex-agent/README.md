@@ -16,6 +16,7 @@ From the repository root:
 
 ```powershell
 node tools/modding/vortex-agent/bridge.mjs --health
+node tools/modding/vortex-agent/bridge.mjs --call read_native_preflight '{}'
 node tools/modding/vortex-agent/session.mjs inspect
 node tools/modding/vortex-agent/session.mjs plan reviewed-plan.json
 ```
@@ -24,6 +25,13 @@ The plan command is offline by default. Add `--apply` only for an authorized,
 reviewed plan. It uses stable request IDs, serial download/enable changes and one optional
 final deployment, then checks acknowledgements and exact terminal receipts.
 See [the no-restart workflow](../../../docs/NO-RESTART-WORKFLOW.md).
+
+Adapter 1.1.0 includes [resident native preflight](../../../docs/NATIVE-PREFLIGHT.md):
+the actual deployment-target table, application version and updater status from
+fixed native getters. Reads preserve target aliases and reject context drift;
+unavailable getters remain explicit partial results. No temporary helper or
+restart is needed per read after the adapter upgrade. This does not approve
+installation or shutdown.
 
 For update or removal preparation, the current source adds the bounded read-only
 [`read_mod_lifecycle` preflight](../../../docs/LIFECYCLE-PERFORMANCE.md): exact
