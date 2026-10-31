@@ -1,0 +1,98 @@
+--- a/util/run.js
++++ b/util/run.js
+@@ -61,38 +61,65 @@
+     // error's message. Otherwise progress with stdout message.
+     var errors = [];
+     var run = cp.spawn(cmd, args);
+-    run.stdout.on('data', function (data) {
+-      try {
+-        var errout = feedStdout(progress, data.toString(), run.stdin, function () {
+-          canceled = true;
+-          run.kill();
+-        });
+-        if (errout) {
+-          errors.push(errout);
++    var failureObserved = false;
++    var firstFailure;
++    var closed = false;
++    var killRequested = false;
++    function requestKill() {
++      if (killRequested || closed) return;
++      // Set before kill: kill may synchronously emit another child error.
++      killRequested = true;
++      run.kill();
++    }
++    function fail(err) {
++      if (closed) return;
++      if (!failureObserved) {
++        failureObserved = true;
++        firstFailure = err;
++      }
++      try { requestKill(); } catch (killError) { /* Preserve the first failure. */ }
++    }
++    try {
++      // Observe this exact child's close before attaching output callbacks.
++      run.on('close', function (code) {
++        if (closed) return;
++        closed = true;
++        if (failureObserved) return reject(firstFailure);
++        return resolve({ code: code, errors: errors });
++      });
++      run.on('error', fail);
++      run.stdin.on('error', fail);
++      run.stdout.on('error', fail);
++      run.stderr.on('error', fail);
++      run.stdout.on('data', function (data) {
++        if (closed || failureObserved) return;
++        try {
++          var errout = feedStdout(progress, data.toString(), run.stdin, function () {
++            canceled = true;
++            try { requestKill(); } catch (err) { fail(err); }
++          });
++          if (errout) {
++            errors.push(errout);
++          }
++        } catch (err) {
++          fail(err);
+         }
+-      } catch (err) {
+-        run.kill();
+-        reject(err);
+-      }
+-    });
+-    run.stderr.on('data', function (data) {
+-      try {
+-        var errout = feedStderr(data.toString());
+-        if (errout) {
+-          errors.push(errout);
++      });
++      run.stderr.on('data', function (data) {
++        if (closed || failureObserved) return;
++        try {
++          var errout = feedStderr(data.toString());
++          if (errout) {
++            errors.push(errout);
++          }
++        } catch (err) {
++          fail(err);
+         }
+-      } catch (err) {
+-        run.kill();
+-        reject(err);
+-      }
+-    });
+-    run.on('error', function (err) {
+-      run.kill();
+-      reject(err)
+-    });
+-    run.on('close', function (code) {
+-      return resolve({ code: code, errors: errors });
+-    });
++      });
++    } catch (err) {
++      // A child already exists. Setup failure is not evidence that it closed.
++      fail(err);
++    }
+ 
+   });
+ };

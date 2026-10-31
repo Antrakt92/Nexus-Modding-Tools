@@ -14,6 +14,7 @@ is a fallback after an uncertain tracked operation.
 | --- | --- | --- |
 | Native source | Vortex tag `v2.9.1`, commit `c80326367cbe6d96621ad6cf4a5488ef49bac110`; five reviewed installed renderer entries byte-identical to upstream | Source identity, not new native safety APIs |
 | Archive seal | Nine Windows sharing checks passed; the exact installed extractor binary also extracted the sealed test ZIP with matching payload | Mechanics/binary fixture only; node-7z wrapper, ancestor handoff and crash lifetime remain unproved |
+| Extractor error settlement | [Pinned node-7z patch](NATIVE-EXTRACTOR-CLOSE-PATCH.md) joins the exact child's close before rejecting the first asynchronous failure | Prepared only; cancellation, descendants, native wrapper acceptance and cleanup ownership remain separate gates |
 | Operation data model | Strict tracked-new-disabled plan, canonical identity and bounded event replay | Pure data; no journal writes, native dispatch or installation permission |
 | Ordinary tracking | [Pinned source patch](NATIVE-TRACKING-PATCH.md) and eight source-backed regressions | Prepared only; ordinary tracking separated, dependency keys retained; application/native acceptance pending |
 | Callback safety | [Ordered callback patch](NATIVE-CALLBACK-PATCH.md), one-shot notification and exact tracking ownership | Prepared only; forced debug cleanup is not native termination |

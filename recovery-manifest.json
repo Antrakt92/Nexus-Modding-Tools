@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "95713a229049a7f99e46e7f86bb16e26d54e5ad753111440d1f981ebe746b109"
+      "sha256_lf": "e8b91b8d7ec36e728d7988e8aa759b22a076b7852a7ed8ee38a5c07d102cde71"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -252,7 +252,7 @@
     },
     {
       "path": "docs/LICENSES.md",
-      "sha256_lf": "e4d84ea2c0fe55bd3b00a1e401959b2a60b0f6626bc7cd8cd7e284bd5d519090"
+      "sha256_lf": "0ebe271bad52d491f2363b3a89f19ecda7a364b22b1c90aeeac70832fe3d473a"
     },
     {
       "path": "docs/LIFECYCLE-IMPLEMENTATION.md",
@@ -268,7 +268,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "c6d3d3ff72aec72e57e5dfda77ffa96c408b2da68d69fd61d3086cd39c66b7eb"
+      "sha256_lf": "527a0a682fcb15578df54b28266c307ccd7c99bcdae5b215731297f9fd0975d3"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -289,6 +289,10 @@
     {
       "path": "docs/NATIVE-DISPATCH-CONTRACT.md",
       "sha256_lf": "2710239405c39c292fd3b6f2a5b3b1d301e2996ebddfaee648fb144018eb1193"
+    },
+    {
+      "path": "docs/NATIVE-EXTRACTOR-CLOSE-PATCH.md",
+      "sha256_lf": "ac5eca694d081d13115fe12d6a9a706b8e7b4958c14f807ce7fcd2819f69bc3e"
     },
     {
       "path": "docs/NATIVE-HELPER-PREPARATION.md",
@@ -831,6 +835,10 @@
       "sha256_lf": "2095ca5e69166a46f7e90f09bb73d9243346c3d5539618602ced0d71c2ce084e"
     },
     {
+      "path": "tools/modding/vortex-agent/native-extractor-close-patch.test.mjs",
+      "sha256_lf": "d913f4a02085631fc283b4da955b20308ddabb5b9b0156edcb8ded596492fab6"
+    },
+    {
       "path": "tools/modding/vortex-agent/native-fixture-close.ps1",
       "sha256_lf": "8e2f5f8772061332301aa007e6e5191dcd4de65d9face4a5f07c40c67c8d7f07"
     },
@@ -873,6 +881,18 @@
     {
       "path": "tools/modding/vortex-agent/native-patch-test-fixture.mjs",
       "sha256_lf": "7187fff854ba3c4dd1c54e7f6a2c7826d01c9236388975dc3abe63f9bb73a3db"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/node-7z-b75def8/LICENSE",
+      "sha256_lf": "842d5ae0d6e8548e518ff8d0442d5ca32f2c77aeb34c0c94a13ccda6809e84b0"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/node-7z-b75def8/error-close.json",
+      "sha256_lf": "2aebd3be4c4c32c23231d6889bee10b671402198f066cfbac2a8f03dd2c5a5b4"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/node-7z-b75def8/error-close.patch",
+      "sha256_lf": "5382cae6427faa9206ed28ec94c5d9d3e7bb0279ab83fdee25b0ec9c040e4c15"
     },
     {
       "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/callback-order.json",
