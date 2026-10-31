@@ -1440,15 +1440,15 @@
     },
     {
       "path": "tools/modding/vortex-agent/native-source-series.json",
-      "sha256_lf": "bc9df63da69248276f52fcb198b825aa357c4a4ee9bc6fb161c81c5d8b6d85f2"
+      "sha256_lf": "b64bf4f9791f9b11987880e4827fdd44c409751820858601a78e4242b84233d9"
     },
     {
       "path": "tools/modding/vortex-agent/native-source-series.mjs",
-      "sha256_lf": "b5d0cfc11a3d91db9a3becd50725d65ef5f1bbbffbba04039eda478b0536570d"
+      "sha256_lf": "6150c6bfdf05c6e34b0efc59a78e8d44e01cc9bfa9ed2bb82e3f60afdf3968bf"
     },
     {
       "path": "tools/modding/vortex-agent/native-source-series.test.mjs",
-      "sha256_lf": "c6010626d231d9646c6400b180ad8a5b6ffb8ec056ac484c8970f27d7e85f49f"
+      "sha256_lf": "018d9ae1a7289a4babd87183ccf76d6f6ae79dd938b35ea300e8ad4ba9d44e80"
     },
     {
       "path": "tools/modding/vortex-agent/native-staging-pending-transfer-patch.test.mjs",

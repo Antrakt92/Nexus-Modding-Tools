@@ -4,6 +4,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import test from 'node:test';
+import {execFileSync} from 'node:child_process';
 import {assembleNativeSources, NATIVE_SOURCE_PATHS, NATIVE_SOURCE_LIMITS} from './native-source-series.mjs';
 import {applyExact} from './native-patch-test-fixture.mjs';
 
@@ -186,7 +187,7 @@ integration('all ten final sources equal independent exact application and retur
     assert.equal(sha(result.sources[row.path]), row.finalSHA256);
   }
   assert(Object.isFrozen(result.receipt.sources)); assert(Object.isFrozen(result.receipt.sources[0]));
-  assert(Object.isFrozen(result.receipt.patches[0])); assert.equal(result.receipt.patches.length, 29);
+  assert(Object.isFrozen(result.receipt.patches[0])); assert.equal(result.receipt.patches.length, series.patches.length);
   assert.equal(result.receipt.preparedOnly, true);
   for (const flag of ['nativeAdmission', 'effectsAllowed', 'typecheckVerified', 'nativeAcceptanceVerified', 'installed'])
     assert.equal(result.receipt[flag], false);
@@ -224,5 +225,34 @@ integration('both added download originals require their independently pinned by
   for (const file of NATIVE_SOURCE_PATHS.filter(file => file.includes('/download_management/'))) {
     const changed = originals(); changed[file][0] ^= 1;
     reject(changed, 'INPUT_SHA256');
+  }
+});
+
+test('Git index and LF checkout preserve strict packet pins from CRLF working inputs', async t => {
+  const copy = clonePacket(t);
+  const textFiles = ['native-source-series.mjs', 'native-source-series.json', 'native-patch-test-fixture.mjs', 'strict-json.cjs',
+    ...fs.readdirSync(copy.packet).map(name => path.join('native-patches/vortex-2.9.1', name))];
+  for (const relative of textFiles) {
+    const file = path.join(copy.root, relative);
+    fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replaceAll('\r\n', '\n').replaceAll('\n', '\r\n'));
+    assert(fs.readFileSync(file).includes(Buffer.from('\r\n')));
+  }
+  fs.writeFileSync(path.join(copy.root, '.gitattributes'), '* text eol=lf\n', {flag: 'wx'});
+  const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !key.toUpperCase().startsWith('GIT_')));
+  Object.assign(env, {GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: path.join(copy.root, '.git', 'empty-config'), GIT_ATTR_NOSYSTEM: '1'});
+  const git = args => execFileSync('git', ['-C', copy.root, ...args], {env, encoding: 'utf8', timeout: 10000, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe']});
+  git(['init', '--quiet', '--template=', '--initial-branch=fixture']);
+  git(['-c', 'core.autocrlf=false', '-c', 'core.safecrlf=false', 'add', '--', '.gitattributes', ...textFiles]);
+  const checkout = path.join(copy.root, 'checkout'); fs.mkdirSync(checkout);
+  git(['-c', 'core.autocrlf=false', 'checkout-index', '--all', '--prefix='+checkout.replaceAll('\\', '/')+'/']);
+  for (const relative of textFiles) assert(!fs.readFileSync(path.join(checkout, relative)).includes(Buffer.from('\r\n')), relative);
+  const assemble = (await import(pathToFileURL(path.join(checkout, 'native-source-series.mjs')).href)).assembleNativeSources;
+  // This code means every fixed manifest/patch pin passed; dummy originals then
+  // fail at their independent source hash. No commits, hooks or network calls.
+  assert.throws(() => assemble(dummy()), error => error.message === 'NATIVE_SOURCE_SERIES_INPUT_SHA256');
+  if (process.env.VORTEX_NATIVE_SOURCE_ROOT) {
+    const result = assemble(originals());
+    assert.equal(result.receipt.patches.length, series.patches.length);
+    for (const row of series.files) assert.equal(sha(result.sources[row.path]), row.finalSHA256);
   }
 });

@@ -367,7 +367,7 @@
     {
       "name": "download-settings-ownership",
       "path": "src/renderer/src/extensions/download_management/views/Settings.tsx",
-      "manifestSHA256": "24e81f00f3d79c25897bde057e6b1e0ad16148a456e243bc3d30fb4991ab6a22",
+      "manifestSHA256": "0c6024c24488124c30a3ee63d1e49b49d4fc9cbd4a700bb04aa48b30f0978b4f",
       "patchSHA256": "a4d93c88955c680ad18b0697517eaf296d5ca0c168bbd3d41d654b37c5d31ed9",
       "inputSHA256": "a5d10fefc98115411930cab28b4345d681cb60b51ac16cbe3a44f08c2e24037a",
       "outputSHA256": "0c47662eaad2bb7c1a5f1fb919bd53ed81050500d19c1bde64e6a3bbe2820faa",

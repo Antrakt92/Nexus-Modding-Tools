@@ -9,7 +9,7 @@ import {applyExact} from './native-patch-test-fixture.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const PACKET = path.join(HERE, 'native-patches/vortex-2.9.1');
-const SERIES_SHA256 = 'c33c3269ded1e13c550ed851447092c2661ea55ad68f0fdba12e55d86829bcbe';
+const SERIES_SHA256 = 'b64bf4f9791f9b11987880e4827fdd44c409751820858601a78e4242b84233d9';
 export const NATIVE_SOURCE_PATHS = Object.freeze([
   'src/renderer/src/extensions/mod_management/eventHandlers.ts',
   'src/renderer/src/extensions/mod_management/index.ts',
