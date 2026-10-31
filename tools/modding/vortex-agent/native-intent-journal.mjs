@@ -75,6 +75,7 @@ export function createNativeIntentJournal(options = {}) {
       io.sameAncestry(dir, pins);
       need(JSON.stringify(names(dir)) === '["intent.json"]'
         && generation(fs.lstatSync(file, {bigint: true})) === observations.get(file), 'CHANGED');
+      io.sameAncestry(dir, pins);
       return result(id, request, record.requestSHA256);
     });
   }

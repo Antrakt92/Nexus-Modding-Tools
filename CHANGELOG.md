@@ -17,6 +17,11 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Add an internal background ZIP worker with original-handle handoff, bounded
+  control delivery and immutable operation/job bindings. This runs in own scratch;
+  Vortex registration and the public installation endpoint remain unavailable.
+- Reject ancestor replacement during final journal readback, bound source-file
+  hashing and create worker scratch through retained native parent handles.
 - Add an internal ZIP backend that creates outputs exclusively and keeps their
   original handles through transfer. Unsupported archives and existing outputs
   refuse without an overwrite or extractor fallback; MCP installation stays disabled.

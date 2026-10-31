@@ -112,8 +112,10 @@ This storage layer has no append/resume, acknowledgement, dispatch token,
 cancellation or cleanup API. Every status retains `effectsAllowed:false` and
 `powerLossPersistenceVerified:false`. File flush and process-exit readback tests
 do not establish survival of directory publication after OS crash/power loss.
-The journal reserves operation IDs only; the future executor still needs shared
-durable job exclusion, authoritative renderer lifetime, capability admission,
+The intent journal reserves operation IDs only. The separate
+[scratch worker and executor journal](OWNED-ZIP-WORKER.md) add permanent job-ID
+bindings before that worker's filesystem effects. They do not provide shared
+native-manager exclusion, authoritative renderer lifetime, capability admission,
 effect ordering and the remaining native gates. No caller option can promote
 the observed intent into an installation permit.
 
