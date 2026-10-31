@@ -16,6 +16,10 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Add a pure tracked-install job model with bounded strict JSON, canonical plan
+  identity and replayed callback/terminal/cleanup observations. It grants no
+  native effects and does not add an installation endpoint.
+
 - Rename the project to Vortex Nexus Modding MCP and move the repository to
   `Antrakt92/vortex-nexus-modding-mcp`. Update current source/recovery links while
   accepting the previous repository URL in existing packages. Published tags,
