@@ -21,6 +21,7 @@ is a fallback after an uncertain tracked operation.
 | Transfer failure | [Copy-error propagation patch](NATIVE-COPY-ERROR-PATCH.md), actual native transfer/concurrency regressions | Prepared only; error propagation is not no-clobber, safe cleanup or terminal proof |
 | Transfer worker join | [Joined transfer patch](NATIVE-TRANSFER-JOIN-PATCH.md), stop new callbacks after failure and await started mkdir/copy callbacks | Prepared only; callback settlement is not detached I/O/extractor exit or safe path cleanup |
 | Native ownership | No replacement, exclusive owner/path reservation and owned cleanup | Missing from the reviewed ordinary host contract |
+| File transfer primitive | [Handle-owned transfer](OWNED-FILE-TRANSFER.md), exclusive relative creation, native identity pins and retained failure output | Windows fixture library only; no Vortex connection, extractor handoff or cleanup permit |
 | Native activity | [Core-tail diagnostic patch](NATIVE-ACTIVITY-PATCH.md), separate IDs and joined error cleanup | Prepared only; no extractor/process exit proof or native dispatch acknowledgement |
 | Native terminal | Exact intent/job binding and proven extractor/mandatory cleanup completion | Not accepted by the reviewed ordinary host contract |
 | Dispatch data contract | Closed full-plan request and bounded synchronous consumed-ID model with operation/job exclusion | Offline only; caller-provided lifetime claims, no native invocation or persistence |

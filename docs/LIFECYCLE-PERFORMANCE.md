@@ -138,6 +138,11 @@ current native installer can prompt to ignore dependencies before offering
 side-by-side installation; continuing changes collection rules. Removing the
 helper guard would not make that route safe.
 
+The internal [handle-owned transfer library](OWNED-FILE-TRANSFER.md) now provides
+bounded new-only copying with retained parent/file handles and verified bytes.
+It addresses one filesystem primitive; it does not yet replace the native
+installer, establish extractor exit or measure a complete install speedup.
+
 Build retention also needs an explicit consumer manifest: each canonical recipe
 should name the exact source/variant archives and hashes it consumes, its current
 output and any rollback keeper. Cleanup must preserve those referenced inputs.
