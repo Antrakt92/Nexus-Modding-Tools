@@ -1476,11 +1476,11 @@
     },
     {
       "path": "tools/modding/vortex-agent/own-helper-binder.mjs",
-      "sha256_lf": "ca334fcab3534342fad656dfce36aea566c077fd5caa6ce4bc0b47e0020fee11"
+      "sha256_lf": "a788fd61e7827ffca695a7e5bbb91c49f9bb0a0908f3e68b6361b01c3a6dca40"
     },
     {
       "path": "tools/modding/vortex-agent/own-helper-binder.test.mjs",
-      "sha256_lf": "a9d3324a7cb58f7f022baed326e3526b12be9de5e45c4c68431b1f8b0d3192ea"
+      "sha256_lf": "12930ef78141d0fedac178f8f00304ba913e511690e1fcb22e8a714f0b456202"
     },
     {
       "path": "tools/modding/vortex-agent/own-install-preflight.mjs",

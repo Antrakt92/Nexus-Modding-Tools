@@ -329,3 +329,39 @@ test('worker own-local binder propagates explicit mode into held kit and complet
 test('binder refuses invalid source proof modes before opening inputs or creating output',t=>{
   const f=fixture(t);assert.throws(()=>prepareOwnHelper({...f.args(),sourceProofMode:'auto'}),/OWN_BINDER_INVALID_SOURCE_PROOF_MODE/);assert(!fs.existsSync(f.output));
 });
+
+function completePlaceholderReference(f) {
+  const reference = path.join(f.root, 'private-reference'); fs.mkdirSync(reference);
+  for (const name of ['index.prepared.js', ...Object.keys(SUPPORTED_FAMILY.modules)])
+    fs.writeFileSync(path.join(reference, name), 'PRIVATE_REFERENCE_CONTENT');
+  return reference;
+}
+test('CLI reports missing mandatory reference entry or module before hash work without leaking private paths', t => {
+  for (const missing of ['index.prepared.js', 'local-import-readiness.cjs']) {
+    const f = fixture(t), args = f.args(), reference = completePlaceholderReference(f);
+    fs.unlinkSync(path.join(reference, missing));
+    assert.throws(() => execFileSync(process.execPath, [path.join(here, 'own-helper-binder.mjs'),
+      '--reference', reference, '--plan', args.planFile, '--plan-sha256', args.planSHA256, '--output', args.output],
+    {encoding: 'utf8', timeout: 15000, stdio: ['ignore', 'pipe', 'pipe']}), error => {
+      assert.equal(error.status, 1); assert.equal(error.stdout, '');
+      assert.equal(error.stderr, 'OWN_BINDER_REFERENCE_MISSING\n');
+      assert(!error.stderr.includes(reference)); assert(!error.stderr.includes(missing));
+      assert(!error.stderr.includes('PRIVATE_REFERENCE_CONTENT')); return true;
+    });
+    assert.equal(fs.existsSync(f.output), false);
+  }
+});
+
+test('reference preflight preserves drift, reparse and permission refusal rather than mislabeling them missing', t => {
+  const f = fixture(t), args = f.args(), reference = completePlaceholderReference(f);
+  assert.throws(() => prepareOwnHelper({...args, reference}), /OWN_BINDER_REFERENCE_DRIFT/);
+  const leaf = path.join(reference, 'local-import-readiness.cjs'), lstat = fs.lstatSync;
+  const denied = Object.assign(Error('private permission detail'), {code: 'EACCES'});
+  try {
+    fs.lstatSync = (file, ...rest) => {if (path.resolve(file) === leaf) throw denied; return lstat(file, ...rest);};
+    assert.throws(() => prepareOwnHelper({...args, reference}), error => error === denied);
+  } finally {fs.lstatSync = lstat;}
+  fs.unlinkSync(leaf); fs.symlinkSync(path.join(f.root, 'absent-link-target'), leaf, 'file');
+  assert.throws(() => prepareOwnHelper({...args, reference}), /OWN_BINDER_REPARSE_PATH/);
+  assert.equal(fs.existsSync(f.output), false);
+});
