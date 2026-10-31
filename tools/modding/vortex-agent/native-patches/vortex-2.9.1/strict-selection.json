@@ -1,0 +1,30 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/extensions/mod_management/InstallManager.ts",
+  "originalSourceSHA256": "577d56a8728052069f850face9bb57437dbf2886bd41409fe6a66cfefc08ed33",
+  "prerequisitePatch": "native-activity.patch",
+  "prerequisitePatchSHA256": "518d18897c281bc72fb47c597e2b154bbaecc2072d1951f4932af08e6a9b959a",
+  "inputSHA256": "0a6cd70aeea38c761af7e50c193f9a11dbaf159e378b2bc9f810585bf5e2a028",
+  "outputSHA256": "004ceae2a4e02d0abef1e39c1c888718ab0c140116d221b533e2a31c46e41baf",
+  "patchSHA256": "c91b8ffe9e6061fa2bb756d97954024dd478a977e664fecb5d0e950618db6ea3",
+  "scope": "Private optional strict-new selection context only; public install signature unchanged.",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "nativeTerminalGuarantee": false,
+  "globalIdleGuarantee": false,
+  "noReplacementGuarantee": false,
+  "importNoClobberGuarantee": false,
+  "ownerReservationGuarantee": false,
+  "installationPermit": false,
+  "testSourceEnvironment": "VORTEX_NATIVE_INSTALL_MANAGER",
+  "limitations": [
+    "Synchronous metadata observations are not ownership reservation, atomic no-clobber, archive seal or extractor exit proof.",
+    "Public install() never supplies strictNew; no new native entrypoint or executor exists.",
+    "Source-derived tests use owned API/state stubs; no constructor, archive extraction, installation or native effects run.",
+    "Fresh context may change after the final guard; serialized native mutation and atomic reservation remain separate gates."
+  ]
+}

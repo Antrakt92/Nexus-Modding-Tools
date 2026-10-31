@@ -48,6 +48,11 @@ regressions verify this storage scope. Power-loss publication, shared durable
 job exclusion and native no-replacement/ownership remain open; stage 4 is not
 accepted for installation.
 
+The [private selection patch](NATIVE-STRICT-SELECTION.md) prepares fresh context,
+tracked-package and all-profile conflict checks while bypassing legacy replacement
+branches. It remains uninstalled and requires separate owner/reservation, full
+application-build and native acceptance gates.
+
 The current bottleneck evidence and architectural constraints are in
 [Lifecycle performance](LIFECYCLE-PERFORMANCE.md). This checklist does not replace
 the [agent workflow](AGENT-WORKFLOW.md) or task-specific native admission.

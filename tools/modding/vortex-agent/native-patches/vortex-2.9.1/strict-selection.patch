@@ -1,0 +1,244 @@
+--- a/src/renderer/src/extensions/mod_management/InstallManager.ts
++++ b/src/renderer/src/extensions/mod_management/InstallManager.ts
+@@ -1354,7 +1354,112 @@
+     allowAutoDeploy?: boolean,
+     sourceModId?: string,
+     modReference?: IModReference,
++    strictNew?: Readonly<{
++      archiveId: string; md5: string; size: number; gameId: string; profileId: string; modId: string;
++    }>,
+   ): void {
++    // Internal selection context only. Public install() never supplies this argument.
++    // These observations reserve no path and grant no native installation permit.
++    if (strictNew !== undefined) {
++      const keys = ["archiveId", "md5", "size", "gameId", "profileId", "modId"];
++      const copy: any = {};
++      if (strictNew === null || typeof strictNew !== "object"
++          || ![Object.prototype, null].includes(Object.getPrototypeOf(strictNew))
++          || Reflect.ownKeys(strictNew).length !== keys.length) {
++        throw new ProcessCanceled("Strict new installation: invalid context");
++      }
++      for (const key of keys) {
++        const field = Object.getOwnPropertyDescriptor(strictNew, key);
++        if (!field || !field.enumerable || !("value" in field)) {
++          throw new ProcessCanceled("Strict new installation: invalid context");
++        }
++        copy[key] = field.value;
++      }
++      const opaque = (value: any) => typeof value === "string" && /^[A-Za-z0-9_-]{1,128}$/.test(value);
++      const owner = copy.modId;
++      if (!opaque(copy.archiveId) || !opaque(copy.profileId) || copy.gameId !== "cyberpunk2077"
++          || typeof copy.md5 !== "string" || !/^[a-f0-9]{32}$/.test(copy.md5)
++          || !Number.isSafeInteger(copy.size) || copy.size <= 0 || copy.size > 64 * 1024 * 1024
++          || typeof owner !== "string" || owner.length < 1 || owner.length > 200
++          || !/^[A-Za-z0-9_. -]+$/.test(owner) || owner.trim() !== owner || /[. ]$/.test(owner)
++          || /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(owner)
++          || /\.installing$/i.test(owner)
++          || [".", "..", "__proto__", "constructor", "prototype", "__folder_managed_by_vortex"].includes(owner.toLowerCase())) {
++        throw new ProcessCanceled("Strict new installation: invalid context");
++      }
++      strictNew = Object.freeze(copy);
++    }
++    const assertStrictNew = (projectedInfo: any = info) => {
++      if (strictNew === undefined) return;
++      const fail = () => {throw new ProcessCanceled("Strict new installation: selection refused");};
++      const object = (value: any) => value !== null && typeof value === "object" && !Array.isArray(value);
++      const blocked = ["choices", "patches", "previous", "custom", "rules", "fileList", "meta"];
++      if (!object(info) || !object(projectedInfo) || blocked.some(key => key in info || key in projectedInfo)
++          || processDependencies !== false || enable !== false || allowAutoDeploy !== false || unattended !== true
++          || sourceModId !== undefined || modReference !== undefined || fileList !== undefined
++          || info.modReference !== undefined || projectedInfo.modReference !== undefined
++          || forceInstaller !== undefined || forceGameId !== strictNew.gameId
++          || archiveId !== strictNew.archiveId || !Array.isArray(downloadGameIds)
++          || downloadGameIds.length !== 1 || downloadGameIds[0] !== strictNew.gameId
++          || typeof archivePath !== "string" || !/\.zip$/i.test(path.basename(archivePath))
++          || path.basename(archivePath, path.extname(archivePath)).trim() !== strictNew.modId
++          || ("profileId" in info && info.profileId !== strictNew.profileId)
++          || ("profileId" in projectedInfo && projectedInfo.profileId !== strictNew.profileId)
++          || getBatchContext(["install-dependencies", "install-recommendations"], "") != null) fail();
++      const state = api.getState(), profile = activeProfile(state);
++      const profiles = state.persistent?.profiles, mods = state.persistent?.mods?.[strictNew.gameId];
++      const download = state.persistent?.downloads?.files?.[archiveId];
++      if (!object(profiles) || Object.keys(profiles).length > 2000 || !object(mods) || Object.keys(mods).length > 10000) fail();
++      const storedProfile = profiles[strictNew.profileId];
++      if (!profile || profile.id !== strictNew.profileId || profile.gameId !== strictNew.gameId
++          || !storedProfile || storedProfile.gameId !== strictNew.gameId || storedProfile.pendingRemove === true
++          || activeGameId(state) !== strictNew.gameId || !object(download) || download.state !== "finished"
++          || download.fileMD5 !== strictNew.md5 || download.size !== strictNew.size
++          || download.localPath !== path.basename(archivePath) || "installed" in download
++          || !Array.isArray(download.game) || download.game.length !== 1 || download.game[0] !== strictNew.gameId) fail();
++      const provider = download.modInfo?.nexus?.ids;
++      if (provider != null && (!object(provider)
++          || ["modId", "fileId", "revisionId", "collectionId"].some(key => key in provider))) fail();
++      for (const data of [info.download, projectedInfo.download]) {
++        if (data !== undefined && (!object(data) || data.fileMD5 !== strictNew.md5 || data.size !== strictNew.size)) fail();
++      }
++      const targets = [strictNew.modId.toLowerCase(), (strictNew.modId + ".installing").toLowerCase()];
++      let profileEntries = 0;
++      for (const [key, entry] of Object.entries(profiles) as Array<[string, any]>) {
++        if (!object(entry) || entry.id !== key || typeof entry.gameId !== "string"
++            || !/^[A-Za-z0-9_-]{1,128}$/.test(entry.gameId) || !object(entry.modState)) fail();
++        if (entry.gameId !== strictNew.gameId) continue;
++        const keys = Object.keys(entry.modState);
++        profileEntries += keys.length;
++        if (profileEntries > 50000) fail();
++        for (const mod of keys) {
++          if (!object(entry.modState[mod]) || targets.includes(mod.toLowerCase())
++              || targets.includes(mod.replace(/[. ]+$/, "").toLowerCase())) fail();
++        }
++      }
++      const unsafePart = (part: string) => part.length === 0 || /[. ]$/.test(part)
++        || /^(?:con|prn|aux|nul|conin\$|conout\$|com[1-9]|lpt[1-9])(?:\.|$)/i.test(part)
++        || /[<>:"|?*\x00-\x1f\x7f]/.test(part);
++      for (const [key, mod] of Object.entries(mods) as Array<[string, any]>) {
++        if (!object(mod) || mod.id !== key || key.length > 255 || unsafePart(key)
++            || key.includes("/") || key.includes("\\") || targets.includes(key.toLowerCase())
++            || mod.archiveId === strictNew.archiveId) fail();
++        if (mod.attributes !== undefined && !object(mod.attributes)) fail();
++        if (mod.attributes !== undefined && "fileMD5" in mod.attributes) {
++          const existingMD5 = mod.attributes.fileMD5;
++          if (typeof existingMD5 !== "string" || !/^[a-f0-9]{32}$/.test(existingMD5)
++              || existingMD5 === strictNew.md5) fail();
++        }
++        if (mod.installationPath !== undefined) {
++          if (typeof mod.installationPath !== "string" || mod.installationPath.length > 512) fail();
++          const parts = mod.installationPath.replace(/^[A-Za-z]:[\\/]/, "").split(/[\\/]/);
++          if (parts.some(unsafePart)) fail();
++          const installed = path.normalize(mod.installationPath).toLowerCase();
++          if (targets.includes(installed) || targets.includes(path.basename(installed))) fail();
++        }
++      }
++    };
++    assertStrictNew();
+     const baseName = path.basename(archivePath, path.extname(archivePath)).trim() || "EMPTY_NAME";
+     const installId =
+       sourceModId != null
+@@ -1435,7 +1540,7 @@
+         trackedCallback(error, undefined);
+         this.settleNativeInstallActivity(nativeActivity);
+         return;
+-      } else if (download) {
++      } else if (download && strictNew === undefined) {
+         modReference = modReference || downloadToModRef(download);
+       }
+     }
+@@ -1455,6 +1560,7 @@
+     // Use parallel installation concurrency limiter instead of sequential mQueue
+     this.mInstallLimit
+       .do(() => {
++        assertStrictNew();
+         nativeActivity.state = "running";
+         return new Promise<string>((resolve, reject) => {
+           const installationZip = new Zip();
+@@ -1529,8 +1635,16 @@
+                   // Convert game ID from Nexus page ID to internal ID if necessary
+                   const state = api.getState();
+                   const games = knownGames(state);
++                  assertStrictNew(fullInfo);
++                  if (strictNew !== undefined && (gameId !== strictNew.gameId
++                      || games.find((iter) => iter.id === strictNew.gameId) === undefined)) {
++                    throw new ProcessCanceled("Strict new installation: unsupported game selection");
++                  }
+                   const convertedGameId = convertGameIdReverse(games, gameId);
+                   installGameId = convertedGameId || gameId; // Use converted ID or fallback to original
++                  if (strictNew !== undefined && installGameId !== strictNew.gameId) {
++                    throw new ProcessCanceled("Strict new installation: converted game changed");
++                  }
+ 
+                   if (installGameId === undefined) {
+                     return Promise.reject(
+@@ -1569,6 +1683,10 @@
+                       new ProcessCanceled("You need to manage a game before installing this mod"),
+                     );
+                   }
++                  if (strictNew !== undefined && (installGameId !== strictNew.gameId
++                      || currentProfile?.id !== strictNew.profileId || currentProfile?.gameId !== strictNew.gameId)) {
++                    throw new ProcessCanceled("Strict new installation: context changed");
++                  }
+                   if (installGameId !== currentProfile?.gameId) {
+                     const installProfileId = lastActiveProfileForGame(state, installGameId);
+                     batchContext?.set("profileId", installProfileId);
+@@ -1579,6 +1697,7 @@
+                     installProfile = profileById(state, info.profileId);
+                   }
+                   // TODO make the download first functionality optional
++                  assertStrictNew(fullInfo);
+                   await api.emitAndAwait(
+                     "will-install-mod",
+                     installGameId,
+@@ -1586,6 +1705,7 @@
+                     modId,
+                     fullInfo,
+                   );
++                  assertStrictNew(fullInfo);
+                   setAttribute("mod.installGameId", installGameId);
+                   return Promise.resolve(installGameId);
+                 })
+@@ -1619,6 +1739,10 @@
+                   });
+                 })
+                 .then((gameId) => {
++                  assertStrictNew(fullInfo);
++                  if (strictNew !== undefined && (archiveMD5 !== strictNew.md5 || archiveSize !== strictNew.size)) {
++                    throw new ProcessCanceled("Strict new installation: archive hash metadata changed");
++                  }
+                   if (installGameId === "site") {
+                     // install an already-downloaded extension
+                     return api
+@@ -1641,6 +1765,15 @@
+                   });
+                 })
+                 .then((modInfo: ILookupResult[]) => {
++                  if (strictNew !== undefined) {
++                    assertStrictNew(fullInfo);
++                    if (!Array.isArray(modInfo) || modInfo.length !== 0
++                        || this.deriveInstallName(baseName, fullInfo) !== strictNew.modId) {
++                      throw new ProcessCanceled("Strict new installation: metadata or derived owner");
++                    }
++                    modId = strictNew.modId;
++                    return modId;
++                  }
+                   log("debug", "got mod meta information", {
+                     archivePath,
+                     resultCount: modInfo.length,
+@@ -1757,6 +1890,14 @@
+                   return filterModInfo(fullInfo, undefined);
+                 })
+                 .then((modInfo) => {
++                  if (strictNew !== undefined) {
++                    assertStrictNew(fullInfo);
++                    if (modInfo === null || typeof modInfo !== "object" || Array.isArray(modInfo)
++                        || ["modId", "fileId", "revisionId"].some(key => key in modInfo)) {
++                      throw new ProcessCanceled("Strict new installation: provider metadata");
++                    }
++                    return;
++                  }
+                   const fileId = modInfo.fileId ?? modInfo.revisionId;
+                   installingFileId = fileId;
+                   const isCollection = modInfo.revisionId !== undefined;
+@@ -1829,6 +1970,10 @@
+                   // Only do this when the fileId matches, meaning it's the exact same
+                   // version being reinstalled — a different version (upgrade/downgrade)
+                   // may have different installer steps.
++                  if (strictNew !== undefined) {
++                    assertStrictNew(fullInfo);
++                    return;
++                  }
+                   if (fullInfo.choices === undefined) {
+                     const prevFileId = fullInfo.previous?.fileId;
+                     if (prevFileId !== undefined && prevFileId === installingFileId) {
+@@ -1900,6 +2045,14 @@
+                     installingFileId,
+                     replacementChoice,
+                   );
++                  if (strictNew !== undefined) {
++                    assertStrictNew(fullInfo);
++                    if (modId !== strictNew.modId || installGameId !== strictNew.gameId
++                        || existingMod !== undefined || replacementChoice !== undefined || rules.length !== 0
++                        || overrides.length !== 0 || enable !== false) {
++                      throw new ProcessCanceled("Strict new installation: final selection changed");
++                    }
++                  }
+                   installContext.startInstallCB(modId, installGameId, archiveId, installKind);
+ 
+                   destinationPath = path.join(this.mGetInstallPath(installGameId), modId);

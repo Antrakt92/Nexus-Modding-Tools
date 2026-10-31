@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "42d58927f891c766cdb4e6835193586c3d925b3d1e5d422af6bf46c2e8bd832d"
+      "sha256_lf": "b482c8a655e9e639fd3f6236e41e0434aca5f3431c239f74b57c9e63df8f777b"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -256,7 +256,7 @@
     },
     {
       "path": "docs/LIFECYCLE-IMPLEMENTATION.md",
-      "sha256_lf": "65e43259dddaef3fcb8cb58814d7405a2f1d3aae3f146ec3d2a2ce910b5720ee"
+      "sha256_lf": "da43d55ea19ea66d8d99180575e75106785c4e8720609dc72f4196e29269ba79"
     },
     {
       "path": "docs/LIFECYCLE-PERFORMANCE.md",
@@ -268,7 +268,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "cb6ff2e150fbfa78a2c838df8e3d60934579738babd7961d0a6f3fbdb48dbfc7"
+      "sha256_lf": "3a704a8660fa145e38282b6de1a69b38231e608c01ef0d0e8dd4cd8a99861a1d"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -284,7 +284,7 @@
     },
     {
       "path": "docs/NATIVE-DISPATCH-CONTRACT.md",
-      "sha256_lf": "2881c8f3a208d2e21f44e0c2595d8346087f7034fe549478f40d315d2678bc2a"
+      "sha256_lf": "2710239405c39c292fd3b6f2a5b3b1d301e2996ebddfaee648fb144018eb1193"
     },
     {
       "path": "docs/NATIVE-HELPER-PREPARATION.md",
@@ -293,6 +293,10 @@
     {
       "path": "docs/NATIVE-LIFECYCLE-GATES.md",
       "sha256_lf": "4389ce1bf97ac2fe43d120a732fa2133a51e8e1e1d6e71d3f091330cec02513a"
+    },
+    {
+      "path": "docs/NATIVE-STRICT-SELECTION.md",
+      "sha256_lf": "d7ae4808aa30ee645ead2a3c7e799316701ab2f85a022244169632902d1615a5"
     },
     {
       "path": "docs/NATIVE-TRACKING-PATCH.md",
@@ -869,6 +873,18 @@
     {
       "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/ordinary-tracking.patch",
       "sha256_lf": "c9d5711ac1c5ce3e8c01aebc9f4ffcc0c5fa5640da189753b34e3178e9205af3"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/strict-selection.json",
+      "sha256_lf": "f58d1a210c91cf9ab40ce550cd38b5fbfc0c3099c003fd93aeacfb19485d73ea"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/strict-selection.patch",
+      "sha256_lf": "c91b8ffe9e6061fa2bb756d97954024dd478a977e664fecb5d0e950618db6ea3"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-strict-selection-patch.test.mjs",
+      "sha256_lf": "37a5823dac7d9ab6649c9fa5588ce4773c8eb302d4cb2757923e53225ed19193"
     },
     {
       "path": "tools/modding/vortex-agent/native-tracking-patch.test.mjs",
