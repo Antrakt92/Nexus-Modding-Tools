@@ -1,0 +1,112 @@
+--- a/src/renderer/src/extensions/mod_management/InstallManager.ts
++++ b/src/renderer/src/extensions/mod_management/InstallManager.ts
+@@ -3,6 +3,7 @@
+  */
+ 
+ import { randomBytes } from "crypto";
++import { types as utilTypes } from "util";
+ import * as os from "os";
+ import * as path from "path";
+ 
+@@ -573,6 +574,7 @@
+   private static mNativeLegacyCalls: Set<object> = new Set();
+   private static mNativeExclusiveOwner: object | undefined;
+   private static mNativeExclusiveManager: InstallManager | undefined;
++  private static mNativeTransferAdmissionInvalid: boolean = false;
+ 
+   public getNativeInstallExclusion() {
+     return {
+@@ -593,6 +595,15 @@
+         || InstallManager.nativeLegacyStatePending()) {
+       throw new ProcessCanceled("Native installation exclusion busy");
+     }
++    if (InstallManager.nativeTransferStateUnresolved()) {
++      throw new ProcessCanceled("Native transfer state unresolved");
++    }
++    // getState is a native API boundary; reentry must not replace a new owner.
++    if (InstallManager.mNativeExclusiveOwner !== undefined
++        || InstallManager.mNativeLegacyCalls.size !== 0
++        || InstallManager.nativeLegacyStatePending()) {
++      throw new ProcessCanceled("Native installation exclusion busy");
++    }
+     const owner = Object.freeze({});
+     InstallManager.mNativeExclusiveOwner = owner;
+     InstallManager.mNativeExclusiveManager = this;
+@@ -605,6 +616,77 @@
+         || InstallManager.mNativeExclusiveManager !== this) {
+       throw new ProcessCanceled("Native installation exclusion owner mismatch");
+     }
++    const transferUnresolved = InstallManager.mNativeTransferAdmissionInvalid
++      || InstallManager.nativeTransferStateUnresolved();
++    // getState may reenter a check and invalidate this owner before returning.
++    if (InstallManager.mNativeTransferAdmissionInvalid || transferUnresolved) {
++      InstallManager.mNativeTransferAdmissionInvalid = true;
++      throw new ProcessCanceled("Native transfer state unresolved");
++    }
++  }
++
++  private static nativeTransferStateUnresolved(): boolean {
++    // Observe every registered manager's actual state; never clear persisted markers.
++    const record = (value: unknown): value is Record<string, unknown> => {
++      if (value === null || typeof value !== "object"
++          || utilTypes.isProxy(value) || Array.isArray(value)) {
++        return false;
++      }
++      const prototype = Object.getPrototypeOf(value);
++      if (prototype === null) {
++        return true;
++      }
++      if (utilTypes.isProxy(prototype)) {
++        return false;
++      }
++      const constructor = Object.getOwnPropertyDescriptor(prototype, "constructor");
++      return Object.getPrototypeOf(prototype) === null
++        && constructor !== undefined && Object.hasOwn(constructor, "value")
++        && typeof constructor.value === "function" && !utilTypes.isProxy(constructor.value)
++        && Object.getOwnPropertyDescriptor(constructor.value, "prototype")?.value === prototype
++        && Function.prototype.toString.call(constructor.value)
++          === Function.prototype.toString.call(Object);
++    };
++    const ownValue = (value: unknown, key: string): unknown => {
++      if (!record(value)) {
++        throw new Error("Unknown native transfer container");
++      }
++      const descriptor = Object.getOwnPropertyDescriptor(value, key);
++      if (descriptor === undefined) {
++        if (key in value) {
++          throw new Error("Inherited native transfer state");
++        }
++        return undefined;
++      }
++      if (!Object.hasOwn(descriptor, "value") || !descriptor.enumerable) {
++        throw new Error("Unknown native transfer field");
++      }
++      return descriptor.value;
++    };
++    for (const manager of InstallManager.mNativeManagers) {
++      try {
++        const persistent = ownValue(manager.mApi.getState(), "persistent");
++        const transactions = ownValue(persistent, "transactions");
++        if (transactions === undefined) {
++          continue;
++        }
++        const transfer = ownValue(transactions, "transfer");
++        if (transfer === undefined) {
++          continue;
++        }
++        if (!record(transfer)) {
++          return true;
++        }
++        for (const key of Reflect.ownKeys(transfer)) {
++          if (typeof key !== "string" || ownValue(transfer, key) !== undefined) {
++            return true;
++          }
++        }
++      } catch {
++        return true;
++      }
++    }
++    return false;
+   }
+ 
+   private registerNativeManager(): void {

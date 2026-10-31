@@ -29,6 +29,26 @@ release. Renderer reload destroys in-memory ownership and is not reconciliation.
 `getNativeInstallExclusion()` returns detached diagnostics with
 `effectsAllowed:false` and `globalIdleVerified:false`; it exposes no owner.
 
+## Persisted transfer markers
+
+The final `native-transfer-marker-admission.patch` also reads each registered
+manager's persisted transfer state before reservation and during owner checks.
+A defined marker, including `false` or `null`, refuses admission. Missing optional
+transaction/transfer records are allowed; malformed containers, accessors, hidden
+or symbol entries, proxies and failed state reads are held. Plain records from
+another realm and null-prototype records remain supported.
+
+A refusal before reservation creates no owner and permits a later fresh check.
+Once an owner has been issued, observed uncertainty permanently invalidates it
+for the loaded class. Removing a marker cannot restore it. State getters may
+reenter these checks: the outer check reads the sticky hold again after the
+getter returns, and reservation rechecks ownership before publishing its owner.
+Wrong-owner checks fail before invoking state getters.
+
+This is a renderer-state observation, not a lease against other writers or proof
+of persisted disk state. It writes no marker, clears no interlock and adds no
+release, reset, recovery or native dispatch API.
+
 ## Existing manager routes
 
 Ordinary installation reserves legacy ownership before queue admission and keeps
@@ -85,6 +105,8 @@ forwarding, metadata completion and competing manager ownership. The preceding
 archive pipeline is substituted in core-tail tests; no archive extraction or
 native installation runs. This VM is a test tool, not a security sandbox.
 
-Without the exact source, integration tests explicitly skip. Full upstream
-build/typecheck, installed renderer acceptance and live event/UX behavior remain
-unverified. Unit tests do not turn the source preparation into a loaded capability.
+Without the exact source, integration tests explicitly skip. The final composed
+renderer passed the actual upstream typecheck and webpack build; see
+[source qualification](NATIVE-SOURCE-ASSEMBLY.md). Installed renderer
+acceptance and live event/UX behavior remain unverified. Unit tests do not turn
+the source preparation into a loaded capability.

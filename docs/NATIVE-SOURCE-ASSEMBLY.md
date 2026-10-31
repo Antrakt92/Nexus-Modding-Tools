@@ -1,6 +1,6 @@
 # Assemble the reviewed Vortex source patches
 
-`native-source-series.mjs` applies the fixed sequence of 29 reviewed patches to
+`native-source-series.mjs` applies the fixed sequence of 30 reviewed patches to
 ten original files from Vortex `v2.9.1`, commit
 `c80326367cbe6d96621ad6cf4a5488ef49bac110`. It replaces manually composing separate
 patch chains before compilation. It does not change an installed application or
@@ -155,7 +155,7 @@ No compiler configuration or expectation was relaxed. See
 
 ## Downloads Settings owner — 31 October 2026
 
-The current 29-patch / ten-source graph adds whole-operation ownership to Downloads
+The 29-patch / ten-source graph adds whole-operation ownership to Downloads
 Settings after the destination-cleanup safeguard. It captures the global download
 pattern and resolved paths before normalization, checks context/marker readback,
 and joins the returned transfer, tag, elevation and reporting tails. The original
@@ -172,3 +172,24 @@ transfer tests retain their separately recorded six-case acceptance.
 This is source/build qualification. Native child completion, physical custody,
 main persistence acknowledgement, background download writers and installation
 remain separate gates. The installed Vortex application was not replaced.
+
+## Persisted transfer admission — 31 October 2026
+
+The current 30-patch / ten-source graph checks persisted transfer markers in
+every registered install manager before reserving native exclusion and when
+checking an issued owner. An unresolved or unreadable marker refuses admission.
+Uncertainty observed after reservation permanently invalidates that owner;
+clearing a marker cannot revive it. Reentrant state reads also preserve this hold.
+See [manager exclusion](NATIVE-MANAGER-EXCLUSION.md).
+
+All 13 marker regressions, 13 existing manager tests and 15 source-graph checks
+passed without skips. Independent review reproduced and verified the repair of
+a nested state-read case that previously allowed its outer check to return.
+The final source passed actual TypeScript and webpack targets with unchanged
+compiler configuration and lockfile. All ten final sources matched both the
+TypeScript Program and renderer source map. The earlier build of the defective
+draft was retained as superseded, not used as final acceptance.
+
+These checks qualify prepared renderer source only. They add no marker reset,
+owner release, native dispatch, registration, filesystem custody or installation
+permit. The installed Vortex application remains unchanged.
