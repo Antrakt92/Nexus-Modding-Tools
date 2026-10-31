@@ -104,8 +104,10 @@ The first installed-host probe refused its unreviewed deployment-map shape befor
 producing a native baseline. The helper was retired and the normal adapter
 restored; protected disk data and active-profile flags matched before/after.
 This is an exercised refusal path, not successful native capture or installation.
-Current curated MCP reads still need a native preflight endpoint that reports the
-actual target map and updater status without another temporary extension.
+The [resident native preflight](NATIVE-PREFLIGHT.md) endpoint now reports the
+actual target map and updater status without another temporary extension. Its
+source/wire/package checks and installed-host acceptance remain separate; these
+observations alone do not accept the native ZIP installation path.
 
 ## Stage 2 verification — 30 October 2026
 

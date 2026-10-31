@@ -78,7 +78,7 @@ async function main() {
   const runtimePath = path.join(paths.build, 'plugin/vortex-agent/index.js');
   const original = fs.readFileSync(runtimePath, 'utf8');
   const provenance = JSON.parse(fs.readFileSync(path.join(path.dirname(runtimePath), 'provenance.json'), 'utf8'));
-  must(provenance.version === '1.0.4' && provenance.pluginSha256 === sha(Buffer.from(original)), 'FIXTURE_SOURCE_PROVENANCE_MISMATCH');
+  must(provenance.version === '1.1.0' && provenance.pluginSha256 === sha(Buffer.from(original)), 'FIXTURE_SOURCE_PROVENANCE_MISMATCH');
   input.runtimeVersion = provenance.version; input.runtimeSourceSha256 = provenance.pluginSha256;
   must(provenance.sources?.['paths.cjs'] && original.includes('module.exports.start = start;'), 'UNEXPECTED_RUNTIME_BUNDLE');
   const runtime = original;

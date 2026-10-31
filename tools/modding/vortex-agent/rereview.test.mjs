@@ -18,7 +18,7 @@ async function fixture() {
   const dir = await fs.mkdtemp(path.join(ROOT, 'synthetic-user-'));
   const state = { confidential: { apiKey: 'actual-private-key' },
     settings: { gameMode: { discovered: { cyberpunk2077: { path: dir } } } },
-    persistent: { nexus: { userInfo: { username: 'synthetic-user', accountLabel: 'vortex-agent', displayVersion: baseline ? '1.0.2' : '1.0.4', firstName: 'mod', lastName: 'request', country: 'cyberpunk', extra: 'profile', number: ':' } },
+    persistent: { nexus: { userInfo: { username: 'synthetic-user', accountLabel: 'vortex-agent', displayVersion: baseline ? '1.0.2' : '1.1.0', firstName: 'mod', lastName: 'request', country: 'cyberpunk', extra: 'profile', number: ':' } },
       profiles: { 'profile-id': { gameId: 'cyberpunk2077', modState: {} } },
       mods: { cyberpunk2077: { 'mod-id': { state: 'installed', installationPath: 'mod-id' } } }, downloads: { files: {} } }, session: { base: {} } };
   const api = { getState: () => state, ext: {}, events: {} };
@@ -34,7 +34,7 @@ test('re-review: userInfo overlap cannot corrupt health operational values or ex
   const f = await fixture();
   const health = guard.safe(f.ops.health(), f.api, 'health');
   assert.equal(health.protocol, 'vortex-agent/1');
-  assert.equal(health.extensionVersion, baseline ? '1.0.2' : '1.0.4');
+  assert.equal(health.extensionVersion, baseline ? '1.0.2' : '1.1.0');
   assert.equal(health.gameId, f.args.gameId); assert.equal(health.profileId, f.args.profileId);
   assert.equal(health.gamePath, disk.realpathSync(f.dir)); assert.deepEqual(health.filesystemIds, f.args.filesystemIds);
   assert.throws(() => guard.safe({ account: f.state.persistent.nexus.userInfo }, f.api, 'health'), /ACCOUNT_DATA_NOT_CURATED/);
