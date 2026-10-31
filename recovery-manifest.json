@@ -212,7 +212,7 @@
     },
     {
       "path": "docs/AUTHORIZED-RESTART.md",
-      "sha256_lf": "dfd0d79e19d0cdebe47726011c4d19477f0e5d8a9798ba8819277b7f87fcbb9b"
+      "sha256_lf": "63ce132beb28df913c2f7d5d79dc269497319b0d3b6466f81f90b9168b7eb53e"
     },
     {
       "path": "docs/CHILD-TERMINAL-OBSERVER.md",
@@ -264,7 +264,7 @@
     },
     {
       "path": "docs/LIFECYCLE-IMPLEMENTATION.md",
-      "sha256_lf": "198b6108b697630f3afd92d4e41f7054ccfe7e6f2ea2158ea0f03eb1851e4b0c"
+      "sha256_lf": "eee10fc091ac56b1424a1605ec453cb0077c9e682f611a99f8c5c2d169019290"
     },
     {
       "path": "docs/LIFECYCLE-PERFORMANCE.md",
@@ -404,7 +404,7 @@
     },
     {
       "path": "docs/READ-CAPTURE-PREPARATION.md",
-      "sha256_lf": "61232ecf4259b875daa718c49c207a7d90229dffb8c7aca08674d14e23b3e1fe"
+      "sha256_lf": "19ce73760270d856e20d48c8e9bb60ca7a07540eb7e5e014bb6e7601f2bbf455"
     },
     {
       "path": "docs/README.md",
