@@ -93,6 +93,20 @@ This completes offline binding only. No running extension was upgraded, no
 helper activated and no game launched. Install readiness, fresh source/session
 admission, deployment proof and gameplay acceptance are not granted by this kit.
 
+The [external disk baseline](READ-CAPTURE-BASELINE.md) now replaces ad hoc physical
+baseline preparation for the supported hardlink profile. It checks FD identity,
+protected pairs, required preferences and repeated discovery. Metadata-only plans
+avoid a second payload hash pass. The [read-capture kit](READ-CAPTURE-PREPARATION.md)
+requires a separately reviewed actual deployment map; several mod-type IDs can
+refer to the same game root, but guessed aliases cannot authorize capture.
+
+The first installed-host probe refused its unreviewed deployment-map shape before
+producing a native baseline. The helper was retired and the normal adapter
+restored; protected disk data and active-profile flags matched before/after.
+This is an exercised refusal path, not successful native capture or installation.
+Current curated MCP reads still need a native preflight endpoint that reports the
+actual target map and updater status without another temporary extension.
+
 ## Stage 2 verification — 30 October 2026
 
 Reviewed plans now return a stable full `planId`. Apply reserves an immutable

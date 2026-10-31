@@ -19,10 +19,22 @@ for exactly one window or a particular class-name count. Record the current
 window handles and their owning PID; scope every post to the freshly verified
 main process and reject identity drift. Never broadcast to other processes.
 
+After a close request, the admitted main process can exit before the next window
+check. Pin its process handle before posting; distinguish that expected exit
+from PID reuse or a failed identity query. Then verify that every Vortex process
+exited. Do not replay the close phase if it already stopped the host: reconcile
+its original receipt and review only the remaining maintenance/start steps.
+
 Capture and compare process creation times using the same native representation.
 CIM can truncate to microseconds while .NET retains 100-nanosecond ticks. Comparing
 those values directly can falsely report PID reuse. If both are needed, pin and
 recheck each separately; do not round timestamps or add a tolerance to admit drift.
+
+Preserve JSON timestamp types too. On the reviewed PowerShell 7.6 runtime,
+`ConvertFrom-Json` converts ISO timestamps to `DateTime` by default. Use
+`-DateKind String` when the approval contract requires a timestamp string, and
+test the actual JSON reader as well as its date-format check. A rejected approval
+before an attempt is written does not establish that a close request occurred.
 
 The installed `vortex-mod-lifecycle` skill's `references/native-lifecycle.md`,
 section **Hidden Vortex windows**, is the canonical agent procedure. On the
