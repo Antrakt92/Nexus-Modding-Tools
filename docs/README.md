@@ -37,6 +37,7 @@ Each report lists what was checked and what still needs testing.
 - [Local installation continuation](LOCAL-INSTALL-IMPLEMENTATION.md): bounded job model, native ownership/terminal prerequisites and separate new-ZIP contracts.
 - [Prepared callback patch](NATIVE-CALLBACK-PATCH.md): one-shot completion, synchronous event ordering and exact tracking cleanup; source tests only.
 - [Prepared activity patch](NATIVE-ACTIVITY-PATCH.md): separate per-invocation core-tail observations and joined error cleanup; native acceptance pending.
+- [Next native dispatch contract](NATIVE-DISPATCH-CONTRACT.md): fixed new-disabled entrypoint, preallocated job ID, one-shot consumption and uncertain-result recovery; not implemented.
 - [29 October full source audit](FULL-AUDIT-20261029.md).
 - [29 October follow-up and live upgrade](AUDIT-20261029.md).
 - [Dependency pins and checks](DEPENDENCY-AUDIT.md).
