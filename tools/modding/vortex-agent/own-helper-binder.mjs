@@ -210,6 +210,13 @@ function readReference(reference, observations) {
   need(!/[\\/]vortex[\\/]plugins(?:[\\/]|$)/i.test(dir), 'OWN_BINDER_ACTIVE_PATH_REFUSED');
   need(!fs.readdirSync(dir).some(n => /^(?:reviewed\.json|READY|frozen|root-ready|capture-ready|attempt|failed|completed|preflight-failed|HOST)/i.test(n)),
     'OWN_BINDER_ATTEMPTED_REFERENCE_REFUSED');
+  // Diagnose only the closed reference family here, before hashing its entry.
+  // Unrelated plan/build/archive filesystem failures keep their existing codes.
+  for (const name of ['index.prepared.js', ...Object.keys(family.modules)]) {
+    const file = path.join(dir, name); ordinary(file);
+    try { fs.lstatSync(file); }
+    catch (error) { if (error.code === 'ENOENT') throw Error('OWN_BINDER_REFERENCE_MISSING'); throw error; }
+  }
   const input = boundedRead(path.join(dir, 'index.prepared.js'), 1024 * 1024, observations);
   need(sha(input) === family.entrySHA256, 'OWN_BINDER_REFERENCE_DRIFT'); const modules = new Map();
   for (const [name, pin] of Object.entries(family.modules)) {
