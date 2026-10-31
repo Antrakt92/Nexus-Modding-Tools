@@ -17,6 +17,9 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Exercise controlled guardian loss with suspended and active extractor fixtures
+  and a real intent journal. Owner loss requires reconciliation regardless of
+  process exit code; source drift and replay remain refused in the fixture.
 - Add opt-in Windows custody tests with a separate surviving custodian and a
   controlled caller crash. Document the observed early-release gap in child-only
   handle inheritance; SDK/Vortex integration and general recovery remain unproved.

@@ -78,13 +78,61 @@ termination. Both 32 MiB payloads matched their size and SHA-256. Default
 execution skipped both cases as intended. These counts describe this run,
 not a timing or throughput guarantee.
 
+## Loss of the guardian
+
+Two additional cases terminate the guardian itself after the launcher has
+closed its temporary job handle. An outer observer receives only the exact
+reader process/thread and output-pipe handles, never the job or file seals.
+The guardian is the sole remaining owner of the kill-on-close job handle.
+
+The suspended case never resumes the reader. The running case first reads
+known own-entry output from 7z, then stops reading and requires eight observations
+of a full stdout buffer with the exact process still unsignaled. Its ZIP adds
+2,048 empty own entries to make output exceed the measured pipe buffer. This
+is an observed backpressure fixture, not a thread-instruction or throughput
+measurement.
+
+After the controlled guardian exit, the observer requires exact reader
+termination and both pipe EOFs. It also requires absence of a normal guardian
+success report. Exit code is recorded, never treated as success proof: in the
+first actual runs, even the never-resumed reader ended with code 0. Microsoft's
+[kill-on-close contract](https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_basic_limit_information)
+specifies termination, not a particular exit value. The original tests' nonzero
+expectation was rejected; those failed reports were preserved.
+
+Before launching the guardian, the observer writes a real
+[`native-intent-journal`](NATIVE-DISPATCH-CONTRACT.md#immutable-intent-storage)
+fixture. The full request binds the own archive/payload and fixture context,
+not admitted live Vortex roots. Its independently retained operation ID and
+request digest are supplied to a fresh journal reader after termination.
+The required result remains `intent_observed`, `dispatchState:unknown`,
+`reconcileRequired:true`, `canReplay:false` and `effectsAllowed:false`.
+Containment cannot turn a lost owner into a completion or retry permit.
+
+The intent fixture pins its Python and Node entrypoints, native module, helper
+and the helper's six local journal/protocol dependencies. Checks before and
+after helper calls reject source drift. Separate metadata-only Node tests
+exercise stale source pins, incorrect expected digests, repeated begin and
+preservation of the original intent bytes. These tests do not validate ZIP
+format or perform native installation.
+
+The four native cases passed together on the reviewed host on 31 October 2026.
+Both controlled guardian-loss cases observed reader exit code 0, exact process
+termination and both EOFs; neither produced a normal completion receipt. Their
+fresh journal statuses matched the original pre-launch bindings and remained
+unknown and non-replayable. The running case recorded own-entry output and all
+eight full-pipe observations before guardian loss; the suspended case never
+resumed its reader.
+
 ## Remaining gates
 
-The custodian survives this scenario. Its own death and arbitrary simultaneous
-failures require a separate containment/recovery contract. Job membership and
-the kill-on-close setting are checked; this does not establish all abort or
-descendant behavior. Directory handles do not fence arbitrary descendant files.
-Sampling is observational and cannot prove protection at every instant.
+The normal custody pair requires a surviving guardian. The controlled loss
+cases test containment after launcher takeover; they do not cover every crash
+before process creation/handoff, arbitrary simultaneous failures, descendant
+behavior or a production recovery transaction. Guardian death releases its
+seals: the loss cases do not claim custody until observed reader termination or
+authorize successor filesystem actions. Directory handles do not fence
+arbitrary descendants. Sampling cannot prove protection at every instant.
 
 The prepared Node SDK spawn path does not use this launcher. Earlier SDK
 normal-path tests plus this separate experiment do not establish crash-safe

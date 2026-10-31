@@ -27,6 +27,10 @@ import unittest
 HERE = Path(__file__).absolute().parent
 ROOT = HERE.parents[2]
 SOURCE = HERE/'owned-file-transfer.py'
+INTENT_HELPER = HERE/'native-custody-intent-fixture.mjs'
+NODE = Path('C:/Program Files/nodejs/node.exe')
+INTENT_SOURCES = ('native-intent-journal.mjs', 'immutable-records.mjs', 'strict-json.cjs',
+                  'paths.cjs', 'native-dispatch-contract.cjs', 'install-job-contract.cjs')
 TASK = ROOT/'local-state/native-custody-process-tests'
 EXE = Path('C:/Program Files/Vortex/resources/app.asar.unpacked/node_modules/7z-bin/win32/7z.exe')
 EXE_SHA = 'fcd699098397e8981104c51afe32f4527cb6f02a5b64cbb6b2581f4749808e8c'
@@ -75,11 +79,16 @@ def validate_run(run):
     return run
 
 
-def prepare(guardian_custody=True):
+def prepare(guardian_custody=True, crash_stage=None):
     """Explicit setup only; fresh own data, no process launched."""
     need(type(guardian_custody) is bool, 'INVALID_GUARDIAN_CUSTODY')
+    need(crash_stage is None or type(crash_stage) is str and crash_stage in ('suspended', 'running'), 'INVALID_CRASH_STAGE')
+    need(crash_stage is None or guardian_custody, 'CRASH_REQUIRES_GUARDIAN')
     check_abi()
+    if crash_stage is not None:
+        need(INTENT_HELPER.is_file() and NODE.is_file(), 'INTENT_RUNTIME_MISSING')
     need(sha(EXE) == EXE_SHA and sha(EXE.with_name('7z.dll')) == DLL_SHA, 'EXTRACTOR_DRIFT')
+    intent_sources = {name: sha(HERE/name) for name in INTENT_SOURCES} if crash_stage else None
     ordinary(TASK)
     TASK.mkdir(parents=True, exist_ok=True)
     ordinary(TASK)
@@ -87,10 +96,20 @@ def prepare(guardian_custody=True):
     for name in ('archives', 'temps', 'final'):
         (run/name).mkdir()
     payload = random.Random(31012026).randbytes(32*1024*1024)
+    manifest = {'payload.bin': hashlib.sha256(payload).hexdigest()}
     with zipfile.ZipFile(run/'archives/own.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
         archive.writestr('payload.bin', payload)
-    packet(run/'PLAN.json', {'schema': 'own-custody-process-fixture/1', 'guardianCustody': guardian_custody,
+        if crash_stage == 'running':
+            for index in range(2048):
+                name = 'entries/empty%04d.bin' % index
+                archive.writestr(name, b'')
+                manifest[name] = hashlib.sha256(b'').hexdigest()
+    packet(run/'PLAN.json', {'schema': 'own-custody-process-fixture/1', 'guardianCustody': guardian_custody, 'crashStage': crash_stage,
+           'payloadManifest': manifest, 'unpackedBytes': len(payload), 'payloadFileCount': len(manifest),
            'scriptSHA256': sha(Path(__file__)), 'moduleSHA256': sha(SOURCE),
+           'intentHelperSHA256': sha(INTENT_HELPER) if crash_stage else None,
+           'intentSourceSHA256': intent_sources,
+           'nodeSHA256': sha(NODE) if crash_stage else None,
            'archiveSHA256': sha(run/'archives/own.zip'),
            'archiveBytes': (run/'archives/own.zip').stat().st_size,
            'payloadSHA256': hashlib.sha256(payload).hexdigest(), 'payloadBytes': len(payload),
@@ -164,6 +183,8 @@ def api():
         'IsProcessInJob': ([W.HANDLE, W.HANDLE, C.POINTER(W.BOOL)], W.BOOL),
         'ResumeThread': ([W.HANDLE], W.DWORD), 'WaitForSingleObject': ([W.HANDLE, W.DWORD], W.DWORD),
         'GetExitCodeProcess': ([W.HANDLE, C.POINTER(W.DWORD)], W.BOOL),
+        'TerminateProcess': ([W.HANDLE, W.UINT], W.BOOL),
+        'GetNamedPipeInfo': ([W.HANDLE, C.c_void_p, C.POINTER(W.DWORD), C.POINTER(W.DWORD), C.c_void_p], W.BOOL),
         'MoveFileExW': ([W.LPCWSTR, W.LPCWSTR, W.DWORD], W.BOOL),
         'RemoveDirectoryW': ([W.LPCWSTR], W.BOOL),
     }
@@ -185,24 +206,36 @@ def identity(path):
     return {'schema': 'win-file-id128/1', 'volumeSerialNumber': str(stat.st_dev), 'fileId': str(stat.st_ino)}
 
 
-def process_identity(k, process, thread, job):
+def process_identity(k, process, thread, job=None):
     times = [W.FILETIME() for _ in range(4)]
     need(k.GetProcessTimes(process, *(C.byref(value) for value in times)), 'PROCESS_TIMES_FAILED')
     image, length, inside = C.create_unicode_buffer(1024), W.DWORD(1024), W.BOOL()
     need(k.QueryFullProcessImageNameW(process, 0, image, C.byref(length)), 'PROCESS_IMAGE_FAILED')
-    need(k.IsProcessInJob(process, job, C.byref(inside)) and inside.value, 'JOB_MEMBERSHIP_FAILED')
+    if job is not None:
+        need(k.IsProcessInJob(process, job, C.byref(inside)) and inside.value, 'JOB_MEMBERSHIP_FAILED')
     pid, tid = k.GetProcessId(process), k.GetThreadId(thread)
     need(pid and tid and k.GetProcessIdOfThread(thread) == pid and Path(image.value) == EXE, 'PROCESS_IDENTITY_FAILED')
     return {'pid': pid, 'tid': tid, 'created': (times[0].dwHighDateTime << 32) | times[0].dwLowDateTime,
-            'image': image.value, 'inOwnJob': True}
+            'image': image.value, 'inOwnJob': bool(inside.value) if job is not None else None}
 
+
+
+def verify_intent_sources(plan):
+    pins = plan.get('intentSourceSHA256')
+    need(type(pins) is dict and set(pins) == set(INTENT_SOURCES), 'INTENT_SOURCE_SET_REFUSED')
+    need(all(type(pins[name]) is str and re.fullmatch(r'[a-f0-9]{64}', pins[name])
+             and sha(HERE/name) == pins[name] for name in INTENT_SOURCES), 'INTENT_SOURCE_DRIFT')
 
 def load_plan(run):
     plan = json.loads((run/'PLAN.json').read_text('utf-8'))
     need(type(plan.get('guardianCustody')) is bool, 'INVALID_GUARDIAN_CUSTODY')
+    need(plan.get('crashStage') in (None, 'suspended', 'running'), 'INVALID_CRASH_STAGE')
     need(sha(Path(__file__)) == plan['scriptSHA256'] and sha(SOURCE) == plan['moduleSHA256'], 'SOURCE_DRIFT')
     need(sha(EXE) == EXE_SHA and sha(EXE.with_name('7z.dll')) == DLL_SHA, 'EXTRACTOR_DRIFT')
     need(sha(run/'archives/own.zip') == plan['archiveSHA256'], 'ARCHIVE_DRIFT')
+    if plan['crashStage'] is not None:
+        verify_intent_sources(plan)
+        need(sha(INTENT_HELPER) == plan['intentHelperSHA256'] and sha(NODE) == plan['nodeSHA256'], 'INTENT_HELPER_DRIFT')
     return plan
 
 
@@ -318,6 +351,30 @@ def fence_probe(k, run, timings=None):
     return output  # No write, truncate, rename or deletion is performed.
 
 
+def drain_pipe(k, handle, output, stop_readers):
+    buffer, used, available = C.create_string_buffer(65536), W.DWORD(), W.DWORD()
+    try:
+        while not stop_readers.is_set():
+            if not k.PeekNamedPipe(handle, None, 0, None, C.byref(available), None):
+                output['error'] = C.get_last_error()
+                output['eof'] = output['error'] == 109
+                return
+            if not available.value:
+                stop_readers.wait(0.001)
+                continue
+            # Sole reader, no concurrent consumer: do not block asking
+            # for bytes which have not actually arrived in this pipe.
+            if not k.ReadFile(handle, buffer, min(available.value, len(buffer)), C.byref(used), None):
+                output['error'] = C.get_last_error()
+                output['eof'] = output['error'] == 109
+                return
+            need(used.value > 0, 'PIPE_NO_PROGRESS')
+            output['bytes'] += used.value
+        output['stoppedWithoutEOF'] = True
+    except BaseException as error:
+        output['exception'] = type(error).__name__
+
+
 def supervise(run):
     run, k = validate_run(run), api()
     plan = load_plan(run)
@@ -347,8 +404,11 @@ def supervise(run):
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             archive = run/'archives/own.zip'
-            binding = {'operationId': 'op_'+'1'*32, 'nativeJobId': 'exec_'+'2'*32,
-                       'requestSHA256': sha(run/'PLAN.json'), 'rendererGeneration': 'renderer_'+'3'*32}
+            if plan['crashStage'] is not None:
+                binding = json.loads((run/'EXPECTED-BINDING.json').read_text('utf-8'))
+            else:
+                binding = {'operationId': 'op_'+'1'*32, 'nativeJobId': 'exec_'+'2'*32,
+                           'requestSHA256': sha(run/'PLAN.json'), 'rendererGeneration': 'renderer_'+'3'*32}
             guardian = module.ArchiveTempLease(binding, str(archive.parent), identity(archive.parent), archive.name,
                        identity(archive), plan['archiveBytes'], plan['archiveSHA256'],
                        str(run/'temps'), identity(run/'temps'), 'Extract')
@@ -380,37 +440,16 @@ def supervise(run):
         need(all(evidence[key] == ack[key] for key in ('pid', 'tid', 'created', 'image')), 'ACK_IDENTITY_MISMATCH')
         need(k.WaitForSingleObject(process, 0) == 258, 'CHILD_NOT_SUSPENDED_ALIVE')
         # Drain both real pipes BEFORE resuming. Only the bounded tail is kept.
-        def drain(handle, output):
-            buffer, used, available = C.create_string_buffer(65536), W.DWORD(), W.DWORD()
-            try:
-                while not stop_readers.is_set():
-                    if not k.PeekNamedPipe(handle, None, 0, None, C.byref(available), None):
-                        output['error'] = C.get_last_error()
-                        output['eof'] = output['error'] == 109
-                        return
-                    if not available.value:
-                        stop_readers.wait(0.001)
-                        continue
-                    # Sole reader, no concurrent consumer: do not block asking
-                    # for bytes which have not actually arrived in this pipe.
-                    if not k.ReadFile(handle, buffer, min(available.value, len(buffer)), C.byref(used), None):
-                        output['error'] = C.get_last_error()
-                        output['eof'] = output['error'] == 109
-                        return
-                    need(used.value > 0, 'PIPE_NO_PROGRESS')
-                    output['bytes'] += used.value
-                output['stoppedWithoutEOF'] = True
-            except BaseException as error:
-                output['exception'] = type(error).__name__
         for original in ack['readHandles']:
             read = duplicate(k, int(keeper_process._handle), original)
             handles.append(read)
             reader_handles.append(read)
             output = {'bytes': 0, 'error': None, 'eof': False}
             logs.append(output)
-            worker = threading.Thread(target=drain, args=(read, output), daemon=True)
-            worker.start()
-            threads.append(worker)
+            if plan['crashStage'] is None:
+                worker = threading.Thread(target=drain_pipe, args=(k, read, output, stop_readers), daemon=True)
+                worker.start()
+                threads.append(worker)
         packet(run/'TAKEOVER.json', {'identity': evidence, 'guardianHoldsSealHandles': plan['guardianCustody'],
                'sealHandlesExported': False})
         need(keeper_process.wait(timeout=5) == 73, 'KEEPER_CRASH_NOT_OBSERVED')
@@ -423,6 +462,21 @@ def supervise(run):
         expected_error = 32 if plan['guardianCustody'] else 0
         need(all(value == expected_error for value in result['suspendedAfterKeeperCrash'].values()),
              'FENCES_NOT_RETAINED' if plan['guardianCustody'] else 'CONTROL_EXTERNAL_FENCE_PRESENT')
+        if plan['crashStage'] is not None:
+            # The outer observer receives only process/thread/stdio capabilities.
+            # Neither the Job handle nor any file/directory seal is exported.
+            packet(run/'GUARDIAN-READY.json', {'identity': evidence,
+                   'processHandle': process, 'threadHandle': thread, 'readHandles': reader_handles,
+                   'binding': guardian.status()['binding'], 'bindingFileSHA256': sha(run/'EXPECTED-BINDING.json'),
+                   'scriptSHA256': plan['scriptSHA256'], 'moduleSHA256': plan['moduleSHA256'],
+                   'tempIdentity': ack['tempIdentity'], 'killOnJobCloseVerified': True,
+                   'jobMembershipVerified': True, 'jobOrSealHandlesExported': False})
+            outer_deadline = time.monotonic()+30
+            while not (run/'OUTER-ACK.json').exists():
+                need(not (run/'OUTER-ABORT.json').exists(), 'OUTER_ABORTED')
+                need(time.monotonic() < outer_deadline, 'OUTER_ACK_DEADLINE')
+                time.sleep(0.005)
+            os._exit(75)  # Only the dedicated guardian subprocess may do this.
         need(k.ResumeThread(thread) == 1, 'RESUME_COUNT_MISMATCH')
         live_samples, live_rows = [], []
         reader_started = time.monotonic()
@@ -564,6 +618,216 @@ def supervise(run):
     return result
 
 
+
+def intent_fixture(run, mode, binding=None):
+    """Fixed real journal fixture CLI, never a generic script/command input."""
+    plan = load_plan(run)
+    need(mode in ('begin', 'read'), 'INTENT_MODE_REFUSED')
+    argv = [str(NODE), str(INTENT_HELPER), mode, str(run)]
+    if mode == 'read':
+        argv.extend((binding['operationId'], binding['requestSHA256']))
+    output = subprocess.run(argv, cwd=ROOT, env={'SystemRoot': os.environ['SystemRoot'],
+             'TEMP': str(run), 'TMP': str(run)}, capture_output=True, timeout=15, creationflags=0x08000000)
+    need(output.returncode == 0 and len(output.stdout) <= 8192, 'INTENT_HELPER_REFUSED')
+    def unique(pairs):
+        value = {}
+        for key, item in pairs:
+            need(key not in value, 'INTENT_DUPLICATE_JSON')
+            value[key] = item
+        return value
+    value = json.loads(output.stdout.decode('utf-8'), object_pairs_hook=unique)
+    need(type(value) is dict, 'INTENT_OUTPUT_REFUSED')
+    if mode == 'begin':
+        fields = {'operationId': r'op_[a-f0-9]{32}', 'nativeJobId': r'exec_[a-f0-9]{32}',
+                  'requestSHA256': r'[a-f0-9]{64}', 'rendererGeneration': r'renderer_[a-f0-9]{32}'}
+        need(set(value) == set(fields) and all(type(value[key]) is str and re.fullmatch(pattern, value[key])
+             for key, pattern in fields.items()), 'INTENT_BINDING_REFUSED')
+    else:
+        need(value.get('operationId') == binding['operationId']
+             and value.get('requestSHA256') == binding['requestSHA256']
+             and value.get('state') == 'intent_observed' and value.get('dispatchState') == 'unknown'
+             and value.get('reconcileRequired') is True and value.get('canReplay') is False
+             and value.get('effectsAllowed') is False and value.get('powerLossPersistenceVerified') is False,
+             'INTENT_STATUS_NOT_HELD')
+    need(sha(INTENT_HELPER) == plan['intentHelperSHA256'] and sha(NODE) == plan['nodeSHA256'], 'INTENT_HELPER_DRIFT')
+    verify_intent_sources(plan)
+    return value
+
+
+def running_backpressure(k, process, stdout, evidence):
+    """Observe actual own extraction output, then a full unread stdout pipe.
+
+    This is a bounded fixture signal with known remaining output, not a generic
+    Windows thread-state or universal scheduler proof.
+    """
+    outgoing, incoming = W.DWORD(), W.DWORD()
+    win(k.GetNamedPipeInfo(stdout, None, C.byref(outgoing), C.byref(incoming), None), 'PIPE_INFO_FAILED')
+    capacity = outgoing.value or incoming.value
+    evidence.update({'stdoutBufferBytes': capacity, 'outgoingBufferBytes': outgoing.value,
+                     'incomingBufferBytes': incoming.value, 'noReaderThreadsStarted': True,
+                     'ownEntryOutputObserved': False, 'consumedBytes': 0})
+    need(0 < capacity <= 65536, 'PIPE_CAPACITY_REFUSED')
+    buffer, used, available = C.create_string_buffer(65536), W.DWORD(), W.DWORD()
+    observed = bytearray()
+    deadline = time.monotonic()+10
+    while b'entries/' not in observed and b'entries\\' not in observed:
+        need(time.monotonic() < deadline and k.WaitForSingleObject(process, 0) == 258, 'RUNNING_OUTPUT_NOT_OBSERVED')
+        win(k.PeekNamedPipe(stdout, None, 0, None, C.byref(available), None), 'OUTPUT_PEEK_FAILED')
+        if available.value:
+            win(k.ReadFile(stdout, buffer, min(available.value, 4096), C.byref(used), None), 'OUTPUT_READ_FAILED')
+            need(used.value > 0, 'OUTPUT_NO_PROGRESS')
+            observed.extend(buffer.raw[:used.value])
+            evidence['consumedBytes'] = len(observed)
+            need(len(observed) <= 128*1024, 'OUTPUT_LIMIT')
+        else:
+            time.sleep(0.001)
+    evidence['ownEntryOutputObserved'] = True
+    # Stop consuming stdout. The known 2048 entry lines exceed its real capacity.
+    samples = []
+    while len(samples) < 8:
+        need(time.monotonic() < deadline, 'BACKPRESSURE_NOT_OBSERVED')
+        before = k.WaitForSingleObject(process, 0)
+        win(k.PeekNamedPipe(stdout, None, 0, None, C.byref(available), None), 'BACKPRESSURE_PEEK_FAILED')
+        after = k.WaitForSingleObject(process, 0)
+        evidence['lastPipeObservation'] = {'availableBytes': available.value, 'beforeWait': before, 'afterWait': after}
+        need(before == 258 and after == 258, 'CHILD_EXITED_BEFORE_CRASH_ACK')
+        if available.value >= capacity:
+            samples.append({'availableBytes': available.value, 'beforeWait': before, 'afterWait': after,
+                            'monotonic': time.monotonic()})
+        else:
+            samples.clear()
+        evidence['unreadFullPipeSamples'] = list(samples)
+        time.sleep(0.005)
+    return evidence
+
+
+def observe_guardian_crash(run):
+    """Outer observer never receives a Job or file/directory seal handle."""
+    run, k = validate_run(run), api()
+    plan = load_plan(run)
+    need(plan['guardianCustody'] and plan['crashStage'] in ('suspended', 'running'), 'CRASH_SCOPE_REFUSED')
+    binding = intent_fixture(run, 'begin')  # Exactly once, BEFORE guardian launch.
+    held_binding_sha = sha(run/'EXPECTED-BINDING.json')
+    packet(run/'OUTER-INTENT.json', {'binding': binding, 'scope': 'own guardian self-crash fixture',
+           'jobOrSealHandlesReceived': False, 'nativeInstallAccepted': False})
+    handles, readers, workers, logs = [], [], [], []
+    stop = threading.Event()
+    guardian_process = None
+    process = thread = None
+    verified_reader = False
+    retained = []
+    result = {'nativeInstallAccepted': False, 'effectsAllowed': False, 'persistenceVerified': False,
+              'descendantsVerified': False, 'crashStage': plan['crashStage'],
+              'jobOrSealHandlesReceived': False, 'scope': 'own guardian self-crash qualification only'}
+    try:
+        guardian_process = subprocess.Popen([sys.executable, '-B', str(Path(__file__)), '--crash-guardian', str(run)],
+             env={'SystemRoot': os.environ['SystemRoot'], 'TEMP': str(run), 'TMP': str(run)},
+             close_fds=True, creationflags=0x08000000)
+        deadline = time.monotonic()+20
+        while not (run/'GUARDIAN-READY.json').exists():
+            need(guardian_process.poll() is None and time.monotonic() < deadline, 'GUARDIAN_READY_MISSING')
+            time.sleep(0.005)
+        ready = json.loads((run/'GUARDIAN-READY.json').read_text('utf-8'))
+        need(ready['binding'] == binding and ready['bindingFileSHA256'] == held_binding_sha
+             and ready['scriptSHA256'] == plan['scriptSHA256'] and ready['moduleSHA256'] == plan['moduleSHA256']
+             and ready['killOnJobCloseVerified'] is True and ready['jobMembershipVerified'] is True
+             and ready['jobOrSealHandlesExported'] is False, 'GUARDIAN_READY_BINDING_REFUSED')
+        for key in ('processHandle', 'threadHandle'):
+            handles.append(duplicate(k, int(guardian_process._handle), ready[key]))
+        process, thread = handles
+        actual = process_identity(k, process, thread)  # Deliberately no Job capability.
+        need(all(actual[key] == ready['identity'][key] for key in ('pid', 'tid', 'created', 'image')),
+             'GUARDIAN_CHILD_IDENTITY_MISMATCH')
+        verified_reader = True
+        for original in ready['readHandles']:
+            read = duplicate(k, int(guardian_process._handle), original)
+            handles.append(read)
+            readers.append(read)
+        need(len(readers) == 2 and k.WaitForSingleObject(process, 0) == 258, 'CRASH_CHILD_NOT_SUSPENDED_ALIVE')
+        result['processIdentity'] = actual
+        result['guardianVerifiedJobMembership'] = ready['jobMembershipVerified']
+        result['guardianVerifiedKillOnJobClose'] = ready['killOnJobCloseVerified']
+        result['resumeCount'] = 0
+        if plan['crashStage'] == 'running':
+            need(k.ResumeThread(thread) == 1, 'CRASH_RESUME_COUNT_MISMATCH')
+            result['resumeCount'] = 1
+            result['runningEvidence'] = {}
+            running_backpressure(k, process, readers[0], result['runningEvidence'])
+        else:
+            result['suspendedEvidence'] = {'childWait': k.WaitForSingleObject(process, 0), 'neverResumed': True}
+            need(result['suspendedEvidence']['childWait'] == 258, 'SUSPENDED_CHILD_NOT_ALIVE')
+        need(k.WaitForSingleObject(process, 0) == 258, 'CHILD_EXITED_BEFORE_GUARDIAN_CRASH')
+        packet(run/'OUTER-ACK.json', {'binding': binding, 'childIdentity': actual,
+               'stage': plan['crashStage'], 'physicalEvidenceObserved': True})
+        need(guardian_process.wait(timeout=5) == 75, 'GUARDIAN_SELF_CRASH_NOT_OBSERVED')
+        result['guardianExitCode'] = 75
+        result['readerFinalWait'] = k.WaitForSingleObject(process, 5000)
+        need(result['readerFinalWait'] == 0, 'READER_SURVIVED_GUARDIAN_CRASH')
+        exit_code = W.DWORD()
+        win(k.GetExitCodeProcess(process, C.byref(exit_code)), 'CRASH_EXIT_QUERY_FAILED')
+        result['readerExitCode'] = exit_code.value
+        # ExitProcess status is diagnostic. Even an unresumed reader can receive
+        # zero from Job termination; it is never native completion evidence.
+        result['readerExitCodeIsSuccessProof'] = False
+        result['ownerLost'] = True
+        result['nativeCompletionAccepted'] = False
+        need(not (run/'REPORT.json').exists(), 'UNEXPECTED_NORMAL_GUARDIAN_RECEIPT')
+        result['normalGuardianReceiptAbsent'] = True
+        for handle in readers:
+            log = {'bytes': 0, 'error': None, 'eof': False}
+            logs.append(log)
+            worker = threading.Thread(target=drain_pipe, args=(k, handle, log, stop), daemon=True)
+            worker.start()
+            workers.append(worker)
+        for worker in workers:
+            worker.join(timeout=5)
+            need(not worker.is_alive(), 'CRASH_PIPE_DRAIN_UNCERTAIN')
+        need(len(logs) == 2 and all(log['eof'] for log in logs), 'CRASH_PIPE_EOF_NOT_OBSERVED')
+        result['pipeObservations'] = logs
+        # Fresh process/read with the independently retained original digest.
+        result['journalStatus'] = intent_fixture(run, 'read', binding)
+        result.update({'passed': True, 'allReaderPipesDrained': True,
+                       'filesystemSuccessOrTransferClaimed': False, 'nativeAdmissionVerified': False})
+    except BaseException as error:
+        result.update({'passed': False, 'code': str(error) if isinstance(error, RuntimeError) else type(error).__name__})
+        try:
+            if not (run/'OUTER-ABORT.json').exists():
+                packet(run/'OUTER-ABORT.json', {'abort': True})
+        except BaseException:
+            result['guardianAbortSignalUncertain'] = True
+        # No name/PID kills: only the exact retained own reader capability.
+        if verified_reader and process and k.WaitForSingleObject(process, 0) == 258:
+            result['emergencyTerminateExactReader'] = bool(k.TerminateProcess(process, 94))
+            result['emergencyReaderJoined'] = k.WaitForSingleObject(process, 5000) == 0
+        if guardian_process is not None:
+            try:
+                result['guardianFinalExitCode'] = guardian_process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                result['guardianStillHeld'] = True
+    finally:
+        stop.set()
+        for worker in workers:
+            worker.join(timeout=2)
+        active_reads = {handle for handle, worker in zip(readers, workers) if worker.is_alive()}
+        terminal = process is not None and k.WaitForSingleObject(process, 0) == 0
+        for handle in reversed(handles):
+            if handle in active_reads or (not terminal and handle in handles[:2]):
+                retained.append(handle)
+                result.update({'passed': False, 'resourcesHeld': True})
+            elif not k.CloseHandle(handle):
+                retained.append(handle)
+                result.update({'passed': False, 'closeUncertain': True})
+        try:
+            packet(run/'OUTER-REPORT.json', result)
+        except BaseException as error:
+            error.guardian_process, error.retained_process_handles = guardian_process, tuple(retained)
+            raise
+    if not result.get('passed'):
+        error = RuntimeError('GUARDIAN_CRASH_FIXTURE_HELD: '+str(run/'OUTER-REPORT.json'))
+        error.guardian_process, error.retained_process_handles, error.result = guardian_process, tuple(retained), result
+        raise error
+    return result
+
 def _keeper_main():
     # This fixed child branch intentionally needs no opt-in environment flag:
     # its supervisor passes only a minimal stdlib environment.
@@ -582,6 +846,24 @@ def _keeper_main():
                        'environmentAPIRefusal': code.startswith(('JOB_LIST_FAILED_WIN', 'HANDLE_LIST_FAILED_WIN'))})
             except BaseException:
                 pass  # Existing .writing/INTENT is held evidence, never replay.
+        sys.exit(74)
+
+
+def _crash_guardian_main():
+    need(len(sys.argv) == 3 and sys.argv[1] == '--crash-guardian', 'PRIVATE_GUARDIAN_ONLY')
+    run = validate_run(sys.argv[2])
+    try:
+        need(load_plan(run)['crashStage'] in ('suspended', 'running'), 'PRIVATE_CRASH_SCOPE_REFUSED')
+        supervise(run)
+        raise RuntimeError('GUARDIAN_CRASH_NOT_REACHED')
+    except BaseException as error:
+        code = str(error) if isinstance(error, RuntimeError) else type(error).__name__
+        if not re.fullmatch(r'[A-Za-z_0-9]{1,100}', code):
+            code = 'GUARDIAN_FAILED'
+        try:
+            packet(run/'GUARDIAN-FAILURE.json', {'code': code, 'nativeInstallAccepted': False})
+        except BaseException:
+            pass
         sys.exit(74)
 
 
@@ -608,9 +890,35 @@ class NativeCustodyProcessTest(unittest.TestCase):
         self.assertTrue(all(value == 0 for value in result['afterReaderBeforeGuardianClose'].values()))
         self.assertFalse(result['nativeInstallAccepted'])
 
+    def test_guardian_self_crash_terminates_exact_suspended_reader(self):
+        result = observe_guardian_crash(prepare(crash_stage='suspended'))
+        self.assertTrue(result['passed'])
+        self.assertEqual(result['resumeCount'], 0)
+        self.assertTrue(result['ownerLost'])
+        self.assertFalse(result['readerExitCodeIsSuccessProof'])
+        self.assertFalse(result['nativeCompletionAccepted'])
+        self.assertEqual(result['journalStatus']['dispatchState'], 'unknown')
+        self.assertTrue(result['journalStatus']['reconcileRequired'])
+        self.assertFalse(result['journalStatus']['canReplay'])
+        self.assertFalse(result['journalStatus']['effectsAllowed'])
+
+    def test_guardian_self_crash_terminates_exact_running_backpressured_reader(self):
+        result = observe_guardian_crash(prepare(crash_stage='running'))
+        self.assertTrue(result['passed'])
+        self.assertTrue(result['runningEvidence']['ownEntryOutputObserved'])
+        self.assertTrue(result['ownerLost'])
+        self.assertFalse(result['readerExitCodeIsSuccessProof'])
+        self.assertFalse(result['nativeCompletionAccepted'])
+        self.assertEqual(result['journalStatus']['dispatchState'], 'unknown')
+        self.assertTrue(result['journalStatus']['reconcileRequired'])
+        self.assertFalse(result['journalStatus']['canReplay'])
+        self.assertFalse(result['journalStatus']['effectsAllowed'])
+
 
 if __name__ == '__main__':
     if sys.argv[1:2] == ['--keeper']:
         _keeper_main()
+    elif sys.argv[1:2] == ['--crash-guardian']:
+        _crash_guardian_main()
     else:
         unittest.main()
