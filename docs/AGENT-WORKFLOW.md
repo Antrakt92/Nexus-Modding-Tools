@@ -23,7 +23,7 @@ missing capabilities rather than inventing another implementation.
 | Coordinate downloads or installed-mod activation | `vortex-mod-lifecycle` | `run_mod_plan` MCP / session CLI; batch exact installed IDs, one final deploy, reconcile before recovery; native installation remains a separate stage |
 | Inspect an interrupted reviewed plan | `vortex-mod-lifecycle` | `inspect_mod_plan` / `session.mjs plan-status` with the original full `planId`; historical receipts only, no replay, resume or interlock clearing |
 | Prepare a task-owned native install helper | `vortex-mod-lifecycle` | [Maintained code kit](NATIVE-HELPER-PREPARATION.md); offline preparation and code-contract verification before fresh binding/activation; completed helpers stay frozen |
-| Compose the reviewed Vortex application source patches | `project-intake`, `verification-matrix` | [Exact source assembly](NATIVE-SOURCE-ASSEMBLY.md); fixed six-file/20-patch graph, separate full compilation and native admission |
+| Compose the reviewed Vortex application source patches | `project-intake`, `verification-matrix` | [Exact source assembly](NATIVE-SOURCE-ASSEMBLY.md); fixed six-file/21-patch graph, separate full compilation and native admission |
 | Bind one own-local package to the supported reviewed family | `vortex-mod-lifecycle` | [Offline binder](OWN-LOCAL-BINDER.md); exact archive/source/build pins, new inert output and separate native admission |
 | Public Nexus search, metadata or requirements | `nexus-research` | [CLI wrapper](../tools/modding/nexus-cli/README.md); inspect JSON status/errors/pagination |
 | Nexus upload preparation or authorized publication | `nexus-publication` | [Guarded publisher](../tools/modding/nexus-publish/README.md); offline by default |

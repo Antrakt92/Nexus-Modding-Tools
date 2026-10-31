@@ -1,0 +1,25 @@
+{
+  "schema": "native-source-patch/1",
+  "upstreamRepository": "https://github.com/Nexus-Mods/Vortex",
+  "upstreamTag": "v2.9.1",
+  "upstreamCommit": "c80326367cbe6d96621ad6cf4a5488ef49bac110",
+  "upstreamPath": "src/renderer/src/extensions/mod_management/index.ts",
+  "originalSourceSHA256": "d895c7614a692242e1921fa0d9fba1a52743bcd9aed5b1bcac9a539d393b2400",
+  "prerequisitePatch": "deployment-error-types.patch",
+  "prerequisitePatchSHA256": "388ab9c0f84ff76105a05f31b61822f8189ab75293725caef4c1e1f8bf6252b3",
+  "inputSHA256": "d41e40fb3319e44053644050015f3095d7a52444ba8b92f4dbaabb14d4526cb6",
+  "outputSHA256": "c12bdc5d08c95bafa18b44ee758a3d9661ade77ca692cd102d531261197ececd",
+  "patchSHA256": "f4f98440a276e726f54cb4ead95fcad718a52fe50a68c809efc74d3569aee27f",
+  "preparedOnly": true,
+  "installed": false,
+  "nativeAcceptanceVerified": false,
+  "nativeTerminalGuarantee": false,
+  "globalIdleGuarantee": false,
+  "installationPermit": false,
+  "limitations": [
+    "Prepared exact-source only; no full application compilation, installed host acceptance or physical cleanup authority.",
+    "Startup cleanup remains synchronous before once returns; non-ENOENT failure stops subsequent work and preserves the failed mod record.",
+    "Failed or refused work has no reset/replay/release API; shared lifecycle failures remain held.",
+    "No durable crash recovery, native dispatch, registration or installation permit."
+  ]
+}

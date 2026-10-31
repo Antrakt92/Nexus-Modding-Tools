@@ -87,8 +87,8 @@ test('fixed packet is checked, but an unpinned original can never assemble', () 
   reject(Object.assign(Object.create(null), dummy()), 'INPUT_SHA256');
 });
 
-test('pinned series closes all twenty nodes, exact source chains and cross-file manager dependencies', () => {
-  assert.equal(series.patches.length, 20); assert.equal(series.files.length, 6);
+test('pinned series closes all fixed nodes, exact source chains and cross-file manager dependencies', () => {
+  assert.equal(series.patches.length, 21); assert.equal(series.files.length, 6);
   assert.deepEqual([...series.files.map(row => row.path)].sort(), [...NATIVE_SOURCE_PATHS].sort());
   const done = new Map(), current = new Map(series.files.map(row => [row.path, row.originalSHA256]));
   for (const row of series.patches) {
@@ -166,7 +166,7 @@ integration('all six final sources equal independent exact application and retur
     assert.equal(sha(result.sources[row.path]), row.finalSHA256);
   }
   assert(Object.isFrozen(result.receipt.sources)); assert(Object.isFrozen(result.receipt.sources[0]));
-  assert(Object.isFrozen(result.receipt.patches[0])); assert.equal(result.receipt.patches.length, 20);
+  assert(Object.isFrozen(result.receipt.patches[0])); assert.equal(result.receipt.patches.length, 21);
   assert.equal(result.receipt.preparedOnly, true);
   for (const flag of ['nativeAdmission', 'effectsAllowed', 'typecheckVerified', 'nativeAcceptanceVerified', 'installed'])
     assert.equal(result.receipt[flag], false);

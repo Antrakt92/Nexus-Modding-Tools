@@ -40,7 +40,7 @@
     },
     {
       "path": "CHANGELOG.md",
-      "sha256_lf": "e7f5958b514116efdc41b1cfc3433a95837c3f37f8d9151c86948b410bfc16ab"
+      "sha256_lf": "808f16caf265029e6420d8a11c92ddf0e4bfd966bad3f0fa1870bf04c7b6b33d"
     },
     {
       "path": "CONTRIBUTING.md",
@@ -196,7 +196,7 @@
     },
     {
       "path": "docs/AGENT-WORKFLOW.md",
-      "sha256_lf": "5712d0dc8b0c90734f17f9b8a0d8bd7351e7a8a6c0b4329136f64ca40985ea03"
+      "sha256_lf": "8ca5d56610c981cf0f13736bfaed601509879a3d5620078d19ab8025b77db976"
     },
     {
       "path": "docs/ARCHIVE-TEMP-CUSTODY.md",
@@ -276,7 +276,7 @@
     },
     {
       "path": "docs/LOCAL-INSTALL-IMPLEMENTATION.md",
-      "sha256_lf": "87c8ebe0e54ef3b7ebf051efa81af594ea94cfbe143f242370336d3fa1947e1e"
+      "sha256_lf": "6322feda02e2fbee277f3e95b30643fc9a018bba934a59a4abfc2bfe5236c5be"
     },
     {
       "path": "docs/MAINTENANCE.md",
@@ -300,7 +300,7 @@
     },
     {
       "path": "docs/NATIVE-DEPLOYMENT-LIFECYCLE.md",
-      "sha256_lf": "944c9bd09aa6fb8ffffe3d83621826e4131ea29adc48b66ef5d30136ba0a8886"
+      "sha256_lf": "98180689c3142ef8c3a57d05a49f75b3d075a3e4b8ce49635f64d8262af91e06"
     },
     {
       "path": "docs/NATIVE-DISPATCH-CONTRACT.md",
@@ -316,7 +316,7 @@
     },
     {
       "path": "docs/NATIVE-LIFECYCLE-GATES.md",
-      "sha256_lf": "4389ce1bf97ac2fe43d120a732fa2133a51e8e1e1d6e71d3f091330cec02513a"
+      "sha256_lf": "bbc32407c4511df33a5cfb562a8257ee403e3788a8109ea2316cbc01847c90e6"
     },
     {
       "path": "docs/NATIVE-LIFECYCLE-HANDLERS.md",
@@ -332,7 +332,11 @@
     },
     {
       "path": "docs/NATIVE-SOURCE-ASSEMBLY.md",
-      "sha256_lf": "b1a78427427f95f0ea18308d4732049b273b5eaf9f37044198606802326a86d6"
+      "sha256_lf": "84da023458beb30715febc2aab069956d8691af543e097b4ee29d44239532229"
+    },
+    {
+      "path": "docs/NATIVE-STARTUP-CLEANUP.md",
+      "sha256_lf": "cbb1d44ceb8bc1e0d843e8779a6c644c99e225efd706ac83020ea834c0418363"
     },
     {
       "path": "docs/NATIVE-STRICT-SELECTION.md",
@@ -1147,6 +1151,14 @@
       "sha256_lf": "4dedbd7082685052f440e7dcfd41af83d7c41eeab9bede69a55b39ce413d3902"
     },
     {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/startup-cleanup-ownership.json",
+      "sha256_lf": "13a9259ca9f69354fe1291fb8f524ed584ac53af79528484e259fe6cdad5297a"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/startup-cleanup-ownership.patch",
+      "sha256_lf": "f4f98440a276e726f54cb4ead95fcad718a52fe50a68c809efc74d3569aee27f"
+    },
+    {
       "path": "tools/modding/vortex-agent/native-patches/vortex-2.9.1/strict-selection.json",
       "sha256_lf": "f58d1a210c91cf9ab40ce550cd38b5fbfc0c3099c003fd93aeacfb19485d73ea"
     },
@@ -1176,15 +1188,19 @@
     },
     {
       "path": "tools/modding/vortex-agent/native-source-series.json",
-      "sha256_lf": "9709581335003820a7f10f305ca62cff6d3b213765de2177b1c9650065f1fba0"
+      "sha256_lf": "cece9f4851a18672594c61b74b76eb2909ea5d7261396c234f410d75a9c4dad1"
     },
     {
       "path": "tools/modding/vortex-agent/native-source-series.mjs",
-      "sha256_lf": "3299d8c5954cb39698355773ddd63a2d2de84584fe499eb62aae1a94327b43e8"
+      "sha256_lf": "df5aad831f16b5546511e61b1a299742afa1a91e004c84317792bede4b60080e"
     },
     {
       "path": "tools/modding/vortex-agent/native-source-series.test.mjs",
-      "sha256_lf": "6cb239a90e25110c2701e4b3c2c96179f1cb60203fa2a1e4f72b510393e913ba"
+      "sha256_lf": "f013b2430564d33f1ba214304f0a03548ddfb1c3874dc57ba2a3284fc2cd393b"
+    },
+    {
+      "path": "tools/modding/vortex-agent/native-startup-cleanup-patch.test.mjs",
+      "sha256_lf": "eebba36f8c20d4c31631ea9bb03e0deea591a77284d76d645ddae2e6ccf4ff65"
     },
     {
       "path": "tools/modding/vortex-agent/native-strict-selection-patch.test.mjs",

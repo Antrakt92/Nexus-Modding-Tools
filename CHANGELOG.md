@@ -17,6 +17,11 @@ embedded Vortex adapter's 1.0.4 label.
 
 ## Unreleased
 
+- Keep failed startup cleanup from discarding an incomplete mod record. The
+  prepared Vortex patch preserves synchronous startup ordering, stops later
+  removals on failure and retains shared ownership. It is not installed and
+  grants no physical cleanup or native installation permission.
+
 - Assemble the reviewed Vortex source patches through one pinned six-file,
   20-patch graph. Reject changed inputs and packet drift; return detached output
   bytes and a receipt that keeps compilation and native admission unverified.

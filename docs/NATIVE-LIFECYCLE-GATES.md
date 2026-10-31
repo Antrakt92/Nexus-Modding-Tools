@@ -29,6 +29,13 @@ source parity and loaded extensions before using this review for an operation.
 This is host/tooling source evidence. It neither requires nor permits reading
 restricted mod implementations.
 
+A fresh read on 31 October 2026 confirmed the same installed archive hash and
+unchanged file generation before/after inspection. All six files used by the
+[prepared source series](NATIVE-SOURCE-ASSEMBLY.md), including deployment,
+activation-store and mod-activation sources, matched their official original
+hashes. None matched the prepared patched outputs. This closes original-source
+identity for that observation; it does not show the prepared code is loaded.
+
 ## Why a new owner ID is insufficient
 
 The native installer derives its base name from the trimmed archive basename
